@@ -18,7 +18,7 @@ setup(
     license='MIT',
     packages=['src'],
     install_requires=[
-        'numpy', 'pandas', 'scipy',
+        'numpy', 'pandas', 'scipy', 'matplotlib'
     ],
     zip_safe=False,
     classifiers=[
