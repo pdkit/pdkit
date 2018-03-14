@@ -284,12 +284,13 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 # Dealing with numpy and other related issues at RTD
-from mock import Mock as MagicMock
- 
+import sys
+from unittest.mock import MagicMock
+
 class Mock(MagicMock):
-@classmethod
-def __getattr__(cls, name):
-return MagicMock()
- 
-MOCK_MODULES = ['numpy', 'scipy', 'scipy.linalg', 'scipy.signal', 'pandas', 'matplotlib']
+    @classmethod
+    def __getattr__(cls, name):
+        return MagicMock()
+
+MOCK_MODULES = ['pygtk', 'gtk', 'gobject', 'argparse', 'numpy', 'pandas', 'scipy', 'matplotlib']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
