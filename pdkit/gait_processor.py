@@ -1,7 +1,7 @@
 import sys
 import traceback
 import numpy as np
-from tremor_processor import TremorProcessor
+from .tremor_processor import TremorProcessor
 
 from scipy import interpolate, signal, fft
 import matplotlib.pyplot as plt
@@ -37,12 +37,12 @@ class GaitProcessor(TremorProcessor):
     """Class used extract gait features from accelerometer data
     """
     
-    def detect_fog(self, sample_rate=100.0, step_size=50.0):
+    def detect_fog(self, sample_rate=100.0, step_size=50.0, plot=False):
         """Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
         """
         
         # the sampling frequency was recommended by the author of the pilot study
-        self.data_frame.resample_signal(sampling_frequency=100.0) 
+        self.resample_signal(sampling_frequency=100.0) 
         
         data = self.data_frame.y.values
         
@@ -89,4 +89,11 @@ class GaitProcessor(TremorProcessor):
             jPos = jPos + stepSize
             i = i + 1
 
-        return time, sumLocoFreeze, freezeIndex
+        self.freeze_time = time
+        self.locomotion_freeze = sumLocoFreeze
+        self.freeze_index = freezeIndex
+
+        if plot:
+            plt.plot(self.freeze_time, self.freeze_index)
+            plt.plot(self.freeze_time, self.locomotion_freeze)
+            plt.show()
