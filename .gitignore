@@ -85,3 +85,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# local files
+.local/
