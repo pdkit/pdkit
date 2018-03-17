@@ -70,6 +70,9 @@ docs/_build/
 
 # virtualenv
 .venv
+pip-selfcheck.json
+include/
+bin/
 venv/
 ENV/
 
