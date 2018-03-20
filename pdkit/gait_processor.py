@@ -128,3 +128,25 @@ class GaitProcessor(Processor):
         speed= 0.5 * np.sqrt(WEd1+(WEd2/2)+(WEd3/3)+(WEd4/4)+(WEd5/5))
 
         self.gait_speed = speed
+
+    def calc_regularity_symmetry(self):
+        
+        def regularity_symmetry(v):
+            maxtab, _ = np.peakdet(v, DELTA)
+            return maxtab[1][1], maxtab[2][1]
+
+        step_regularity_x, stride_regularity_x = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
+        step_regularity_y, stride_regularity_y = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
+        step_regularity_z, stride_regularity_z = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
+
+        self.step_regularity_x = step_regularity_x
+        self.stride_regularity_x = stride_regularity_x
+        self.symmetry_x = stride_regularity_x - step_regularity_x
+
+        self.step_regularity_y = step_regularity_y
+        self.stride_regularity_y = stride_regularity_y
+        self.symmetry_y = stride_regularity_y - step_regularity_y
+
+        self.step_regularity_z = step_regularity_z
+        self.stride_regularity_z = stride_regularity_z
+        self.symmetry_z = stride_regularity_z - step_regularity_z
