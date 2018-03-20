@@ -100,3 +100,14 @@ class GaitProcessor(Processor):
         self.locomotion_freeze = sumLocoFreeze
         self.freeze_index = freezeIndex
 
+    def get_frequency_from_peaks(self, start_offset=100, end_offset=100, delta=0.5):
+        # this method calculatess the frequency from the peaks of the x-axis acceleration
+        self.peaks_data_frame = self.data_frame[start_offset:-end_offset]
+
+        maxtab, mintab = np.peakdet(self.peaks_data_frame.x, delta)
+
+        x = np.mean(self.peaks_data_frame.dt[maxtab[1:,0].astype(int)] - self.peaks_data_frame.dt[maxtab[0:-1,0].astype(int)])
+        
+        self.frequency_from_peaks = 1/x
+
+    
