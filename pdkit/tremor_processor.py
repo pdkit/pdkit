@@ -133,8 +133,8 @@ class TremorProcessor:
             :param str window: hanning window size
         '''
         signal_length = len(self.data_frame.filtered_signal.values)
-        ll = signal_length / 2 - window / 2
-        rr = signal_length / 2 + window / 2
+        ll = int ( signal_length / 2 - window / 2 )
+        rr = int ( signal_length / 2 + window / 2 )
         msa = self.data_frame.filtered_signal[ll:rr].values
         hann_window = signal.hann(window)
 
@@ -144,8 +144,7 @@ class TremorProcessor:
         data = {'filtered_signal': msa_window, 'transformed_signal': self.transformed_signal,
                 'dt': self.data_frame.dt[ll:rr].values}
         # fft signal is a new data frame
-        self.data_frame_fft = pd.DataFrame(data, index=self.data_frame.index[ll:rr],
-                                           columns=['filtered_signal', 'transformed_signal', 'dt'])
+        self.data_frame_fft = pd.DataFrame(data, index=self.data_frame.index[ll:rr],columns=['filtered_signal', 'transformed_signal', 'dt'])
         logging.debug("fft signal")
 
     def tremor_amplitude(self, lower_frequency=LOWER_FREQUENCY_TREMOR, upper_frequency=UPPER_FREQUENCY_TREMOR):
@@ -164,8 +163,8 @@ class TremorProcessor:
         T = signal_length / SAMPLING_FREQUENCY
         frq = k / T  # two sides frequency range
 
-        frq = frq[range(signal_length / 2)]  # one side frequency range
-        ts = normalised_transformed_signal[range(signal_length / 2)]
+        frq = frq[range(int(signal_length / 2))]  # one side frequency range
+        ts = normalised_transformed_signal[range(int(signal_length / 2))]
         self.amplitude = sum(abs(ts[(frq > lower_frequency) & (frq < upper_frequency)]))
         self.frequency = frq[abs(ts).argmax(axis=0)]
         logging.debug("tremor amplitude calculated")
