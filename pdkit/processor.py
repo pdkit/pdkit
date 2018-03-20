@@ -6,18 +6,10 @@ import numpy as np
 import pandas as pd
 from scipy import interpolate, signal, fft
 
-NANOSEC_TO_SEC = 1000000000.0
-SAMPLING_FREQUENCY = 100.0  # this was recommended by the author of the pilot study [1]
-CUTOFF_FREQUENCY_HIGH = 2.0  # Hz as per [1]
-FILTER_ORDER = 2  # as per [1]
-WINDOW = 256  # this was recommended by the author of the pilot study [1]
-LOWER_FREQUENCY_TREMOR = 2.0  # Hz as per [1]
-UPPER_FREQUENCY_TREMOR = 10.0  # Hz as per [1]
-
 
 class Processor:
     '''
-       Tremor Processor Class
+        Processor Class
     '''
 
     def __init__(self):
@@ -121,7 +113,7 @@ class Processor:
         df_resampled.mag_sum_acc = f(new_timestamp)
         # interpolate the x,y,z values of the data frame
         self.data_frame = df_resampled.interpolate(method='linear')
-        
+
         logging.debug("resample signal")
 
     def filter_signal(self, cutoff_frequency=2.0, filter_order=2, sampling_frequency=100.0):
