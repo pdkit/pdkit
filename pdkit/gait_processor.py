@@ -110,4 +110,21 @@ class GaitProcessor(Processor):
         
         self.frequency_from_peaks = 1/x
 
-    
+    def calc_gait_speed(self, wavelet_type='db3', wavelet_level=6):
+        # the technique followed in this method is described in detail in [2]
+        # it involves wavelet transforming the signal and calculating
+        # the gait speed from the energies of the approximation coefficients
+        coeffs = wavedec(self.data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
+
+        energy = [sum(coeffs[wavelet_level - i]**2) / len(coeffs[wavelet_level - i]) for i in range(wavelet_level)]
+
+        WEd1 = energy[0] / (5 * np.sqrt(2))
+        WEd2 = energy[1] / (4 * np.sqrt(2))
+        WEd3 = energy[2] / (3 * np.sqrt(2))
+        WEd4 = energy[3] / (2 * np.sqrt(2))
+        WEd5 = energy[4] / np.sqrt(2)
+        WEd6 = energy[5] / np.sqrt(2)
+
+        speed= 0.5 * np.sqrt(WEd1+(WEd2/2)+(WEd3/3)+(WEd4/4)+(WEd5/5))
+
+        self.gait_speed = speed
