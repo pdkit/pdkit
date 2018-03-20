@@ -1,10 +1,9 @@
 import sys
 import traceback
 import numpy as np
-from .tremor_processor import TremorProcessor
+from .processor import Processor
 
 from scipy import interpolate, signal, fft
-import matplotlib.pyplot as plt
 
 SR = 100.0            # Sample rate in herz
 stepSize = SR/2      # Step size in samples
@@ -33,11 +32,16 @@ def x_numericalIntegration(x, SR):
 
 # inheriting from TremorProcessor to stub loading the data
 # will fix this hack once the DataLoader is implemented
-class GaitProcessor(TremorProcessor):
+class GaitProcessor(Processor):
     """Class used extract gait features from accelerometer data
     """
+
+    def __init__(self):
+        self.freeze_time = None
+        self.locomotion_freeze = None
+        self.freeze_index = None
     
-    def detect_fog(self, sample_rate=100.0, step_size=50.0, plot=False):
+    def detect_fog(self, sample_rate=100.0, step_size=50.0):
         """Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
         """
         
@@ -92,8 +96,3 @@ class GaitProcessor(TremorProcessor):
         self.freeze_time = time
         self.locomotion_freeze = sumLocoFreeze
         self.freeze_index = freezeIndex
-
-        if plot:
-            plt.plot(self.freeze_time, self.freeze_index)
-            plt.plot(self.freeze_time, self.locomotion_freeze)
-            plt.show()
