@@ -1,37 +1,13 @@
 import sys
 import traceback
 import numpy as np
+
 from .processor import Processor
 
 from scipy import interpolate, signal, fft
+from pywt import wavedec
 
-SR = 100.0            # Sample rate in herz
-stepSize = SR/2      # Step size in samples
-offDelay = 2.0       # Evaluation delay in seconds: tolerates delay after detecting
-onDelay=2.0          # Evaluation delay in seconds: tolerates delay before detecting
 
-NANOSEC_TO_SEC = 1000000000.0
-MILLISEC_TO_SEC = 1000.0
-SAMPLING_FREQUENCY = 100.0 # this was recommended by the author of the pilot study [1]
-CUTOFF_FREQUENCY_HIGH = 2.0 # Hz as per [1]
-FILTER_ORDER = 2 # as per [1]
-WINDOW = 256 # this was recommended by the author of the pilot study [1]
-LOWER_FREQUENCY_TREMOR = 2.0 # Hz as per [1]
-UPPER_FREQUENCY_TREMOR = 10.0 # Hz as per [1]
-CUTOFF_FREQUENCY_LOW = 4.0 # Hz as per [1]z
-
-def x_numericalIntegration(x, SR):
-#
-# Do numerical integration of x with the sampling rate SR
-# -------------------------------------------------------------------
-# Copyright 2008 Marc Bachlin, ETH Zurich, Wearable Computing Lab.
-#
-# -------------------------------------------------------------------
-# I do not trust this... would like to know where it came from...
-    return 1/2 * (sum(x[1:]) / SR + sum(x[:-1]) / SR)
-
-# inheriting from TremorProcessor to stub loading the data
-# will fix this hack once the DataLoader is implemented
 class GaitProcessor(Processor):
     """Class used extract gait features from accelerometer data
     """
@@ -40,7 +16,34 @@ class GaitProcessor(Processor):
         self.freeze_time = None
         self.locomotion_freeze = None
         self.freeze_index = None
+
+
+    @staticmethod
+    def x_numericalIntegration(x, sampling_rate):
+    #
+    # Do numerical integration of x with the sampling rate SR
+    # -------------------------------------------------------------------
+    # Copyright 2008 Marc Bachlin, ETH Zurich, Wearable Computing Lab.
+    #
+    # -------------------------------------------------------------------
+    # I do not trust this... would like to know where it came from...
+        return 1/2 * (sum(x[1:]) / sampling_rate + sum(x[:-1]) / SR)
+
+    @staticmethod
+    def estimated_autocorrelation(x):
+        """
+        http://stackoverflow.com/q/14297012/190597
+        http://en.wikipedia.org/wiki/Autocorrelation#Estimation
+        """
+        n = len(x)
+        variance = x.var()
+        x -= x.mean()
+        
+        r = np.correlate(x, x, mode = 'full')[-n:]
+        result = r / (variance * (np.arange(n, 0, -1)))
+        return result
     
+
     def detect_fog(self, sample_rate=100.0, step_size=50.0):
         """Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
         """
@@ -83,8 +86,8 @@ class GaitProcessor(Processor):
             Y = fft(y, int(NFFT))
             Pyy = abs(Y*Y) / NFFT #conjugate(Y) * Y / NFFT
 
-            areaLocoBand = x_numericalIntegration( Pyy[f_nr_LBs-1 : f_nr_LBe], SR )
-            areaFreezeBand = x_numericalIntegration( Pyy[f_nr_FBs-1 : f_nr_FBe], SR )
+            areaLocoBand = self.x_numericalIntegration( Pyy[f_nr_LBs-1 : f_nr_LBe], SR )
+            areaFreezeBand = self.x_numericalIntegration( Pyy[f_nr_FBs-1 : f_nr_FBe], SR )
 
             sumLocoFreeze.append(areaFreezeBand + areaLocoBand)
 
@@ -96,3 +99,4 @@ class GaitProcessor(Processor):
         self.freeze_time = time
         self.locomotion_freeze = sumLocoFreeze
         self.freeze_index = freezeIndex
+
