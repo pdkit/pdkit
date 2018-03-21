@@ -73,7 +73,6 @@ docs/_build/
 .venv
 pip-selfcheck.json
 include/
-bin/
 venv/
 ENV/
 
