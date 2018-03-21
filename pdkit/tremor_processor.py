@@ -51,10 +51,11 @@ class TremorProcessor:
             :param str filename: The path to load data from
             :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
         '''
-        self.data_frame = load_data(filename, format_file)
+        # self.data_frame = load_data(filename, format_file)
         logging.debug("data loaded")
+        return load_data(filename, format_file)
 
-    def resample_signal(self, sampling_frequency=SAMPLING_FREQUENCY):
+    def resample_signal(self, data_frame, sampling_frequency=SAMPLING_FREQUENCY):
         '''
             Resample signal
             We need to resample the signal as it is recorded with variable sampling rate
@@ -62,11 +63,11 @@ class TremorProcessor:
             :param str filename: The path to load data from
             :param str formatfile: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
         '''
-        df_resampled = self.data_frame.resample(str(1 / sampling_frequency) + 'S').mean()
+        df_resampled = data_frame.resample(str(1 / sampling_frequency) + 'S').mean()
         # interpolate function
-        f = interpolate.interp1d(self.data_frame.td, self.data_frame.mag_sum_acc)
+        f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
         # use arange to equally space the time difference
-        new_timestamp = np.arange(self.data_frame.td[0], self.data_frame.td[-1], 1.0 / sampling_frequency)
+        new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / sampling_frequency)
         # interpolate the time magnitude sum acceleration values
         df_resampled.mag_sum_acc = f(new_timestamp)
         # interpolate the x,y,z values of the data frame
@@ -148,14 +149,15 @@ class TremorProcessor:
         self.amplitude = sum(Pxx_den[(frq > lower_frequency) & (frq < upper_frequency)])
         logging.debug("tremor amplitude by welch calculated")
 
-    def process(self, method='fft'):
+    def process(self, data_frame, method='fft'):
         '''
             Process method.
 
+            :param data_frame: pandas data frame.
             :param str method: fft or welch.
         '''
         try:
-            self.resample_signal()
+            self.resample_signal(data_frame)
             self.filter_signal()
 
             if method == 'fft':
