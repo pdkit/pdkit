@@ -18,7 +18,7 @@ setup(
     license='MIT',
     packages=['pdkit'],
     install_requires=[
-        'numpy', 'pandas', 'scipy', 'matplotlib'
+        'numpy', 'pandas', 'scipy', 'PyWavelets'
     ],
     zip_safe=False,
     classifiers=[
