@@ -5,7 +5,8 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy import interpolate, signal, fft
-from utils import load_data
+from .utils import load_data
+from tsfresh.feature_extraction import feature_calculators
 
 
 class TremorProcessor:
@@ -167,6 +168,10 @@ class TremorProcessor:
         self.amplitude = sum(Pxx_den[(frq > self.lower_frequency) & (frq < self.upper_frequency)])
 
         logging.debug("tremor amplitude by welch calculated")
+
+    def spkt_welch_density(x, param = [{"coeff":0}]):
+        welch = feature_calculators.spkt_welch_density(x, param)
+        return list(welch)[0][1]
 
     def process(self, data_frame, method='fft'):
         '''
