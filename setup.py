@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name='pdkit',
-    version='0.1.6',
+    version='0.2.6',
     description='Parkinson`s Disease Kit',
     url='https://github.com/pdkit/pdkit',
     long_description=readme(),
@@ -16,9 +16,9 @@ setup(
     author='Joan S. Pons',
     author_email='joan@dcs.bbk.ac.uk',
     license='MIT',
-    packages=['src'],
+    packages=['pdkit'],
     install_requires=[
-        'numpy', 'pandas', 'scipy',
+        'numpy', 'pandas', 'scipy', 'PyWavelets'
     ],
     zip_safe=False,
     classifiers=[

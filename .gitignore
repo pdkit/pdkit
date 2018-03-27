@@ -24,6 +24,7 @@ parts/
 sdist/
 var/
 wheels/
+man/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -70,6 +71,8 @@ docs/_build/
 
 # virtualenv
 .venv
+pip-selfcheck.json
+include/
 venv/
 ENV/
 
