@@ -7,7 +7,19 @@ NANOSEC_TO_SEC = 1000000000.0
 
 def load_cloudupdrs_data(filename):
     '''
-       Load CloudUPDRS data
+       This method loads data in the cloudupdrs format
+       
+       Usually the data will be saved in a csv file and it should look like this:
+       
+       timestamp0, x0, y0, z0
+       timestamp1, x1, y1, z1
+       timestamp0, x2, y2, z2
+       .
+       .
+       .
+       timestampn, xn, yn, zn
+       
+       where x, y, z are the components of the acceleration
 
        :param str filename: The path to load data from
     '''
@@ -25,7 +37,21 @@ def load_cloudupdrs_data(filename):
 
 def load_mpower_data(filename):
     '''
-        Load MPower data
+        This method loads data in the mpower format
+       
+        https://www.synapse.org/#!Synapse:syn4993293/wiki/247859
+        
+        The format is like:
+        
+        [ 
+            {
+                "timestamp":19298.67999479167,
+                "x": ... ,
+                "y": ...,
+                "z": ...,
+            }, {...}, {...}
+        ]
+        
 
         :param str filename: The path to load data from
     '''
@@ -43,7 +69,7 @@ def load_mpower_data(filename):
 
 def load_data(filename, format_file='cloudupdrs'):
     '''
-        General method to load data with different format file
+        This is a general load data method where the format of data to load can be passed as a parameter,
 
         :param str filename: The path to load data from
         :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
