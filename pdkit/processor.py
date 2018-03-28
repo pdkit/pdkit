@@ -1,155 +1,128 @@
 #!/usr/bin/env python3
 import sys
 import logging
-
 import numpy as np
 import pandas as pd
 from scipy import interpolate, signal, fft
-
+from .utils import load_data
 
 class Processor:
     '''
-        Processor Class
+       This is the main Processor class. Once the data is loaded it will be
+       accessible at data_frame, where it looks like:
+       data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
+       data_frame.index is the datetime-like index
+       
+       This values are recommended by the author of the pilot study [1]
+       
+       sampling_frequency = 100.0Hz
+       cutoff_frequency = 2.0Hz
+       filter_order = 2
+       window = 256
+       lower_frequency = 2.0Hz
+       upper_frequency = 10.0Hz
+
+       [1] Developing a tool for remote digital assessment of Parkinson s disease
+            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+            
+       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
+            vol. 15, pp. 70-73, 1967)
+            P. Welch
     '''
 
-    def __init__(self):
+    def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
+                 window=256, lower_frequency=2.0, upper_frequency=10.0):
         try:
-            self.data_m = []
-            self.date_times = []
-            self.time_difference = []
-            self.magnitude_sum_acceleration = []
-            self.data_frame = pd.DataFrame()
-            self.data_frame_fft = pd.DataFrame()
-            self.transformed_signal = []
-            self.amplitude = 0
-            self.frequency = 0
+            self.sampling_frequency = sampling_frequency
+            self.cutoff_frequency = cutoff_frequency
+            self.filter_order = filter_order
+            self.window = window
+            self.lower_frequency = lower_frequency
+            self.upper_frequency = upper_frequency
+
             logging.debug("Processor init")
 
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("Processor I/O error %s", ierr)
-            # return 'IOError ' + ierr
 
         except ValueError as verr:
             logging.error("Processor ValueError ->%s", verr.message)
-            # return 'TremorPRocessor ValueError'
 
         except:
             logging.error("Unexpected error on Processor init: %s", sys.exc_info()[0])
-            # return 'Unexpected error on TremorProcessor init', sys.exc_info()[0]
 
-    def load_cloudupdrs_data(self, filename):
+    def load_data(self, filename, format_file='cloudupdrs'):
         '''
-           Load CloudUPDRS data
-
-           :param str filename: The path to load data from
-        '''
-        # self.data_m = pd.read_table(filename, sep=',', header=None)
-        self.data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
-        self.date_times = pd.to_datetime((self.data_m[:, 0] - self.data_m[0, 0]))
-        
-        self.time_difference = (self.data_m[:, 0] - self.data_m[0, 0]) / NANOSEC_TO_SEC
-        
-        self.magnitude_sum_acceleration = \
-            np.sqrt(self.data_m[:, 1] ** 2 + self.data_m[:, 2] ** 2 + self.data_m[:, 3] ** 2)
-
-        data = {'dt': self.time_difference,
-                'x': self.data_m[:, 1],
-                'y': self.data_m[:, 2],
-                'z': self.data_m[:, 3],
-                'mag_sum_acc': self.magnitude_sum_acceleration}
-        
-        self.data_frame = pd.DataFrame(data, index=self.date_times, columns=['dt', 'x', 'y', 'z', 'mag_sum_acc'])
-        logging.debug("cloudupdrs data loaded")
-
-    def load_mpower_data(self, filename):
-        '''
-            Load MPower data
+            This is a general load data method where the format of data to load can be passed as a parameter,
 
             :param str filename: The path to load data from
+            :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
         '''
-        raw_data = pd.read_json(filename)
-        self.date_times = pd.to_datetime(raw_data.timestamp * NANOSEC_TO_SEC - raw_data.timestamp[0] * NANOSEC_TO_SEC)
-        self.time_difference = (raw_data.timestamp - raw_data.timestamp[0])
-        self.time_difference = self.time_difference.values
-        self.magnitude_sum_acceleration = \
-            np.sqrt(raw_data.x.values ** 2 + raw_data.y.values ** 2 + raw_data.z.values ** 2)
+        # self.data_frame = load_data(filename, format_file)
+        logging.debug("data loaded")
+        return load_data(filename, format_file)
 
-        data = {'dt': self.time_difference,
-                'x': raw_data.x.values,
-                'y': raw_data.y.values,
-                'z': raw_data.z.values,
-                'mag_sum_acc': self.magnitude_sum_acceleration}
-
-        self.data_frame = pd.DataFrame(data, index=self.date_times, columns=['dt', 'x', 'y', 'z', 'mag_sum_acc'])
-        logging.debug("mpower data loaded")
-
-    def load_data(self, filename, formatfile='cloudupdrs'):
+    def resample_signal(self, data_frame):
         '''
-            General method to load data with different format file
+            Convenience method for frequency conversion and resampling of data frame. 
+            Object must have a DatetimeIndex. After re-sampling, this methods interpolate the time magnitude sum 
+            acceleration values and the x,y,z values of the data frame acceleration
 
-            :param str filename: The path to load data from
-            :param str formatfile: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+            :param data_frame: the data frame to resample
+            :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
         '''
-        if formatfile == 'mpower':
-            self.load_mpower_data(filename),
-        else:
-            self.load_cloudupdrs_data(filename)
+        df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
-    def resample_signal(self, sampling_frequency=100.0):
-        '''
-            Resample signal
-            We need to resample the signal as it is recorded with variable sampling rate
-
-            :param str filename: The path to load data from
-            :param str formatfile: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-        '''
-        df_resampled = self.data_frame.resample(str(1 / sampling_frequency) + 'S').mean()
-        # interpolate function
-        f = interpolate.interp1d(self.time_difference, self.magnitude_sum_acceleration)
-        # use arange to equally space the time difference
-        new_timestamp = np.arange(self.time_difference[0], self.time_difference[-1], 1.0 / sampling_frequency)
-        # interpolate the time magnitude sum acceleration values
+        f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
+        new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / self.sampling_frequency)
         df_resampled.mag_sum_acc = f(new_timestamp)
-        # interpolate the x,y,z values of the data frame
-        self.data_frame = df_resampled.interpolate(method='linear')
 
         logging.debug("resample signal")
+        return df_resampled.interpolate(method='linear')
 
-    def filter_signal(self, cutoff_frequency=2.0, filter_order=2, sampling_frequency=100.0):
+    def filter_signal(self, data_frame):
         '''
-            Filter signal. High pass filter the signal as per [1]
-            [1] Developing a tool for remote digital assessment of Parkinson s disease
-            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+            This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
+            frame using a butter Butterworth digital and analog filter 
+            (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html). Then the method 
+            filter the data frame along one-dimension using a digital filter. 
+            (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html)
 
-            :param str filename: The path to load data from
-            :param str formatfile: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+            :param data_frame: the data frame    
+            :param str cutoff_frequency: The path to load data from
+            :param str filter_order: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
         '''
-        # first step is to high pass filter the signal as per [1]
-        b, a = signal.butter(filter_order, 2 * cutoff_frequency / sampling_frequency, 'high', analog=False)
-        filtered_signal = signal.lfilter(b, a, self.data_frame.mag_sum_acc.values)
-        
-        self.data_frame['filtered_signal'] = filtered_signal
-        
+        b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
+        filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
+        data_frame['filtered_signal'] = filtered_signal
+
         logging.debug("filter signal")
+        return data_frame
 
-    def fft_signal(self, window=256):
+    def fft_signal(self, data_frame):
         '''
-            FFT signal. Perform fft on the signal using a hanning window
+            This method perform Fast Fourier Transform on the data frame using a hanning window
+            (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html)
 
+            :param data_frame: the data frame    
             :param str window: hanning window size
         '''
-        signal_length = len(self.data_frame.filtered_signal.values)
-        ll = int ( signal_length / 2 - window / 2 )
-        rr = int ( signal_length / 2 + window / 2 )
-        msa = self.data_frame.filtered_signal[ll:rr].values
-        hann_window = signal.hann(window)
+        signal_length = len(data_frame.filtered_signal.values)
+        ll = int ( signal_length / 2 - self.window / 2 )
+        rr = int ( signal_length / 2 + self.window / 2 )
+        msa = data_frame.filtered_signal[ll:rr].values
+        hann_window = signal.hann(self.window)
 
         msa_window = (msa * hann_window)
-        self.transformed_signal = fft(msa_window)
+        transformed_signal = fft(msa_window)
 
-        data = {'filtered_signal': msa_window, 'transformed_signal': self.transformed_signal,
-                'dt': self.data_frame.dt[ll:rr].values}
-        # fft signal is a new data frame
-        self.data_frame_fft = pd.DataFrame(data, index=self.data_frame.index[ll:rr],columns=['filtered_signal', 'transformed_signal', 'dt'])
+        data = {'filtered_signal': msa_window, 'transformed_signal': transformed_signal,
+                'dt': data_frame.td[ll:rr].values}
+
+        data_frame_fft = pd.DataFrame(data, index=data_frame.index[ll:rr],
+                                      columns=['filtered_signal', 'transformed_signal', 'dt'])
         logging.debug("fft signal")
+        return data_frame_fft
+        
