@@ -2,11 +2,11 @@ import unittest
 import pandas_validator as pv
 import pdkit
 
-import sys
-import os
+# import sys
+# import os
 
-sys.path.append(os.path.abspath('../pdkit'))
-from pdkit.gait_processor import GaitProcessor
+# sys.path.append(os.path.abspath('../pdkit'))
+# from pdkit.gait_processor import GaitProcessor
 
 class CloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     column_num = 5
@@ -44,6 +44,7 @@ class GaitProcessingTest(unittest.TestCase):
         self.wrong_data = './tests/data/kinetic_tremor_wrong_format.csv'
         df = self.gp.load_data(self.wrong_data, 'cloudupdrs')
         validator = CloudUPDRSDataFrameValidator()
+        
         self.assertEqual(False, validator.is_valid(df))
     
     def test_freeze_of_gait(self):
