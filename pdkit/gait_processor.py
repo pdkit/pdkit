@@ -4,49 +4,49 @@ import numpy as np
 
 from .processor import Processor
 
+from .utils import estimate_autocorrelation, numerical_integration
+
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-
 class GaitProcessor(Processor):
-    """Class used extract gait features from accelerometer data
-    """
+    '''
+       This is the main Gait Processor class. Once the data is loaded it will be
+       accessible at data_frame, where it looks like:
+       data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
+       data_frame.index is the datetime-like index
+       
+       This values are recommended by the author of the pilot study [1]
+       
+       sampling_frequency = 100.0Hz
+       cutoff_frequency = 2.0Hz
+       filter_order = 2
+       window = 256
+       lower_frequency = 2.0Hz
+       upper_frequency = 10.0Hz
+
+       [1] Developing a tool for remote digital assessment of Parkinson s disease
+            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+            
+       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
+            vol. 15, pp. 70-73, 1967)
+            P. Welch
+    '''
 
     def __init__(self):
         self.freeze_time = None
         self.locomotion_freeze = None
         self.freeze_index = None
-
-
-    @staticmethod
-    def x_numericalIntegration(x, sampling_rate):
-    #
-    # Do numerical integration of x with the sampling rate SR
-    # -------------------------------------------------------------------
-    # Copyright 2008 Marc Bachlin, ETH Zurich, Wearable Computing Lab.
-    #
-    # -------------------------------------------------------------------
-    # I do not trust this... would like to know where it came from...
-        return 1/2 * (sum(x[1:]) / sampling_rate + sum(x[:-1]) / SR)
-
-    @staticmethod
-    def estimated_autocorrelation(x):
-        """
-        http://stackoverflow.com/q/14297012/190597
-        http://en.wikipedia.org/wiki/Autocorrelation#Estimation
-        """
-        n = len(x)
-        variance = x.var()
-        x -= x.mean()
-        
-        r = np.correlate(x, x, mode = 'full')[-n:]
-        result = r / (variance * (np.arange(n, 0, -1)))
-        return result
     
 
     def detect_fog(self, sample_rate=100.0, step_size=50.0):
-        """Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
-        """
+        '''
+            F
+        
+        
+        Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
+        '''
         
         # the sampling frequency was recommended by the author of the pilot study
         self.resample_signal(sampling_frequency=100.0) 
@@ -100,7 +100,8 @@ class GaitProcessor(Processor):
         self.locomotion_freeze = sumLocoFreeze
         self.freeze_index = freezeIndex
 
-    def get_frequency_from_peaks(self, start_offset=100, end_offset=100, delta=0.5):
+
+    def frequency_from_peaks(self, start_offset=100, end_offset=100, delta=0.5):
         # this method calculatess the frequency from the peaks of the x-axis acceleration
         self.peaks_data_frame = self.data_frame[start_offset:-end_offset]
 
@@ -110,7 +111,8 @@ class GaitProcessor(Processor):
         
         self.frequency_from_peaks = 1/x
 
-    def calc_gait_speed(self, wavelet_type='db3', wavelet_level=6):
+
+    def gait_speed(self, wavelet_type='db3', wavelet_level=6):
         # the technique followed in this method is described in detail in [2]
         # it involves wavelet transforming the signal and calculating
         # the gait speed from the energies of the approximation coefficients
@@ -129,15 +131,16 @@ class GaitProcessor(Processor):
 
         self.gait_speed = speed
 
-    def calc_regularity_symmetry(self):
+    def regularity_symmetry(self):
         
-        def regularity_symmetry(v):
-            maxtab, _ = np.peakdet(v, DELTA)
+        def _symmetry(v):
+            # DELTA = 0.5 as per Matlab code for gait analysis
+            maxtab, _ = np.peakdet(v, DELTA=0.5)
             return maxtab[1][1], maxtab[2][1]
 
-        step_regularity_x, stride_regularity_x = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
-        step_regularity_y, stride_regularity_y = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
-        step_regularity_z, stride_regularity_z = regularity_symmetry(self.estimated_autocorrelation(self.data_frame.x))
+        step_regularity_x, stride_regularity_x = _symmetry(self.estimated_autocorrelation(self.data_frame.x))
+        step_regularity_y, stride_regularity_y = _symmetry(self.estimated_autocorrelation(self.data_frame.x))
+        step_regularity_z, stride_regularity_z = _symmetry(self.estimated_autocorrelation(self.data_frame.x))
 
         self.step_regularity_x = step_regularity_x
         self.stride_regularity_x = stride_regularity_x

@@ -4,7 +4,6 @@ import numpy as np
 
 NANOSEC_TO_SEC = 1000000000.0
 
-
 def load_cloudupdrs_data(filename):
     '''
        This method loads data in the cloudupdrs format
@@ -78,3 +77,36 @@ def load_data(filename, format_file='cloudupdrs'):
         return load_mpower_data(filename)
     else:
         return load_cloudupdrs_data(filename)
+
+
+def numerical_integration(data, sampling_rate):
+    '''
+        Numerical integration of data with a sampling rate
+
+        :param array data: The data that needs to be integrated. This should be 1-dimensional.
+        :param float sampling_rate: The new sample rate of the data.
+    '''
+
+    integrated_data = np.sum(data[1:]) + np.sum(data[:-1]) 
+    integrated_data /= sampling_rate * 2
+
+    return integrated_data
+
+
+def estimate_autocorrelation(data):
+        """
+        Autocorrelation, also known as serial correlation, is the correlation of a signal with a delayed copy of itself as a function of delay.
+
+        :param array data: The signal that is to be autocorrelated. This should be 1-dimensional.
+
+        http://stackoverflow.com/q/14297012/190597
+        http://en.wikipedia.org/wiki/Autocorrelation#Estimation
+        """
+
+        new_data = np.array(data)
+        new_data -= new_data.mean()
+        
+        autocorrelation = np.correlate(new_data, new_data, mode = 'full')[-len(new_data):]
+        autocorrelation /= (new_data.var() * (np.arange(len(new_data), 0, -1)))
+        
+        return autocorrelation
