@@ -2,9 +2,10 @@
 import pandas as pd
 import numpy as np
 
-NANOSEC_TO_SEC = 1000000000.0
+import sys
 
-def load_cloudupdrs_data(filename):
+
+def load_cloudupdrs_data(filename, time_difference=1000000000.0):
     '''
        This method loads data in the cloudupdrs format
        
@@ -21,11 +22,12 @@ def load_cloudupdrs_data(filename):
        where x, y, z are the components of the acceleration
 
        :param str filename: The path to load data from
+       :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
     '''
     # data_m = pd.read_table(filename, sep=',', header=None)
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
-    time_difference = (data_m[:, 0] - data_m[0, 0]) / NANOSEC_TO_SEC
+    time_difference = (data_m[:, 0] - data_m[0, 0]) / time_difference
     magnitude_sum_acceleration = \
         np.sqrt(data_m[:, 1] ** 2 + data_m[:, 2] ** 2 + data_m[:, 3] ** 2)
     data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'z': data_m[:, 3],
@@ -34,7 +36,7 @@ def load_cloudupdrs_data(filename):
     return data_frame
 
 
-def load_mpower_data(filename):
+def load_mpower_data(filename, time_difference=1000000000.0):
     '''
         This method loads data in the mpower format
        
@@ -50,12 +52,12 @@ def load_mpower_data(filename):
                 "z": ...,
             }, {...}, {...}
         ]
-        
 
         :param str filename: The path to load data from
+        :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
     '''
     raw_data = pd.read_json(filename)
-    date_times = pd.to_datetime(raw_data.timestamp * NANOSEC_TO_SEC - raw_data.timestamp[0] * NANOSEC_TO_SEC)
+    date_times = pd.to_datetime(raw_data.timestamp * time_difference - raw_data.timestamp[0] * time_difference)
     time_difference = (raw_data.timestamp - raw_data.timestamp[0])
     time_difference = time_difference.values
     magnitude_sum_acceleration = \
@@ -79,34 +81,87 @@ def load_data(filename, format_file='cloudupdrs'):
         return load_cloudupdrs_data(filename)
 
 
-def numerical_integration(data, sampling_rate):
-    '''
-        Numerical integration of data with a sampling rate
+def numerical_integration(signal, sampling_frequency):
+    """ Numerically integrate a signal with it's sampling frequency.
 
-        :param array data: The data that needs to be integrated. This should be 1-dimensional.
-        :param float sampling_rate: The new sample rate of the data.
-    '''
-
-    integrated_data = np.sum(data[1:]) + np.sum(data[:-1]) 
-    integrated_data /= sampling_rate * 2
-
-    return integrated_data
-
-
-def estimate_autocorrelation(data):
-        """
-        Autocorrelation, also known as serial correlation, is the correlation of a signal with a delayed copy of itself as a function of delay.
-
-        :param array data: The signal that is to be autocorrelated. This should be 1-dimensional.
-
-        http://stackoverflow.com/q/14297012/190597
-        http://en.wikipedia.org/wiki/Autocorrelation#Estimation
-        """
-
-        new_data = np.array(data)
-        new_data -= new_data.mean()
+        :param array signal: A 1-dimensional array or list (the signal).
+        :param float sampling_frequency: The sampling frequency for the signal.
+    """
         
-        autocorrelation = np.correlate(new_data, new_data, mode = 'full')[-len(new_data):]
-        autocorrelation /= (new_data.var() * (np.arange(len(new_data), 0, -1)))
-        
-        return autocorrelation
+    integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
+    integrate /= sampling_frequency * 2
+    
+    return integrate
+
+def autocorrelation(signal):
+    """ The correlation of a signal with a delayed copy of itself.
+        More info here: https://en.wikipedia.org/wiki/Autocorrelation#Estimation
+
+        :param array signal: A 1-dimensional array or list (the signal).
+    """
+
+    signal = np.array(signal)
+    n = len(signal)
+    variance = signal.var()
+    x -= signal.mean()
+    
+    r = np.correlate(signal, signal, mode = 'full')[-n:]
+    result = r / (variance * (np.arange(n, 0, -1)))
+    
+    return result
+
+
+def peakdet(signal, delta, x = None):
+    """ Find the local maxima and minima ("peaks") in a 1-dimensional signal.
+        Converted from MATLAB script at http://billauer.co.il/peakdet.html
+
+        :param array signal: A 1-dimensional array or list (the signal).
+        :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
+        :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
+    """
+    
+    maxtab = []
+    mintab = []
+
+    if x is None:
+        x = np.arange(len(signal))
+
+    v = np.asarray(signal)
+
+    if len(v) != len(x):
+        sys.exit('Input vectors v and x must have same length')
+
+    if not np.isscalar(delta):
+        sys.exit('Input argument delta must be a scalar')
+
+    if delta <= 0:
+        sys.exit('Input argument delta must be positive')
+
+    mn, mx = np.inf, -np.inf
+    mnpos, mxpos = np.nan, np.nan
+
+    lookformax = True
+
+    for i in np.arange(len(v)):
+        this = v[i]
+        if this > mx:
+            mx = this
+            mxpos = x[i]
+        if this < mn:
+            mn = this
+            mnpos = x[i]
+
+        if lookformax:
+            if this < mx - delta:
+                maxtab.append((mxpos, mx))
+                mn = this
+                mnpos = x[i]
+                lookformax = False
+        else:
+            if this > mn + delta:
+                mintab.append((mnpos, mn))
+                mx = this
+                mxpos = x[i]
+                lookformax = True
+
+    return np.array(maxtab), np.array(mintab)

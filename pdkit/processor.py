@@ -4,27 +4,39 @@ import logging
 
 import numpy as np
 import pandas as pd
+
 from scipy import interpolate, signal, fft
 
 from .utils import load_data
 
 class Processor:
     '''
-        Processor Class
+       This is the main Processor class. Once the data is loaded it will be
+       accessible at data_frame, where it looks like:
+       data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
+       data_frame.index is the datetime-like index
+       
+       This values are recommended by the author of the pilot study [1]
+       
+       sampling_frequency = 100.0Hz
+       cutoff_frequency = 2.0Hz
+       filter_order = 2
+       window = 256
+       lower_frequency = 2.0Hz
+       upper_frequency = 10.0Hz
+
+       [1] Developing a tool for remote digital assessment of Parkinson s disease
+            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+            
+       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
+            vol. 15, pp. 70-73, 1967)
+            P. Welch
     '''
 
-    def __init__(self, 
-                 sampling_frequency=100.0,
-                 cutoff_frequency=2.0,
-                 filter_order=2,
-                 window=256,
-                 lower_frequency=2.0,
-                 upper_frequency=10.0):
-
+    def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
+                 window=256, lower_frequency=2.0, upper_frequency=10.0):
         try:
-            self.amplitude = 0
-            self.frequency = 0
-
             self.sampling_frequency = sampling_frequency
             self.cutoff_frequency = cutoff_frequency
             self.filter_order = filter_order
@@ -120,3 +132,4 @@ class Processor:
                                       columns=['filtered_signal', 'transformed_signal', 'dt'])
         logging.debug("fft signal")
         return data_frame_fft
+        
