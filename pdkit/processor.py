@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import logging
+
 import numpy as np
 import pandas as pd
+
 from scipy import interpolate, signal, fft
+
 from .utils import load_data
 
 class Processor:
@@ -53,6 +56,7 @@ class Processor:
         except:
             logging.error("Unexpected error on Processor init: %s", sys.exc_info()[0])
 
+
     def load_data(self, filename, format_file='cloudupdrs'):
         '''
             This is a general load data method where the format of data to load can be passed as a parameter,
@@ -63,6 +67,7 @@ class Processor:
         # self.data_frame = load_data(filename, format_file)
         logging.debug("data loaded")
         return load_data(filename, format_file)
+
 
     def resample_signal(self, data_frame):
         '''
@@ -82,6 +87,7 @@ class Processor:
         logging.debug("resample signal")
         return df_resampled.interpolate(method='linear')
 
+
     def filter_signal(self, data_frame):
         '''
             This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
@@ -100,6 +106,7 @@ class Processor:
 
         logging.debug("filter signal")
         return data_frame
+
 
     def fft_signal(self, data_frame):
         '''

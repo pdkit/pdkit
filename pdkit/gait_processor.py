@@ -1,21 +1,52 @@
 import sys
 import traceback
+
 import numpy as np
 
-from .processor import Processor
-from .utils import load_data, numerical_integration, autocorrelation, peakdet
-
+from scipy import interpolate, signal, fft
 from pywt import wavedec
 
+from .utils import load_data, numerical_integration, autocorrelation, peakdet
+
+from .processor import Processor
+
 class GaitProcessor(Processor):
-    """Class used extract gait features from accelerometer data
-    """
+    '''
+       This is the main Gait Processor class. Once the data is loaded it will be
+       accessible at data_frame, where it looks like:
+       data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
+       data_frame.index is the datetime-like index
+       
+       This values are recommended by the author of the pilot study [1] and [3]
+       
+       step_size = 50.0
+       start_offset = 100
+       end_offset = 100
+       delta = 0.5
+       loco_band = [0.5, 3]
+       freeze_band = [3, 8]
+       sampling_frequency = 100.0Hz
+       cutoff_frequency = 2.0Hz
+       filter_order = 2
+       window = 256
+       lower_frequency = 2.0Hz
+       upper_frequency = 10.0Hz
+
+       [1] Developing a tool for remote digital assessment of Parkinson s disease
+            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+            
+       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
+            vol. 15, pp. 70-73, 1967)
+            P. Welch
+
+       [3] M. Bachlin et al., "Wearable Assistant for Parkinson’s Disease Patients With the Freezing of Gait Symptom,"
+           in IEEE Transactions on Information Technology in Biomedicine, vol. 14, no. 2, pp. 436-446, March 2010.
+    '''
+
+
     def __init__(self, step_size=50.0, start_offset=100, end_offset=100, delta=0.5, loco_band=[0.5, 3], freeze_band=[3, 8]):
         super().__init__()
-
-        self.freeze_time = None
-        self.locomotion_freeze = None
-        self.freeze_index = None
 
         self.step_size = step_size
         self.start_offset = start_offset
@@ -26,7 +57,9 @@ class GaitProcessor(Processor):
 
 
     def freeze_of_gait(self, data_frame):
-        """Following http://delivery.acm.org/10.1145/1660000/1658515/a11-bachlin.pdf
+        """ This method assess freeze of gait following [3].
+
+            :param DataFrame data_frame: the data frame.
         """
         
         # the sampling frequency was recommended by the author of the pilot study
@@ -72,12 +105,16 @@ class GaitProcessor(Processor):
         self.locomotion_freezes = sumLocoFreeze
 
 
-    def frequency_of_peaks(self, data_frame, delta=0.5):
-        # this method calculatess the frequency from the peaks of the x-axis acceleration
+    def frequency_of_peaks(self, data_frame):
+        """ This method assess the frequency of the peaks on the x-axis.
+
+            :param DataFrame data_frame: the data frame.
+        """
+
         peaks_data = data_frame[self.start_offset:-self.end_offset].x.values
         self.peaks_data = peaks_data
 
-        maxtab, mintab = peakdet(peaks_data, delta)
+        maxtab, mintab = peakdet(peaks_data, self.delta)
 
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
         
@@ -85,9 +122,14 @@ class GaitProcessor(Processor):
         
 
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
-        # the technique followed in this method is described in detail in [2]
-        # it involves wavelet transforming the signal and calculating
-        # the gait speed from the energies of the approximation coefficients
+        """ This method assess the speed of gait following [2].
+            It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
+
+            :param DataFrame data_frame: the data frame.
+            :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
+            :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
+        """
+
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
 
         energy = [sum(coeffs[wavelet_level - i]**2) / len(coeffs[wavelet_level - i]) for i in range(wavelet_level)]
@@ -103,7 +145,12 @@ class GaitProcessor(Processor):
 
         self.gait_speed = speed
 
+
     def walk_regularity_symmetry(self, data_frame):
+        """ This method extracts the step and stride regularity and also walk symmetry.
+
+            :param DataFrame data_frame: the data frame.
+        """
         
         def _symmetry(v):
             maxtab, _ = peakdet(v, self.delta)
