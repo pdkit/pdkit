@@ -11,27 +11,38 @@ from tsfresh.feature_extraction import feature_calculators
 
 class TremorProcessor:
     '''
-       This is the main Tremor Processor class. Once the data is loaded it will be
-       accessible at data_frame, where it looks like:
-       data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
-       data_frame.index is the datetime-like index
-       
-       This values are recommended by the author of the pilot study [1]
-       
-       sampling_frequency = 100.0Hz
-       cutoff_frequency = 2.0Hz
-       filter_order = 2
-       window = 256
-       lower_frequency = 2.0Hz
-       upper_frequency = 10.0Hz
+        This is the main Tremor Processor class. Once the data is loaded it will be
+        accessible at data_frame, where it looks like:
+        data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
+        data_frame.index is the datetime-like index
+        
+        This values are recommended by the author of the pilot study [1]
+        
+        sampling_frequency = 100.0Hz
+        cutoff_frequency = 2.0Hz
+        filter_order = 2
+        window = 256
+        lower_frequency = 2.0Hz
+        upper_frequency = 10.0Hz
 
-       [1] Developing a tool for remote digital assessment of Parkinson s disease
+        :References:
+       
+        [1] Developing a tool for remote digital assessment of Parkinson s disease
             Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
             
-       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
             on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
             vol. 15, pp. 70-73, 1967)
             P. Welch
+            
+        :Example:
+         
+        >>> import pdkit
+        >>> tp = pdkit.TremorProcessor()
+        >>> path = 'path/to/data.csv’ 
+        >>> data_frame = tp.load_data(path)
+        >>> print(data_frame.amplitude)
+        >>> print(data_frame.frequency)
     '''
 
     def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
@@ -65,6 +76,7 @@ class TremorProcessor:
 
             :param str filename: The path to load data from
             :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
         '''
         # self.data_frame = load_data(filename, format_file)
         logging.debug("data loaded")
@@ -78,6 +90,8 @@ class TremorProcessor:
 
             :param data_frame: the data frame to resample
             :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
+            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+
         '''
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
@@ -99,6 +113,8 @@ class TremorProcessor:
             :param data_frame: the data frame    
             :param str cutoff_frequency: The path to load data from
             :param str filter_order: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
@@ -114,6 +130,8 @@ class TremorProcessor:
 
             :param data_frame: the data frame    
             :param str window: hanning window size
+            :return dataframe: data_frame.filtered_signal, data_frame.transformed_signal, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+
         '''
         signal_length = len(data_frame.filtered_signal.values)
         ll = int ( signal_length / 2 - self.window / 2 )
@@ -170,16 +188,25 @@ class TremorProcessor:
         logging.debug("tremor amplitude by welch calculated")
 
     def spkt_welch_density(x, param = [{"coeff":0}]):
+        '''
+        
+        :param param: 
+        :return: 
+        '''
         welch = feature_calculators.spkt_welch_density(x, param)
+        logging.debug("tremor amplitude by tsfresh welch calculated")
         return list(welch)[0][1]
 
     def process(self, data_frame, method='fft'):
         '''
             This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
-            'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered. 
+            'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
+             
+            Result is saved in the Tremor Processor class, where:
+            data_frame.amplitude is the the amplitude of the Tremor
+            data-frame.frequency is the frequency of the Tremor
 
             :param data_frame: the data frame    
-            :param data_frame: pandas data frame.
             :param str method: fft or welch.
         '''
         try:
