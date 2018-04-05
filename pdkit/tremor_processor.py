@@ -5,9 +5,6 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy import interpolate, signal, fft
-from .utils import load_data
-from tsfresh.feature_extraction import feature_calculators
-
 
 class TremorProcessor:
     '''
