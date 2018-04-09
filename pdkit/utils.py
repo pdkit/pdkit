@@ -11,18 +11,20 @@ def load_cloudupdrs_data(filename, time_difference=1000000000.0):
        
        Usually the data will be saved in a csv file and it should look like this:
        
-       timestamp0, x0, y0, z0
-       timestamp1, x1, y1, z1
-       timestamp0, x2, y2, z2
-       .
-       .
-       .
-       timestampn, xn, yn, zn
+      .. code-block:: json
+      
+         timestamp0, x0, y0, z0
+         timestamp1, x1, y1, z1
+         timestamp0, x2, y2, z2
+         .
+         .
+         .
+         timestampn, xn, yn, zn
        
-       where x, y, z are the components of the acceleration
+      where x, y, z are the components of the acceleration
 
-       :param str filename: The path to load data from
-       :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
+      :param str filename: The path to load data from
+      :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
     '''
     # data_m = pd.read_table(filename, sep=',', header=None)
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
@@ -38,23 +40,24 @@ def load_cloudupdrs_data(filename, time_difference=1000000000.0):
 
 def load_mpower_data(filename, time_difference=1000000000.0):
     '''
-        This method loads data in the mpower format
-       
-        https://www.synapse.org/#!Synapse:syn4993293/wiki/247859
+        This method loads data in the [mpower]_ format \
         
-        The format is like:
-        
-        [ 
-            {
-                "timestamp":19298.67999479167,
-                "x": ... ,
-                "y": ...,
-                "z": ...,
-            }, {...}, {...}
-        ]
+        The format is like: 
+       .. code-block:: json
+            
+            [
+               {
+                  "timestamp":19298.67999479167,
+                  "x": ... ,
+                  "y": ...,
+                  "z": ...,
+               },
+               {...},
+               {...}
+            ]
 
-        :param str filename: The path to load data from
-        :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
+       :param str filename: The path to load data from
+       :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
     '''
     raw_data = pd.read_json(filename)
     date_times = pd.to_datetime(raw_data.timestamp * time_difference - raw_data.timestamp[0] * time_difference)
@@ -82,7 +85,8 @@ def load_data(filename, format_file='cloudupdrs'):
 
 
 def numerical_integration(signal, sampling_frequency):
-    """ Numerically integrate a signal with it's sampling frequency.
+    """ 
+        Numerically integrate a signal with it's sampling frequency.
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float sampling_frequency: The sampling frequency for the signal.
@@ -94,8 +98,8 @@ def numerical_integration(signal, sampling_frequency):
     return integrate
 
 def autocorrelation(signal):
-    """ The correlation of a signal with a delayed copy of itself.
-        More info here: https://en.wikipedia.org/wiki/Autocorrelation#Estimation
+    """ 
+        The [correlation]_ of a signal with a delayed copy of itself.
 
         :param array signal: A 1-dimensional array or list (the signal).
     """
@@ -112,7 +116,8 @@ def autocorrelation(signal):
 
 
 def peakdet(signal, delta, x = None):
-    """ Find the local maxima and minima ("peaks") in a 1-dimensional signal.
+    """ 
+        Find the local maxima and minima ("peaks") in a 1-dimensional signal.
         Converted from MATLAB script at http://billauer.co.il/peakdet.html
 
         :param array signal: A 1-dimensional array or list (the signal).
