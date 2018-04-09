@@ -11,7 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   code
+   tremor
+   utils
 
 Indices and tables
 ==================
