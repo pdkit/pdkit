@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 import sys
-
+import functools
 
 def load_cloudupdrs_data(filename, time_difference=1000000000.0):
     '''
@@ -107,7 +107,7 @@ def autocorrelation(signal):
     signal = np.array(signal)
     n = len(signal)
     variance = signal.var()
-    x -= signal.mean()
+    signal -= signal.mean()
     
     r = np.correlate(signal, signal, mode = 'full')[-n:]
     result = r / (variance * (np.arange(n, 0, -1)))
@@ -170,3 +170,29 @@ def peakdet(signal, delta, x = None):
                 lookformax = True
 
     return np.array(maxtab), np.array(mintab)
+
+
+def typecheck(*args1, isclassmethod=True):
+    """Python is a language with typed objects, but untyped references. This means that there is no compiler to help catch type errors at design time. This typecheck function acts as a function decorator so that you can declare the type of each function or method argument. At runtime, the types of these arguments will be checked against their declared types.
+Example:
+    @typecheck(types.StringType, Decimal)
+    def my_function(s, d):
+        pass
+If isclassmethod is True, then the first argument is skipped, since it is simply either self or cls and doesn't need to be typechecked. One important limitation of this decorator is that it cannot be used to typecheck an method argument that is of the same type as the method's class. The reason is that types do not exist until after Python has processed the entire class definition. And unfortunately, there is no way to forward-declare a class. For example, the following will not work:
+    class Foo(object):
+        @typecheck(Foo)
+        def hello(self, f):
+            print('hello: %s' % f)
+Note that the Ruby language does not have this problem, or so I'm told.""" 
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args2, **keywords):
+            args = args2[1:] if isclassmethod else args2
+            for (arg2,arg1) in zip(args,args1):
+                if not isinstance(arg2, arg1):
+                    raise TypeError(
+                        'expected type: %s, actual type: %s' % ( 
+                            arg1, type(arg2)))
+            return func(*args2, **keywords)
+        return wrapper
+    return decorator
