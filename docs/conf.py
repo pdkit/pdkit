@@ -298,14 +298,15 @@ MOCK_MODULES = ['pygtk',
                 'gtk',
                 'gobject',
                 'argparse',
+                'traceback',
                 'numpy',
                 'pandas',
                 'scipy',
+                'pywt',
                 'matplotlib',
                 'numpy.linalg',
-                'scipy.signal',
                 'numpy.testing',
                 'numpy.lib',
                 'numpy.lib.recfunctions',
-                'scipy.linalg']
+                'scipy.signal']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
