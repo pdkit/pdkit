@@ -11,7 +11,8 @@ class TremorTimeSeries:
 
         logging.debug("TremorTimeSeries init")
 
-    def load(self, filename, format_file='cloudupdrs'):
+    @staticmethod
+    def load(filename, format_file='cloudupdrs'):
         '''
             This is a general load data method where the format of data to load can be passed as a parameter,
 
