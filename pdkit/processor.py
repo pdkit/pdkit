@@ -7,7 +7,7 @@ import pandas as pd
 
 from scipy import interpolate, signal, fft
 
-from .utils import load_data
+from utils import load_data
 
 class Processor:
     '''

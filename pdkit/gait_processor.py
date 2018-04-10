@@ -6,9 +6,9 @@ import numpy as np
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-from .utils import load_data, numerical_integration, autocorrelation, peakdet
+from utils import load_data, numerical_integration, autocorrelation, peakdet
+from processor import Processor
 
-from .processor import Processor
 
 class GaitProcessor(Processor):
     '''

@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    tremor
+   gait
    utils
 
 Indices and tables
@@ -20,4 +21,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
