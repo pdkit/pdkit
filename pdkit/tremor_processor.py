@@ -140,6 +140,8 @@ class TremorProcessor:
             :param data_frame: the data frame    
             :param str lower_frequency: LOWER_FREQUENCY_TREMOR
             :param str upper_frequency: UPPER_FREQUENCY_TREMOR
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         signal_length = len(data_frame.filtered_signal)
         normalised_transformed_signal = data_frame.transformed_signal.values / signal_length
@@ -165,6 +167,8 @@ class TremorProcessor:
             :param data_frame: the data frame    
             :param str lower_frequency: LOWER_FREQUENCY_TREMOR
             :param str upper_frequency: UPPER_FREQUENCY_TREMOR
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         frq, Pxx_den = signal.welch(data_frame.filtered_signal.values, self.sampling_frequency, nperseg=self.window)
         frequency = frq[Pxx_den.argmax(axis=0)]
@@ -188,13 +192,11 @@ class TremorProcessor:
         '''
             This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
             'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
-             
-            Result is saved in the Tremor Processor class, where:
-            data_frame.amplitude is the the amplitude of the Tremor
-            data-frame.frequency is the frequency of the Tremor
 
             :param data_frame: the data frame    
             :param str method: fft or welch.
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         try:
             data_frame_resampled = self.resample_signal(data_frame)
