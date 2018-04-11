@@ -25,13 +25,9 @@ class TremorProcessor:
 
         :References:
        
-        [1] Developing a tool for remote digital assessment of Parkinson s disease
-            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+        [1] Developing a tool for remote digital assessment of Parkinson s disease Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
             
-        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
-            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
-            vol. 15, pp. 70-73, 1967)
-            P. Welch
+        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. vol. 15, pp. 70-73, 1967) P. Welch
             
         :Example:
          
