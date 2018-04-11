@@ -71,8 +71,7 @@ class TremorProcessor:
 
             :param data_frame: the data frame to resample
             :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
-            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
-
+            :return data_frame: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
         '''
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
@@ -93,7 +92,6 @@ class TremorProcessor:
 
             :param data_frame: the data frame    
             :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
-
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
@@ -109,8 +107,7 @@ class TremorProcessor:
 
             :param data_frame: the data frame    
             :param str window: hanning window size
-            :return dataframe: data_frame.filtered_signal, data_frame.transformed_signal, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
-
+            :return data_frame: data_frame.filtered_signal, data_frame.transformed_signal, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
         '''
         signal_length = len(data_frame.filtered_signal.values)
         ll = int ( signal_length / 2 - self.window / 2 )

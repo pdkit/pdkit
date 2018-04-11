@@ -2,13 +2,15 @@ import sys
 import traceback
 
 import numpy as np
+import pandas as pd
 
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-from .utils import load_data, numerical_integration, autocorrelation, peakdet
-from .processor import Processor
 
+from utils import load_data, numerical_integration, autocorrelation, peakdet, typecheck
+from processor import Processor
+from loaders import GaitDataLoader
 
 class GaitProcessor(Processor):
     '''
@@ -60,6 +62,7 @@ class GaitProcessor(Processor):
         """ This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
+            :return [list, list, list]: The returns are [freeze_times, freeze_indexes, locomotion_freezes].
         """
         
         # the sampling frequency was recommended by the author of the pilot study
@@ -100,27 +103,26 @@ class GaitProcessor(Processor):
             jPos = jPos + self.step_size
             i = i + 1
 
-        self.freeze_times = time
-        self.freeze_indexes = freezeIndex
-        self.locomotion_freezes = sumLocoFreeze
+        freeze_times = time
+        freeze_indexes = freezeIndex
+        locomotion_freezes = sumLocoFreeze
 
+        return [freeze_times, freeze_indexes, locomotion_freezes]
 
     def frequency_of_peaks(self, data_frame):
         """ This method assess the frequency of the peaks on the x-axis.
 
             :param DataFrame data_frame: the data frame.
+            :return float: The frequency of peaks on the x-axis.
         """
 
-        peaks_data = data_frame[self.start_offset:-self.end_offset].x.values
-        self.peaks_data = peaks_data
-
+        peaks_data = data_frame[self.start_offset: -self.end_offset].x.values
         maxtab, mintab = peakdet(peaks_data, self.delta)
-
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
-        
-        self.frequency_from_peaks = 1/x
-        
+        frequency_from_peaks = 1/x
 
+        return frequency_from_peaks
+        
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
         """ This method assess the speed of gait following [2].
             It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
@@ -128,6 +130,7 @@ class GaitProcessor(Processor):
             :param DataFrame data_frame: the data frame.
             :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
+            :return float: The speed of gait.
         """
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
@@ -141,15 +144,16 @@ class GaitProcessor(Processor):
         WEd5 = energy[4] / np.sqrt(2)
         WEd6 = energy[5] / np.sqrt(2)
 
-        speed= 0.5 * np.sqrt(WEd1+(WEd2/2)+(WEd3/3)+(WEd4/4)+(WEd5/5))
+        gait_speed = 0.5 * np.sqrt(WEd1+(WEd2/2)+(WEd3/3)+(WEd4/4)+(WEd5/5))
 
-        self.gait_speed = speed
+        return gait_speed
 
 
     def walk_regularity_symmetry(self, data_frame):
         """ This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
+            :return [list, list, list]: The returns are [step_regularity, stride_regularity, walk_symmetry] and each list consists of [x, y, z].
         """
         
         def _symmetry(v):
@@ -164,6 +168,9 @@ class GaitProcessor(Processor):
         symmetry_y = stride_regularity_y - step_regularity_y
         symmetry_z = stride_regularity_z - step_regularity_z
 
-        self.step_regularity = [step_regularity_x, step_regularity_y, step_regularity_z]
-        self.stride_regularity = [stride_regularity_x, stride_regularity_y, stride_regularity_z]
-        self.walk_symmetry = [symmetry_x, symmetry_y, symmetry_z]
+        step_regularity = [step_regularity_x, step_regularity_y, step_regularity_z]
+        stride_regularity = [stride_regularity_x, stride_regularity_y, stride_regularity_z]
+        walk_symmetry = [symmetry_x, symmetry_y, symmetry_z]
+
+        return [step_regularity, stride_regularity, walk_symmetry]
+
