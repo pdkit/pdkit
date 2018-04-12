@@ -5,6 +5,7 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy import interpolate, signal, fft
+from tsfresh.feature_extraction import feature_calculators
 
 class TremorProcessor:
     '''
@@ -24,22 +25,17 @@ class TremorProcessor:
 
         :References:
        
-        [1] Developing a tool for remote digital assessment of Parkinson s disease
-            Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
+        [1] Developing a tool for remote digital assessment of Parkinson s disease Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
             
-        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
-            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
-            vol. 15, pp. 70-73, 1967)
-            P. Welch
+        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. vol. 15, pp. 70-73, 1967) P. Welch
             
         :Example:
          
         >>> import pdkit
         >>> tp = pdkit.TremorProcessor()
-        >>> path = 'path/to/data.csv’ 
-        >>> data_frame = tp.load_data(path)
-        >>> print(data_frame.amplitude)
-        >>> print(data_frame.frequency)
+        >>> path = 'path/to/data.csv’
+        >>> ts = TremorTimeSeries().load(path)
+        >>> amplitude, frequency = tp.process(ts)
     '''
 
     def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
@@ -66,18 +62,6 @@ class TremorProcessor:
 
         except:
             logging.error("Unexpected error on TremorProcessor init: %s", sys.exc_info()[0])
-
-    def load_data(self, filename, format_file='cloudupdrs'):
-        '''
-            This is a general load data method where the format of data to load can be passed as a parameter,
-
-            :param str filename: The path to load data from
-            :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
-        '''
-        # self.data_frame = load_data(filename, format_file)
-        logging.debug("data loaded")
-        return load_data(filename, format_file)
 
     def resample_signal(self, data_frame):
         '''
@@ -107,9 +91,7 @@ class TremorProcessor:
             (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html)
 
             :param data_frame: the data frame    
-            :param str cutoff_frequency: The path to load data from
-            :param str filter_order: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-            :return data_frame: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
@@ -151,6 +133,8 @@ class TremorProcessor:
             :param data_frame: the data frame    
             :param str lower_frequency: LOWER_FREQUENCY_TREMOR
             :param str upper_frequency: UPPER_FREQUENCY_TREMOR
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         signal_length = len(data_frame.filtered_signal)
         normalised_transformed_signal = data_frame.transformed_signal.values / signal_length
@@ -161,10 +145,12 @@ class TremorProcessor:
 
         frq = frq[range(int(signal_length / 2))]  # one side frequency range
         ts = normalised_transformed_signal[range(int(signal_length / 2))]
-        self.amplitude = sum(abs(ts[(frq > self.lower_frequency) & (frq < self.upper_frequency)]))
-        self.frequency = frq[abs(ts).argmax(axis=0)]
+        amplitude = sum(abs(ts[(frq > self.lower_frequency) & (frq < self.upper_frequency)]))
+        frequency = frq[abs(ts).argmax(axis=0)]
 
         logging.debug("tremor amplitude calculated")
+
+        return amplitude, frequency
 
     def tremor_amplitude_by_welch(self, data_frame):
         '''
@@ -174,12 +160,16 @@ class TremorProcessor:
             :param data_frame: the data frame    
             :param str lower_frequency: LOWER_FREQUENCY_TREMOR
             :param str upper_frequency: UPPER_FREQUENCY_TREMOR
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         frq, Pxx_den = signal.welch(data_frame.filtered_signal.values, self.sampling_frequency, nperseg=self.window)
-        self.frequency = frq[Pxx_den.argmax(axis=0)]
-        self.amplitude = sum(Pxx_den[(frq > self.lower_frequency) & (frq < self.upper_frequency)])
+        frequency = frq[Pxx_den.argmax(axis=0)]
+        amplitude = sum(Pxx_den[(frq > self.lower_frequency) & (frq < self.upper_frequency)])
 
         logging.debug("tremor amplitude by welch calculated")
+
+        return amplitude, frequency
 
     def spkt_welch_density(x, param = [{"coeff":0}]):
         '''
@@ -195,13 +185,11 @@ class TremorProcessor:
         '''
             This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
             'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
-             
-            Result is saved in the Tremor Processor class, where:
-            data_frame.amplitude is the the amplitude of the Tremor
-            data-frame.frequency is the frequency of the Tremor
 
             :param data_frame: the data frame    
             :param str method: fft or welch.
+            :return: amplitude is the the amplitude of the Tremor
+            :return: frequency is the frequency of the Tremor
         '''
         try:
             data_frame_resampled = self.resample_signal(data_frame)
@@ -209,9 +197,9 @@ class TremorProcessor:
 
             if method == 'fft':
                 data_frame_fft = self.fft_signal(data_frame_filtered)
-                self.tremor_amplitude(data_frame_fft)
+                return self.tremor_amplitude(data_frame_fft)
             else:
-                self.tremor_amplitude_by_welch(data_frame_filtered)
+                return self.tremor_amplitude_by_welch(data_frame_filtered)
 
         except ValueError as verr:
             logging.error("TremorProcessor ValueError ->%s", verr.message)

@@ -7,6 +7,7 @@ import pandas as pd
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
+
 from utils import load_data, numerical_integration, autocorrelation, peakdet, typecheck
 from processor import Processor
 from loaders import GaitDataLoader

@@ -23,13 +23,13 @@ packaging==17.1
 pandas==0.22.0
 pandas-validator==0.5.0
 patsy==0.5.0
-pdkit==0.2.8
+pdkit==0.2.13
 pkginfo==1.4.1
 psutil==5.4.3
 Pygments==2.2.0
 pyparsing==2.2.0
 python-dateutil==2.7.2
-pytz==2018.3
+pytz==2018.4
 PyWavelets==0.5.2
 requests==2.18.4
 requests-toolbelt==0.8.0
