@@ -127,7 +127,7 @@ class GaitProcessor(Processor):
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
         frequency_from_peaks = 1/x
 
-        return frequency_from_peaks
+        return frequency_of_peaks
         
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
         ''' 
