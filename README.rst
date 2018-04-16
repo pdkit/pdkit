@@ -1,5 +1,8 @@
-PDKit
---------
+.. image:: https://circleci.com/gh/pdkit/pdkit.svg?style=shield
+    :target: https://circleci.com/gh/pdkit/pdkit
+
+.. image:: https://readthedocs.org/projects/pdkit/badge/
+    :target: https://pdkit.readthedocs.org
 
 To use, simply do::
 

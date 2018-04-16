@@ -1,4 +1,4 @@
-Auto Generated Documentation
+Tremor Processor
 ============================
 
 .. automodule:: tremor_processor

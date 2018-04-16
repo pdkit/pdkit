@@ -8,7 +8,7 @@ def readme():
 
 setup(
     name='pdkit',
-    version='0.2.6',
+    version='0.2.13',
     description='Parkinson`s Disease Kit',
     url='https://github.com/pdkit/pdkit',
     long_description=readme(),

@@ -26,57 +26,53 @@ class TremorProcessingTest(unittest.TestCase):
     def tearDown(self):
         self.tp = None
 
-    @staticmethod
-    def load_data(filename, format_file):
-        return pdkit.load_data(filename, format_file)
-
     def test_cloudupdrs_data(self):
         self.wrong_data = './tests/data/kinetic_tremor_wrong_format.csv'
-        df = self.load_data(self.wrong_data, 'cloudupdrs')
+        ts = pdkit.TremorTimeSeries().load(self.wrong_data, 'cloudupdrs')
         validator = CloudUPDRSDataFrameValidator()
         # print('---> ', validator.is_valid(self.tp.data_frame))
         # print(self.tp.data_frame)
-        self.assertEqual(False, validator.is_valid(df))
+        self.assertEqual(False, validator.is_valid(ts))
 
     def test_tremor_amplitude_cloudupdrs(self):
-        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.tp.process(df)
-        self.assertEqual(float("{0:.14f}".format(self.tp.amplitude)), float("{0:.14f}".format(2.390463750531757)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_cloudupdrs, 'cloudupdrs')
+        amplitude, frequency = self.tp.process(ts)
+        self.assertEqual(float("{0:.14f}".format(amplitude)), float("{0:.14f}".format(2.390463750531757)))
 
     def test_tremor_freq_cloudupdrs(self):
-        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.tp.process(df)
-        self.assertEqual(float("{0:.5f}".format(self.tp.frequency)), float("{0:.5f}".format(2.34375)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_cloudupdrs, 'cloudupdrs')
+        amplitude, frequency = self.tp.process(ts)
+        self.assertEqual(float("{0:.5f}".format(frequency)), float("{0:.5f}".format(2.34375)))
 
     def test_tremor_amplitude_mpower(self):
-        df = self.load_data(self.filename_mpower, 'mpower')
-        self.tp.process(df)
-        self.assertEqual(float("{0:.14f}".format(self.tp.amplitude)), float("{0:.14f}".format(0.4186992556201507)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_mpower, 'mpower')
+        amplitude, frequency = self.tp.process(ts)
+        self.assertEqual(float("{0:.14f}".format(amplitude)), float("{0:.14f}".format(0.4186992556201507)))
 
     def test_tremor_freq_mpower(self):
-        df = self.load_data(self.filename_mpower, 'mpower')
-        self.tp.process(df)
-        self.assertEqual(float("{0:.5f}".format(self.tp.frequency)), float("{0:.5f}".format(7.421875)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_mpower, 'mpower')
+        amplitude, frequency = self.tp.process(ts)
+        self.assertEqual(float("{0:.5f}".format(frequency)), float("{0:.5f}".format(7.421875)))
 
     def test_tremor_amplitude_welch_cloudupdrs(self):
-        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.tp.process(df, 'welch')
-        self.assertEqual(float("{0:.14f}".format(self.tp.amplitude)), float("{0:.14f}".format(6.39553002855188)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_cloudupdrs, 'cloudupdrs')
+        amplitude, frequency = self.tp.process(ts, 'welch')
+        self.assertEqual(float("{0:.14f}".format(amplitude)), float("{0:.14f}".format(6.39553002855188)))
 
     def test_tremor_freq_welch_cloudupdrs(self):
-        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.tp.process(df, 'welch')
-        self.assertEqual(float("{0:.3f}".format(self.tp.frequency)), float("{0:.3f}".format(3.125)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_cloudupdrs, 'cloudupdrs')
+        amplitude, frequency = self.tp.process(ts, 'welch')
+        self.assertEqual(float("{0:.3f}".format(frequency)), float("{0:.3f}".format(3.125)))
 
     def test_tremor_amplitude_welch_mpower(self):
-        df = self.load_data(self.filename_mpower, 'mpower')
-        self.tp.process(df, 'welch')
-        self.assertEqual(float("{0:.14f}".format(self.tp.amplitude)), float("{0:.14f}".format(0.16300804916508932)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_mpower, 'mpower')
+        amplitude, frequency = self.tp.process(ts, 'welch')
+        self.assertEqual(float("{0:.14f}".format(amplitude)), float("{0:.14f}".format(0.16300804916508932)))
 
     def test_tremor_freq_welch_mpower(self):
-        df = self.load_data(self.filename_mpower, 'mpower')
-        self.tp.process(df, 'welch')
-        self.assertEqual(float("{0:.5f}".format(self.tp.frequency)), float("{0:.5f}".format(5.859375)))
+        ts = pdkit.TremorTimeSeries().load(self.filename_mpower, 'mpower')
+        amplitude, frequency = self.tp.process(ts, 'welch')
+        self.assertEqual(float("{0:.5f}".format(frequency)), float("{0:.5f}".format(5.859375)))
 
 
 # if __name__ == '__main__':
