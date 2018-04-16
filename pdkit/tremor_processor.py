@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): J.S. Pons
 import sys
 import logging
 
@@ -14,7 +19,7 @@ class TremorProcessor:
         data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
         data_frame.index is the datetime-like index
         
-        This values are recommended by the author of the pilot study [1]
+        These values are recommended by the author of the pilot study [1]
         
         sampling_frequency = 100.0Hz
         cutoff_frequency = 2.0Hz
@@ -85,10 +90,8 @@ class TremorProcessor:
     def filter_signal(self, data_frame):
         '''
             This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
-            frame using a butter Butterworth digital and analog filter 
-            (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html). Then the method 
-            filter the data frame along one-dimension using a digital filter. 
-            (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html)
+            frame using a [Butterworth]_ digital and analog filter. Then this method 
+            filters the data frame along one-dimension using a [digital]_ filter. 
 
             :param data_frame: the data frame    
             :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
@@ -102,8 +105,7 @@ class TremorProcessor:
 
     def fft_signal(self, data_frame):
         '''
-            This method perform Fast Fourier Transform on the data frame using a hanning window
-            (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html)
+            This method perform Fast Fourier Transform on the data frame using a [hanning]_ window
 
             :param data_frame: the data frame    
             :param str window: hanning window size
