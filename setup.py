@@ -13,7 +13,7 @@ setup(
     url='https://github.com/pdkit/pdkit',
     long_description=readme(),
     keywords='parkinson`s disease kit',
-    author='Joan S. Pons',
+    author='J.S. Pons',
     author_email='joan@dcs.bbk.ac.uk',
     license='MIT',
     packages=['pdkit'],

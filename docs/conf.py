@@ -1,3 +1,9 @@
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): J.S. Pons
+#
 # -*- coding: utf-8 -*-
 #
 # pdkit documentation build configuration file, created by
@@ -308,5 +314,9 @@ MOCK_MODULES = ['pygtk',
                 'numpy.testing',
                 'numpy.lib',
                 'numpy.lib.recfunctions',
-                'scipy.signal']
+                'scipy.signal',
+                'scipy.linalg',
+                'tsfresh',
+                'tsfresh.feature_extraction',]
+
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

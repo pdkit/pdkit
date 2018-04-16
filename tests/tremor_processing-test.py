@@ -1,17 +1,14 @@
+#!/usr/bin/env python3
 # Copyright 2018 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author: Joan S. Pons
+# Author(s): J.S. Pons
 
 import unittest
 import pandas_validator as pv
 import pdkit
 
-# import sys
-# import os
-# sys.path.append(os.path.abspath(__file__ + "/../"))
-# import pdkit.tremor_processor as pdkit
 
 class CloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     column_num = 5

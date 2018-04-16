@@ -3,3 +3,16 @@ Tremor Processor
 
 .. automodule:: tremor_processor
    :members:
+
+
+
+Tremor Time Series
+============================
+
+.. automodule:: tremor_time_series
+   :members:
+
+
+.. [Butterworth] https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html
+.. [digital] https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html
+.. [hanning] https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html
