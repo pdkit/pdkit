@@ -2,7 +2,7 @@
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author(s): Joan S. Pons and Cosmin Stamate 
+# Author(s): Cosmin Stamate
 
 import sys
 import logging
