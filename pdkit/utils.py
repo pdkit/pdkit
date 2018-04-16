@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): Joan S. Pons and Cosmin Stamate 
+
 import pandas as pd
 import numpy as np
 
@@ -85,12 +90,12 @@ def load_data(filename, format_file='cloudupdrs'):
 
 
 def numerical_integration(signal, sampling_frequency):
-    """ 
+    '''
         Numerically integrate a signal with it's sampling frequency.
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float sampling_frequency: The sampling frequency for the signal.
-    """
+    '''
         
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
@@ -98,11 +103,12 @@ def numerical_integration(signal, sampling_frequency):
     return integrate
 
 def autocorrelation(signal):
-    """ 
-        The [correlation]_ of a signal with a delayed copy of itself.
+    ''' 
+        The correlation of a signal with a delayed copy of itself.
+        More info here: https://en.wikipedia.org/wiki/Autocorrelation#Estimation
 
         :param array signal: A 1-dimensional array or list (the signal).
-    """
+    '''
 
     signal = np.array(signal)
     n = len(signal)
@@ -116,14 +122,14 @@ def autocorrelation(signal):
 
 
 def peakdet(signal, delta, x = None):
-    """ 
+    '''
         Find the local maxima and minima ("peaks") in a 1-dimensional signal.
         Converted from MATLAB script at http://billauer.co.il/peakdet.html
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
         :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
-    """
+    '''
     
     maxtab = []
     mintab = []
@@ -171,28 +177,3 @@ def peakdet(signal, delta, x = None):
 
     return np.array(maxtab), np.array(mintab)
 
-
-def typecheck(*args1, isclassmethod=True):
-    """Python is a language with typed objects, but untyped references. This means that there is no compiler to help catch type errors at design time. This typecheck function acts as a function decorator so that you can declare the type of each function or method argument. At runtime, the types of these arguments will be checked against their declared types.
-Example:
-    @typecheck(types.StringType, Decimal)
-    def my_function(s, d):
-        pass
-If isclassmethod is True, then the first argument is skipped, since it is simply either self or cls and doesn't need to be typechecked. One important limitation of this decorator is that it cannot be used to typecheck an method argument that is of the same type as the method's class. The reason is that types do not exist until after Python has processed the entire class definition. And unfortunately, there is no way to forward-declare a class. For example, the following will not work:
-    class Foo(object):
-        @typecheck(Foo)
-        def hello(self, f):
-            print('hello: %s' % f)
-Note that the Ruby language does not have this problem, or so I'm told.""" 
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args2, **keywords):
-            args = args2[1:] if isclassmethod else args2
-            for (arg2,arg1) in zip(args,args1):
-                if not isinstance(arg2, arg1):
-                    raise TypeError(
-                        'expected type: %s, actual type: %s' % ( 
-                            arg1, type(arg2)))
-            return func(*args2, **keywords)
-        return wrapper
-    return decorator

@@ -1,3 +1,9 @@
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author: Cosmin Stamate 
+
 import sys
 import traceback
 
@@ -7,10 +13,9 @@ import pandas as pd
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-
-from utils import load_data, numerical_integration, autocorrelation, peakdet, typecheck
-from processor import Processor
-from loaders import GaitDataLoader
+from .utils import load_data, numerical_integration, autocorrelation, peakdet
+from .processor import Processor
+from .gait_time_series import GaitTimeSeries
 
 class GaitProcessor(Processor):
     '''
@@ -46,7 +51,6 @@ class GaitProcessor(Processor):
            in IEEE Transactions on Information Technology in Biomedicine, vol. 14, no. 2, pp. 436-446, March 2010.
     '''
 
-
     def __init__(self, step_size=50.0, start_offset=100, end_offset=100, delta=0.5, loco_band=[0.5, 3], freeze_band=[3, 8]):
         super().__init__()
 
@@ -59,11 +63,12 @@ class GaitProcessor(Processor):
 
 
     def freeze_of_gait(self, data_frame):
-        """ This method assess freeze of gait following [3].
+        ''' 
+            This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
             :return [list, list, list]: The returns are [freeze_times, freeze_indexes, locomotion_freezes].
-        """
+        '''
         
         # the sampling frequency was recommended by the author of the pilot study
         data = self.resample_signal(data_frame) 
@@ -110,28 +115,30 @@ class GaitProcessor(Processor):
         return [freeze_times, freeze_indexes, locomotion_freezes]
 
     def frequency_of_peaks(self, data_frame):
-        """ This method assess the frequency of the peaks on the x-axis.
+        ''' 
+            This method assess the frequency of the peaks on the x-axis.
 
             :param DataFrame data_frame: the data frame.
             :return float: The frequency of peaks on the x-axis.
-        """
+        '''
 
         peaks_data = data_frame[self.start_offset: -self.end_offset].x.values
         maxtab, mintab = peakdet(peaks_data, self.delta)
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
         frequency_from_peaks = 1/x
 
-        return frequency_from_peaks
+        return frequency_of_peaks
         
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
-        """ This method assess the speed of gait following [2].
+        ''' 
+            This method assess the speed of gait following [2].
             It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
 
             :param DataFrame data_frame: the data frame.
             :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
             :return float: The speed of gait.
-        """
+        '''
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
 
@@ -150,11 +157,12 @@ class GaitProcessor(Processor):
 
 
     def walk_regularity_symmetry(self, data_frame):
-        """ This method extracts the step and stride regularity and also walk symmetry.
+        ''' 
+            This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
             :return [list, list, list]: The returns are [step_regularity, stride_regularity, walk_symmetry] and each list consists of [x, y, z].
-        """
+        '''
         
         def _symmetry(v):
             maxtab, _ = peakdet(v, self.delta)
