@@ -82,11 +82,12 @@ def load_data(filename, format_file='cloudupdrs'):
 
 
 def numerical_integration(signal, sampling_frequency):
-    """ Numerically integrate a signal with it's sampling frequency.
+    ''' 
+        Numerically integrate a signal with it's sampling frequency.
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float sampling_frequency: The sampling frequency for the signal.
-    """
+    '''
         
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
@@ -94,11 +95,12 @@ def numerical_integration(signal, sampling_frequency):
     return integrate
 
 def autocorrelation(signal):
-    """ The correlation of a signal with a delayed copy of itself.
+    ''' 
+        The correlation of a signal with a delayed copy of itself.
         More info here: https://en.wikipedia.org/wiki/Autocorrelation#Estimation
 
         :param array signal: A 1-dimensional array or list (the signal).
-    """
+    '''
 
     signal = np.array(signal)
     n = len(signal)
@@ -112,13 +114,14 @@ def autocorrelation(signal):
 
 
 def peakdet(signal, delta, x = None):
-    """ Find the local maxima and minima ("peaks") in a 1-dimensional signal.
+    ''' 
+        Find the local maxima and minima ("peaks") in a 1-dimensional signal.
         Converted from MATLAB script at http://billauer.co.il/peakdet.html
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
         :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
-    """
+    '''
     
     maxtab = []
     mintab = []

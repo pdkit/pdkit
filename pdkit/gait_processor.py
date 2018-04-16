@@ -57,10 +57,11 @@ class GaitProcessor(Processor):
 
 
     def freeze_of_gait(self, data_frame):
-        """ This method assess freeze of gait following [3].
+        ''' 
+            This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
-        """
+        '''
         
         # the sampling frequency was recommended by the author of the pilot study
         data = self.resample_signal(data_frame) 
@@ -106,10 +107,11 @@ class GaitProcessor(Processor):
 
 
     def frequency_of_peaks(self, data_frame):
-        """ This method assess the frequency of the peaks on the x-axis.
+        ''' 
+            This method assess the frequency of the peaks on the x-axis.
 
             :param DataFrame data_frame: the data frame.
-        """
+        '''
 
         peaks_data = data_frame[self.start_offset:-self.end_offset].x.values
         self.peaks_data = peaks_data
@@ -122,13 +124,14 @@ class GaitProcessor(Processor):
         
 
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
-        """ This method assess the speed of gait following [2].
+        ''' 
+            This method assess the speed of gait following [2].
             It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
 
             :param DataFrame data_frame: the data frame.
             :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
-        """
+        '''
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
 
@@ -147,10 +150,11 @@ class GaitProcessor(Processor):
 
 
     def walk_regularity_symmetry(self, data_frame):
-        """ This method extracts the step and stride regularity and also walk symmetry.
+        ''' 
+            This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
-        """
+        '''
         
         def _symmetry(v):
             maxtab, _ = peakdet(v, self.delta)
