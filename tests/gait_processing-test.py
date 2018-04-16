@@ -1,12 +1,20 @@
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author: Cosmin Stamate 
+
 import unittest
 import pandas_validator as pv
-import pdkit
+# import pdkit
 
 # import sys
 # import os
 
 # sys.path.append(os.path.abspath('../pdkit'))
-# from pdkit.gait_processor import GaitProcessor
+from pdkit.gait_processor import GaitProcessor
+from pdkit.gait_time_series import GaitTimeSeries
+
 
 class CloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     column_num = 5
@@ -19,7 +27,7 @@ class CloudUPDRSDataFrameValidator(pv.DataFrameValidator):
 
 class GaitProcessingTest(unittest.TestCase):
     def setUp(self):
-        self.gp = pdkit.GaitProcessor()
+        self.gp = GaitProcessor()
         self.filename_cloudupdrs = './tests/data/cloudupdrs_gait.csv'
         self.filename_mpower = './tests/data/mpower_gait.json'
 
@@ -36,44 +44,45 @@ class GaitProcessingTest(unittest.TestCase):
     def tearDown(self):
         self.gp = None
 
-    # @staticmethod
-    # def load_data(filename, format_file):
-    #     return self.gp.load_data(filename, format_file)
+    @staticmethod
+    def load_data(filename, format_file):
+        df = GaitTimeSeries()
+        return df.load_data(filename, format_file)
 
     def test_cloudupdrs_data(self):
         self.wrong_data = './tests/data/kinetic_tremor_wrong_format.csv'
-        df = self.gp.load_data(self.wrong_data, 'cloudupdrs')
+        df = self.load_data(self.wrong_data, 'cloudupdrs')
         validator = CloudUPDRSDataFrameValidator()
         
         self.assertEqual(False, validator.is_valid(df))
     
     def test_freeze_of_gait(self):
-        df = self.gp.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.gp.freeze_of_gait(df)
+        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
+        [freeze_times, freeze_indexes, locomotion_freezes] = self.gp.freeze_of_gait(df)
         
-        self.assertEqual(self.gp.freeze_times, self.freeze_times)
-        self.assertEqual(self.gp.freeze_indexes, self.freeze_indexes)
-        self.assertEqual(self.gp.locomotion_freezes, self.locomotion_freezes)
+        self.assertEqual(freeze_times, self.freeze_times)
+        self.assertEqual(freeze_indexes, self.freeze_indexes)
+        self.assertEqual(locomotion_freezes, self.locomotion_freezes)
     
     def test_frequency_of_peaks(self):
-        df = self.gp.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.gp.frequency_of_peaks(df)
+        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
+        frequency_of_peaks = self.gp.frequency_of_peaks(df)
         
-        self.assertEqual(self.gp.frequency_from_peaks, -192.72632494759722)
+        self.assertEqual(frequency_of_peaks, -192.72632494759722)
     
     def test_speed_of_gait(self):
-        df = self.gp.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.gp.speed_of_gait(df)
+        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
+        gait_speed = self.gp.speed_of_gait(df)
         
-        self.assertEqual(self.gp.gait_speed, 1.4426881267136054)
+        self.assertEqual(gait_speed, 1.4426881267136054)
     
     def test_walk_regularity_symmetry(self):
-        df = self.gp.load_data(self.filename_cloudupdrs, 'cloudupdrs')
-        self.gp.walk_regularity_symmetry(df)
+        df = self.load_data(self.filename_cloudupdrs, 'cloudupdrs')
+        [step_regularity, stride_regularity, walk_symmetry] = self.gp.walk_regularity_symmetry(df)
 
-        self.assertEqual(self.gp.step_regularity, self.step_regularity)
-        self.assertEqual(self.gp.stride_regularity, self.stride_regularity)
-        self.assertEqual(self.gp.walk_symmetry, self.walk_symmetry)
+        self.assertEqual(step_regularity, self.step_regularity)
+        self.assertEqual(stride_regularity, self.stride_regularity)
+        self.assertEqual(walk_symmetry, self.walk_symmetry)
 
 if __name__ == '__main__':
     unittest.main()
