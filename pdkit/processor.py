@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): Joan S. Pons and Cosmin Stamate 
+
 import sys
 import logging
 
@@ -49,7 +54,7 @@ class Processor:
             logging.error("Processor I/O error %s", ierr)
 
         except ValueError as verr:
-            logging.error("Processor ValueError ->%s", verr.message)
+            logging.error("Processor ValueError ->%s", verr)
 
         except:
             logging.error("Unexpected error on Processor init: %s", sys.exc_info()[0])

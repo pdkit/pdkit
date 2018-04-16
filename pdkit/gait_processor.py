@@ -1,3 +1,9 @@
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author: Cosmin Stamate 
+
 import sys
 import traceback
 
@@ -7,10 +13,9 @@ import pandas as pd
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-
-from utils import load_data, numerical_integration, autocorrelation, peakdet, typecheck
-from processor import Processor
-from loaders import GaitDataLoader
+from .utils import load_data, numerical_integration, autocorrelation, peakdet
+from .processor import Processor
+from .gait_time_series import GaitTimeSeries
 
 class GaitProcessor(Processor):
     '''

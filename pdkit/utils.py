@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): Joan S. Pons and Cosmin Stamate 
+
 import pandas as pd
 import numpy as np
 
