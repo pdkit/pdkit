@@ -4,10 +4,23 @@
 .. image:: https://readthedocs.org/projects/pdkit/badge/
     :target: https://pdkit.readthedocs.org
 
-To use, simply do::
+#PDKIT
+
+Example how to use pdkit to calculate Tremor amplitude and frequency:
 
     >>> import pdkit
     >>> tp = pdkit.TremorProcessor()
-    >>> data_frame = tp.load_data(filename)
-    >>> tp.process(dat_frame)
+    >>> ts = pdkit.TremorTimeSeries().load(filename)
+    >>> amplitude, frequency = tp.process(ts)
 
+    where, filename is the data path to load, by default in the cloudUPDRS format.
+
+PDKit can also read data in the MPower format, just like:
+
+    >>> ts = pdkit.TremorTimeSeries().load(filename, 'mpower')
+
+    where, filename is the data path to load in mpower format.
+
+To calculate Welch, as a robust alternative to using Fast Fourier Transform, use like:
+
+    >>> amplitude, frequency = tp.process(ts, 'welch')
