@@ -125,7 +125,7 @@ class GaitProcessor(Processor):
         peaks_data = data_frame[self.start_offset: -self.end_offset].x.values
         maxtab, mintab = peakdet(peaks_data, self.delta)
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
-        frequency_from_peaks = 1/x
+        frequency_of_peaks = 1/x
 
         return frequency_of_peaks
         
