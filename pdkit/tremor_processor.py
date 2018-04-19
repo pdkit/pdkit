@@ -174,8 +174,42 @@ class TremorProcessor:
 
         return amplitude, frequency
 
+    def number_peaks(self, x, n):
+        """
+            As in tsfresh [number_peaks]_
+
+            Calculates the number of peaks of at least support n in the time series x. A peak of support n is defined as a
+            subsequence of x where a value occurs, which is bigger than its n neighbours to the left and to the right.
+
+            Hence in the sequence
+
+            >>> x = [3, 0, 0, 4, 0, 0, 13]
+
+            4 is a peak of support 1 and 2 because in the subsequences
+
+            >>> [0, 4, 0]
+            >>> [0, 0, 4, 0, 0]
+
+            4 is still the highest value. Here, 4 is not a peak of support 3 because 13 is the 3th neighbour to the right of 4
+            and its bigger than 4.
+
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param n: the support of the peak
+            :type n: int
+            :return: the value of this feature
+            :return type: float
+            """
+        if n is None:
+            n = 5
+        peaks = feature_calculators.number_peaks(x, n)
+        logging.debug("agg linear trend by tsfresh calculated")
+        return peaks
+
     def agg_linear_trend(self, x, param = None):
         """
+            As in tsfresh [spkt_welch_density]_
+            
             Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus
             the sequence from 0 up to the number of chunks minus one.
 
@@ -187,8 +221,6 @@ class TremorProcessor:
             The chunksize is regulated by "chunk_len". It specifies how many time series values are in each chunk.
 
             Further, the aggregation function is controlled by "f_agg", which can use "max", "min" or , "mean", "median"
-            
-            As in tsfresh [spkt_welch_density]_
 
             :param x: the time series to calculate the feature of
             :type x: pandas.Series
@@ -205,19 +237,20 @@ class TremorProcessor:
 
     def spkt_welch_density(self, x, param = None):
         '''
-        This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
-        To do so, the time series is first shifted from the time domain to the frequency domain.
-        
-        The feature calculators returns the power spectrum of the different frequencies.
-        
-        As in tsfresh [spkt_welch_density]_
-        
-        :param x: the time series to calculate the feature of
-        :type x: pandas.Series
-        :param param: contains dictionaries {"coeff": x} with x int
-        :type param: list
-        :return: the different feature values
-        :return type: pandas.Series
+            As in tsfresh [spkt_welch_density]_
+            This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
+            To do so, the time series is first shifted from the time domain to the frequency domain.
+            
+            The feature calculators returns the power spectrum of the different frequencies.
+            
+    
+            
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param param: contains dictionaries {"coeff": x} with x int
+            :type param: list
+            :return: the different feature values
+            :return type: pandas.Series
         '''
         if param is None:
             param = [{'coeff': 2}, {'coeff': 5}, {'coeff': 8}]

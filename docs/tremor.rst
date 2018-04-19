@@ -18,3 +18,4 @@ Tremor Time Series
 .. [hanning] https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html
 .. [spkt_welch_density] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1162
 .. [agg_linear_trend] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1727
+.. [number_peaks] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1003
