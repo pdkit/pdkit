@@ -176,7 +176,7 @@ class TremorProcessor:
 
     def number_peaks(self, x, n = None):
         """
-            As in tsfresh [number_peaks]_
+            As in tsfresh [numberPeaks]_
 
             Calculates the number of peaks of at least support n in the time series x. A peak of support n is defined as a
             subsequence of x where a value occurs, which is bigger than its n neighbours to the left and to the right.
@@ -208,7 +208,7 @@ class TremorProcessor:
 
     def agg_linear_trend(self, x, param = None):
         """
-            As in tsfresh [spkt_welch_density]_
+            As in tsfresh [aggLinearTrend]_
             
             Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus
             the sequence from 0 up to the number of chunks minus one.
@@ -237,7 +237,7 @@ class TremorProcessor:
 
     def spkt_welch_density(self, x, param = None):
         '''
-            As in tsfresh [spkt_welch_density]_
+            As in tsfresh [spktWelchDensity]_
             This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
             To do so, the time series is first shifted from the time domain to the frequency domain.
             
