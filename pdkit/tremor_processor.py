@@ -174,11 +174,21 @@ class TremorProcessor:
 
         return amplitude, frequency
 
-    def spkt_welch_density(x, param = [{"coeff":0}]):
+    def spkt_welch_density(x, param = [{'coeff': 2}, {'coeff': 5}, {'coeff': 8}]):
         '''
+        This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
+        To do so, the time series is first shifted from the time domain to the frequency domain.
         
-        :param param: 
-        :return: 
+        The feature calculators returns the power spectrum of the different frequencies.
+        
+        As in tsfresh [spkt_welch_density]_
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param param: contains dictionaries {"coeff": x} with x int
+        :type param: list
+        :return: the different feature values
+        :return type: pandas.Series
         '''
         welch = feature_calculators.spkt_welch_density(x, param)
         logging.debug("tremor amplitude by tsfresh welch calculated")
