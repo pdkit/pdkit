@@ -174,7 +174,36 @@ class TremorProcessor:
 
         return amplitude, frequency
 
-    def spkt_welch_density(x, param = None):
+    def agg_linear_trend(self, x, param = None):
+        """
+            Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus
+            the sequence from 0 up to the number of chunks minus one.
+
+            This feature assumes the signal to be uniformly sampled. It will not use the time stamps to fit the model.
+
+            The parameters attr controls which of the characteristics are returned. Possible extracted attributes are "pvalue",
+            "rvalue", "intercept", "slope", "stderr", see the documentation of linregress for more information.
+
+            The chunksize is regulated by "chunk_len". It specifies how many time series values are in each chunk.
+
+            Further, the aggregation function is controlled by "f_agg", which can use "max", "min" or , "mean", "median"
+            
+            As in tsfresh [spkt_welch_density]_
+
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param param: contains dictionaries {"attr": x, "chunk_len": l, "f_agg": f} with x, f an string and l an int
+            :type param: list
+            :return: the different feature values
+            :return type: pandas.Series
+        """
+        if param is None:
+            param = [{'attr': 'intercept', 'chunk_len': 5, 'f_agg': 'min'},{'attr': 'rvalue', 'chunk_len': 10, 'f_agg': 'var'},{'attr': 'intercept', 'chunk_len': 10, 'f_agg': 'min'}]
+        agg = feature_calculators.agg_linear_trend(x, param)
+        logging.debug("agg linear trend by tsfresh calculated")
+        return list(agg)
+
+    def spkt_welch_density(self, x, param = None):
         '''
         This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
         To do so, the time series is first shifted from the time domain to the frequency domain.
@@ -193,7 +222,7 @@ class TremorProcessor:
         if param is None:
             param = [{'coeff': 2}, {'coeff': 5}, {'coeff': 8}]
         welch = feature_calculators.spkt_welch_density(x, param)
-        logging.debug("tremor amplitude by tsfresh welch calculated")
+        logging.debug("spkt welch density by tsfresh calculated")
         return list(welch)
 
     def process(self, data_frame, method='fft'):
