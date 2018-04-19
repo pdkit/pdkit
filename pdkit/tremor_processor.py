@@ -174,7 +174,7 @@ class TremorProcessor:
 
         return amplitude, frequency
 
-    def number_peaks(self, x, n):
+    def number_peaks(self, x, n = None):
         """
             As in tsfresh [number_peaks]_
 
