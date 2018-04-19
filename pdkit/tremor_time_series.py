@@ -12,12 +12,11 @@ import pandas_validator as pv
 
 class CloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     column_num = 5
-    row_num = 5
-    x = pv.FloatColumnValidator('x', min_value=-10, max_value=10)
-    y = pv.FloatColumnValidator('y', min_value=-10, max_value=10)
-    z = pv.FloatColumnValidator('z', min_value=-10, max_value=10)
-    mag_sum_acc = pv.FloatColumnValidator('mag_sum_acc', min_value=-10, max_value=10)
-    dt = pv.FloatColumnValidator('dt', min_value=-10, max_value=10)
+    td = pv.FloatColumnValidator('td', min_value=-1, max_value=1000)
+    x = pv.FloatColumnValidator('x', min_value=-100, max_value=100)
+    y = pv.FloatColumnValidator('y', min_value=-100, max_value=100)
+    z = pv.FloatColumnValidator('z', min_value=-100, max_value=100)
+    mag_sum_acc = pv.FloatColumnValidator('mag_sum_acc', min_value=-100, max_value=100)
 
 
 class TremorTimeSeries:
