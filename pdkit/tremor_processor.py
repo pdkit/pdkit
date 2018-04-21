@@ -174,6 +174,94 @@ class TremorProcessor:
 
         return amplitude, frequency
 
+    def approximate_entropy(self, x, m=None, r=None):
+        """
+        As in tsfresh [approximateEntropy]_
+
+        Implements a vectorized Approximate entropy algorithm.
+            https://en.wikipedia.org/wiki/Approximate_entropy
+        For short time-series this method is highly dependent on the parameters,
+        but should be stable for N > 2000, see [3]. Other shortcomings and alternatives discussed in [4]
+            
+        :References:
+        
+        [3] Yentes et al. (2012) - The Appropriate Use of Approximate Entropy and Sample Entropy with Short Data Sets
+        [4] Richman & Moorman (2000) - Physiological time-series analysis using approximate entropy and sample entropy
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param m: Length of compared run of data
+        :type m: int
+        :param r: Filtering level, must be positive
+        :type r: float
+        :return: Approximate entropy
+        :return type: float
+        """
+        if m is None or r is None:
+            m = 2.0
+            r = 0.3
+        entropy = feature_calculators.approximate_entropy(x, m, r)
+        logging.debug("approximate entropy by tsfresh calculated")
+
+    def mean(self, x):
+        """
+            Returns the mean of x
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :return: the value of this feature
+            :return type: float
+            """
+        logging.debug("mean calculated")
+
+        return np.mean(x)
+
+    def ratio_value_number_to_time_series_length(self, x):
+        """
+            As in tsfresh [ratioValueNumberToTimeSeriesLength]_
+
+            Returns a factor which is 1 if all values in the time series occur only once,
+            and below one if this is not the case.
+            In principle, it just returns
+                # unique values / # values
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :return: the value of this feature
+            :return type: float
+        """
+        ratio = feature_calculators.ratio_value_number_to_time_series_length(x)
+        logging.debug("ratio value number to time series length by tsfresh calculated")
+        return list(ratio)
+
+    def change_quantiles(self, x, ql=None, qh=None, isabs=None, f_agg=None):
+        """
+            As in tsfresh [changeQuantiles]_
+
+            First fixes a corridor given by the quantiles ql and qh of the distribution of x.
+            Then calculates the average, absolute value of consecutive changes of the series x inside this corridor.
+            Think about selecting a corridor on the
+            y-Axis and only calculating the mean of the absolute change of the time series inside this corridor.
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param ql: the lower quantile of the corridor
+            :type ql: float
+            :param qh: the higher quantile of the corridor
+            :type qh: float
+            :param isabs: should the absolute differences be taken?
+            :type isabs: bool
+            :param f_agg: the aggregator function that is applied to the differences in the bin
+            :type f_agg: str, name of a numpy function (e.g. mean, var, std, median)
+            :return: the value of this feature
+            :return type: float
+        """
+        if ql is None or qh is None or isabs is None or f_agg is None:
+            f_agg = 'mean'
+            isabs = True
+            qh = 0.2
+            ql = 0.0
+        quantile = feature_calculators.change_quantiles(x, ql, qh, isabs, f_agg)
+        logging.debug("change_quantiles by tsfresh calculated")
+        return quantile
+
     def number_peaks(self, x, n = None):
         """
             As in tsfresh [numberPeaks]_
