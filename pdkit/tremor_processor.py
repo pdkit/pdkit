@@ -202,6 +202,82 @@ class TremorProcessor:
             r = 0.3
         entropy = feature_calculators.approximate_entropy(x, m, r)
         logging.debug("approximate entropy by tsfresh calculated")
+        return entropy
+
+    def autocorrelation(self, x, lag):
+        """
+        As in tsfresh [autocorrelation]_
+
+        Calculates the autocorrelation of the specified lag, according to the formula [1]
+        .. math::
+            \\frac{1}{(n-l)\sigma^{2}} \\sum_{t=1}^{n-l}(X_{t}-\\mu )(X_{t+l}-\\mu)
+        where :math:`n` is the length of the time series :math:`X_i`, :math:`\sigma^2` its variance and :math:`\mu` its
+        mean. `l` denotes the lag.
+
+        .. rubric:: References
+        [5] https://en.wikipedia.org/wiki/Autocorrelation#Estimation
+
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param lag: the lag
+        :type lag: int
+        :return: the value of this feature
+        :return type: float
+        """
+        # This is important: If a series is passed, the product below is calculated
+        # based on the index, which corresponds to squaring the series.
+        if lag is None:
+            lag=0
+        _autoc = feature_calculators.autocorrelation(x, lag)
+        logging.debug("autocorrelation by tsfresh calculated")
+        return _autoc
+
+    def partial_autocorrelation(self, x, param):
+        """
+        As in tsfresh [partial_autocorrelation]_
+
+        Calculates the value of the partial autocorrelation function at the given lag. The lag `k` partial autocorrelation
+        of a time series :math:`\\lbrace x_t, t = 1 \\ldots T \\rbrace` equals the partial correlation of :math:`x_t` and
+        :math:`x_{t-k}`, adjusted for the intermediate variables
+        :math:`\\lbrace x_{t-1}, \\ldots, x_{t-k+1} \\rbrace` ([1]).
+        Following [7], it can be defined as
+        .. math::
+            \\alpha_k = \\frac{ Cov(x_t, x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1})}
+            {\\sqrt{ Var(x_t | x_{t-1}, \\ldots, x_{t-k+1}) Var(x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1} )}}
+        with (a) :math:`x_t = f(x_{t-1}, \\ldots, x_{t-k+1})` and (b) :math:`x_{t-k} = f(x_{t-1}, \\ldots, x_{t-k+1})`
+        being AR(k-1) models that can be fitted by OLS. Be aware that in (a), the regression is done on past values to
+        predict :math:`x_t` whereas in (b), future values are used to calculate the past value :math:`x_{t-k}`.
+        It is said in [6] that "for an AR(p), the partial autocorrelations [ :math:`\\alpha_k` ] will be nonzero for `k<=p`
+        and zero for `k>p`."
+        With this property, it is used to determine the lag of an AR-Process.
+        
+        .. rubric:: References
+        |  [6] Box, G. E., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015).
+        |  Time series analysis: forecasting and control. John Wiley & Sons.
+        |  [7] https://onlinecourses.science.psu.edu/stat510/node/62
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param param: contains dictionaries {"lag": val} with int val indicating the lag to be returned
+        :type param: list
+        :return: the value of this feature
+        :return type: float
+        """
+        if param is None:
+            param = [{'lag': 3}, {'lag': 5}, {'lag': 6}]
+        _partialc = feature_calculators.partial_autocorrelation(x, param)
+        logging.debug("partial autocorrelation by tsfresh calculated")
+        return _partialc
+
+    def minimum(self, x):
+        """
+        Calculates the lowest value of the time series x.
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :return: the value of this feature
+        :return type: float
+        """
+        return np.min(x)
 
     def mean(self, x):
         """

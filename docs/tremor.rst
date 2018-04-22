@@ -23,3 +23,5 @@ Tremor Time Series
 .. [ratioValueNumberToTimeSeriesLength] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L830
 .. [changeQuantiles] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1248
 .. [approximateEntropy] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1601
+.. [autocorrelation] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1457
+.. [partial_autocorrelation] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L308
