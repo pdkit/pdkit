@@ -334,7 +334,8 @@ def autocorrelate(data, unbias=2, normalize=2):
 
     # Autocorrelation:
     coefficients = correlate(data, data, 'full')
-    coefficients = coefficients[coefficients.size/2:]
+    size = np.int(coefficients.size/2)
+    coefficients = coefficients[size:]
     N = coefficients.size
 
     # Unbiased:
