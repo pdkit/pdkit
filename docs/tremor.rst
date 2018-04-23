@@ -24,4 +24,8 @@ Tremor Time Series
 .. [changeQuantiles] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1248
 .. [approximateEntropy] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1601
 .. [autocorrelation] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1457
-.. [partial_autocorrelation] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L308
+.. [partialAutocorrelation] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L308
+.. [percentageOfReoccurringDatapointsToAllDatapoints] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L739
+.. [absEnergy] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L390
+.. [fftAggregated] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L896
+.. [fftCoefficient] https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L852
