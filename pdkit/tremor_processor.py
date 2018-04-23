@@ -234,7 +234,7 @@ class TremorProcessor:
 
     def partial_autocorrelation(self, x, param):
         """
-        As in tsfresh [partial_autocorrelation]_
+        As in tsfresh [partialAutocorrelation]_
 
         Calculates the value of the partial autocorrelation function at the given lag. The lag `k` partial autocorrelation
         of a time series :math:`\\lbrace x_t, t = 1 \\ldots T \\rbrace` equals the partial correlation of :math:`x_t` and
@@ -421,6 +421,100 @@ class TremorProcessor:
         welch = feature_calculators.spkt_welch_density(x, param)
         logging.debug("spkt welch density by tsfresh calculated")
         return list(welch)
+
+    def percentage_of_reoccurring_datapoints_to_all_datapoints(self, x):
+        """
+        As in tsfresh [percentageOfReoccurringDatapointsToAllDatapoints]_
+
+        Returns the percentage of unique values, that are present in the time series
+        more than once.
+            len(different values occurring more than once) / len(different values)
+        This means the percentage is normalized to the number of unique values,
+        in contrast to the percentage_of_reoccurring_values_to_all_values.
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :return: the value of this feature
+        :return type: float
+        """
+        _perc = feature_calculators.percentage_of_reoccurring_datapoints_to_all_datapoints(x)
+        logging.debug("percentage of reoccurring datapoints to all datapoints by tsfresh calculated")
+        return _perc
+
+    def abs_energy(self, x):
+        """
+        As in tsfresh [absEnergy]_
+
+        Returns the absolute energy of the time series which is the sum over the squared values
+        .. math::
+            E = \\sum_{i=1,\ldots, n} x_i^2
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :return: the value of this feature
+        :return type: float
+        """
+        _energy = feature_calculators.abs_energy(x)
+        logging.debug("abs energy by tsfresh calculated")
+        return _energy
+
+    def fft_aggregated(self, x, param):
+        """
+        As in tsfresh [fftAggregated]_
+
+        Returns the spectral centroid (mean), variance, skew, and kurtosis of the absolute fourier transform spectrum.
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param param: contains dictionaries {"aggtype": s} where s str and in ["centroid", "variance",
+            "skew", "kurtosis"]
+        :type param: list
+        :return: the different feature values
+        :return type: pandas.Series
+        """
+        if param is None:
+            param = [{'aggtype': 'centroid'}]
+        _fft_agg = feature_calculators.fft_aggregated(x, param)
+        logging.debug("fft aggregated by tsfresh calculated")
+        return list(_fft_agg)
+
+    def fft_coefficient(self, x, param):
+        """
+        As in tsfresh [fftCoefficient]_
+
+        Calculates the fourier coefficients of the one-dimensional discrete Fourier Transform for real input by fast
+        fourier transformation algorithm
+        .. math::
+            A_k =  \\sum_{m=0}^{n-1} a_m \\exp \\left \\{ -2 \\pi i \\frac{m k}{n} \\right \\}, \\qquad k = 0,
+            \\ldots , n-1.
+        The resulting coefficients will be complex, this feature calculator can return the real part (attr=="real"),
+        the imaginary part (attr=="imag), the absolute value (attr=""abs) and the angle in degrees (attr=="angle).
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param param: contains dictionaries {"coeff": x, "attr": s} with x int and x >= 0, s str and in ["real", "imag",
+            "abs", "angle"]
+        :type param: list
+        :return: the different feature values
+        :return type: pandas.Series
+        """
+        if param is None:
+            param = [{'attr': 'abs', 'coeff': 44},{'attr': 'abs', 'coeff': 63},{'attr': 'abs', 'coeff': 0},{'attr': 'real', 'coeff': 0},{'attr': 'real', 'coeff': 23}]
+        _fft_coef = feature_calculators.fft_coefficient(x, param)
+        logging.debug("fft coefficient by tsfresh calculated")
+        return list(_fft_coef)
+
+    def sum_values(self, x):
+        """
+        Calculates the sum over the time series values
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :return: the value of this feature
+        :return type: bool
+        """
+        if len(x) == 0:
+            return 0
+
+        return np.sum(x)
 
     def process(self, data_frame, method='fft'):
         '''
