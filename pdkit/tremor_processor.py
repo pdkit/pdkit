@@ -174,15 +174,253 @@ class TremorProcessor:
 
         return amplitude, frequency
 
-    def spkt_welch_density(x, param = [{"coeff":0}]):
-        '''
+    def approximate_entropy(self, x, m=None, r=None):
+        """
+        As in tsfresh [approximateEntropy]_
+
+        Implements a vectorized Approximate entropy algorithm.
+            https://en.wikipedia.org/wiki/Approximate_entropy
+        For short time-series this method is highly dependent on the parameters,
+        but should be stable for N > 2000, see [3]. Other shortcomings and alternatives discussed in [4]
+            
+        :References:
         
-        :param param: 
-        :return: 
+        [3] Yentes et al. (2012) - The Appropriate Use of Approximate Entropy and Sample Entropy with Short Data Sets
+        [4] Richman & Moorman (2000) - Physiological time-series analysis using approximate entropy and sample entropy
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param m: Length of compared run of data
+        :type m: int
+        :param r: Filtering level, must be positive
+        :type r: float
+        :return: Approximate entropy
+        :return type: float
+        """
+        if m is None or r is None:
+            m = 2.0
+            r = 0.3
+        entropy = feature_calculators.approximate_entropy(x, m, r)
+        logging.debug("approximate entropy by tsfresh calculated")
+        return entropy
+
+    def autocorrelation(self, x, lag):
+        """
+        As in tsfresh [autocorrelation]_
+
+        Calculates the autocorrelation of the specified lag, according to the formula [1]
+        .. math::
+            \\frac{1}{(n-l)\sigma^{2}} \\sum_{t=1}^{n-l}(X_{t}-\\mu )(X_{t+l}-\\mu)
+        where :math:`n` is the length of the time series :math:`X_i`, :math:`\sigma^2` its variance and :math:`\mu` its
+        mean. `l` denotes the lag.
+
+        .. rubric:: References
+        [5] https://en.wikipedia.org/wiki/Autocorrelation#Estimation
+
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param lag: the lag
+        :type lag: int
+        :return: the value of this feature
+        :return type: float
+        """
+        # This is important: If a series is passed, the product below is calculated
+        # based on the index, which corresponds to squaring the series.
+        if lag is None:
+            lag=0
+        _autoc = feature_calculators.autocorrelation(x, lag)
+        logging.debug("autocorrelation by tsfresh calculated")
+        return _autoc
+
+    def partial_autocorrelation(self, x, param):
+        """
+        As in tsfresh [partial_autocorrelation]_
+
+        Calculates the value of the partial autocorrelation function at the given lag. The lag `k` partial autocorrelation
+        of a time series :math:`\\lbrace x_t, t = 1 \\ldots T \\rbrace` equals the partial correlation of :math:`x_t` and
+        :math:`x_{t-k}`, adjusted for the intermediate variables
+        :math:`\\lbrace x_{t-1}, \\ldots, x_{t-k+1} \\rbrace` ([1]).
+        Following [7], it can be defined as
+        .. math::
+            \\alpha_k = \\frac{ Cov(x_t, x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1})}
+            {\\sqrt{ Var(x_t | x_{t-1}, \\ldots, x_{t-k+1}) Var(x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1} )}}
+        with (a) :math:`x_t = f(x_{t-1}, \\ldots, x_{t-k+1})` and (b) :math:`x_{t-k} = f(x_{t-1}, \\ldots, x_{t-k+1})`
+        being AR(k-1) models that can be fitted by OLS. Be aware that in (a), the regression is done on past values to
+        predict :math:`x_t` whereas in (b), future values are used to calculate the past value :math:`x_{t-k}`.
+        It is said in [6] that "for an AR(p), the partial autocorrelations [ :math:`\\alpha_k` ] will be nonzero for `k<=p`
+        and zero for `k>p`."
+        With this property, it is used to determine the lag of an AR-Process.
+        
+        .. rubric:: References
+        |  [6] Box, G. E., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015).
+        |  Time series analysis: forecasting and control. John Wiley & Sons.
+        |  [7] https://onlinecourses.science.psu.edu/stat510/node/62
+        
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :param param: contains dictionaries {"lag": val} with int val indicating the lag to be returned
+        :type param: list
+        :return: the value of this feature
+        :return type: float
+        """
+        if param is None:
+            param = [{'lag': 3}, {'lag': 5}, {'lag': 6}]
+        _partialc = feature_calculators.partial_autocorrelation(x, param)
+        logging.debug("partial autocorrelation by tsfresh calculated")
+        return _partialc
+
+    def minimum(self, x):
+        """
+        Calculates the lowest value of the time series x.
+        :param x: the time series to calculate the feature of
+        :type x: pandas.Series
+        :return: the value of this feature
+        :return type: float
+        """
+        return np.min(x)
+
+    def mean(self, x):
+        """
+            Returns the mean of x
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :return: the value of this feature
+            :return type: float
+            """
+        logging.debug("mean calculated")
+
+        return np.mean(x)
+
+    def ratio_value_number_to_time_series_length(self, x):
+        """
+            As in tsfresh [ratioValueNumberToTimeSeriesLength]_
+
+            Returns a factor which is 1 if all values in the time series occur only once,
+            and below one if this is not the case.
+            In principle, it just returns
+                # unique values / # values
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :return: the value of this feature
+            :return type: float
+        """
+        ratio = feature_calculators.ratio_value_number_to_time_series_length(x)
+        logging.debug("ratio value number to time series length by tsfresh calculated")
+        return list(ratio)
+
+    def change_quantiles(self, x, ql=None, qh=None, isabs=None, f_agg=None):
+        """
+            As in tsfresh [changeQuantiles]_
+
+            First fixes a corridor given by the quantiles ql and qh of the distribution of x.
+            Then calculates the average, absolute value of consecutive changes of the series x inside this corridor.
+            Think about selecting a corridor on the
+            y-Axis and only calculating the mean of the absolute change of the time series inside this corridor.
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param ql: the lower quantile of the corridor
+            :type ql: float
+            :param qh: the higher quantile of the corridor
+            :type qh: float
+            :param isabs: should the absolute differences be taken?
+            :type isabs: bool
+            :param f_agg: the aggregator function that is applied to the differences in the bin
+            :type f_agg: str, name of a numpy function (e.g. mean, var, std, median)
+            :return: the value of this feature
+            :return type: float
+        """
+        if ql is None or qh is None or isabs is None or f_agg is None:
+            f_agg = 'mean'
+            isabs = True
+            qh = 0.2
+            ql = 0.0
+        quantile = feature_calculators.change_quantiles(x, ql, qh, isabs, f_agg)
+        logging.debug("change_quantiles by tsfresh calculated")
+        return quantile
+
+    def number_peaks(self, x, n = None):
+        """
+            As in tsfresh [numberPeaks]_
+
+            Calculates the number of peaks of at least support n in the time series x. A peak of support n is defined as a
+            subsequence of x where a value occurs, which is bigger than its n neighbours to the left and to the right.
+
+            Hence in the sequence
+
+            >>> x = [3, 0, 0, 4, 0, 0, 13]
+
+            4 is a peak of support 1 and 2 because in the subsequences
+
+            >>> [0, 4, 0]
+            >>> [0, 0, 4, 0, 0]
+
+            4 is still the highest value. Here, 4 is not a peak of support 3 because 13 is the 3th neighbour to the right of 4
+            and its bigger than 4.
+
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param n: the support of the peak
+            :type n: int
+            :return: the value of this feature
+            :return type: float
+            """
+        if n is None:
+            n = 5
+        peaks = feature_calculators.number_peaks(x, n)
+        logging.debug("agg linear trend by tsfresh calculated")
+        return peaks
+
+    def agg_linear_trend(self, x, param = None):
+        """
+            As in tsfresh [aggLinearTrend]_
+            
+            Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus
+            the sequence from 0 up to the number of chunks minus one.
+
+            This feature assumes the signal to be uniformly sampled. It will not use the time stamps to fit the model.
+
+            The parameters attr controls which of the characteristics are returned. Possible extracted attributes are "pvalue",
+            "rvalue", "intercept", "slope", "stderr", see the documentation of linregress for more information.
+
+            The chunksize is regulated by "chunk_len". It specifies how many time series values are in each chunk.
+
+            Further, the aggregation function is controlled by "f_agg", which can use "max", "min" or , "mean", "median"
+
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param param: contains dictionaries {"attr": x, "chunk_len": l, "f_agg": f} with x, f an string and l an int
+            :type param: list
+            :return: the different feature values
+            :return type: pandas.Series
+        """
+        if param is None:
+            param = [{'attr': 'intercept', 'chunk_len': 5, 'f_agg': 'min'},{'attr': 'rvalue', 'chunk_len': 10, 'f_agg': 'var'},{'attr': 'intercept', 'chunk_len': 10, 'f_agg': 'min'}]
+        agg = feature_calculators.agg_linear_trend(x, param)
+        logging.debug("agg linear trend by tsfresh calculated")
+        return list(agg)
+
+    def spkt_welch_density(self, x, param = None):
         '''
+            As in tsfresh [spktWelchDensity]_
+            This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
+            To do so, the time series is first shifted from the time domain to the frequency domain.
+            
+            The feature calculators returns the power spectrum of the different frequencies.
+            
+    
+            
+            :param x: the time series to calculate the feature of
+            :type x: pandas.Series
+            :param param: contains dictionaries {"coeff": x} with x int
+            :type param: list
+            :return: the different feature values
+            :return type: pandas.Series
+        '''
+        if param is None:
+            param = [{'coeff': 2}, {'coeff': 5}, {'coeff': 8}]
         welch = feature_calculators.spkt_welch_density(x, param)
-        logging.debug("tremor amplitude by tsfresh welch calculated")
-        return list(welch)[0][1]
+        logging.debug("spkt welch density by tsfresh calculated")
+        return list(welch)
 
     def process(self, data_frame, method='fft'):
         '''
