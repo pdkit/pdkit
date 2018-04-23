@@ -5,14 +5,14 @@
 # Author: Cosmin Stamate 
 
 import logging
-from .utils import load_data
+from pdkit.utils import load_data
 
 class GaitTimeSeries:
     def __init__(self):
         logging.debug("TremorTimeSeries init")
 
     @staticmethod
-    def load_data(self, filename, format_file='cloudupdrs'):
+    def load_data(filename, format_file='cloudupdrs'):
         '''
             This is a general load data method where the format of data to load can be passed as a parameter,
 

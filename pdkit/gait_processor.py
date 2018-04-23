@@ -13,9 +13,18 @@ import pandas as pd
 from scipy import interpolate, signal, fft
 from pywt import wavedec
 
-from .utils import load_data, numerical_integration, autocorrelation, peakdet
-from .processor import Processor
-from .gait_time_series import GaitTimeSeries
+from pdkit.processor import Processor
+from pdkit.gait_time_series import GaitTimeSeries
+
+from pdkit.utils import (load_data,
+                        numerical_integration, 
+                        autocorrelation,
+                        peakdet,
+                        compute_interpeak,
+                        butter_lowpass_filter,
+                        crossings_nonzero_pos2neg,
+                        autocorrelate)
+
 
 class GaitProcessor(Processor):
     '''
@@ -27,8 +36,7 @@ class GaitProcessor(Processor):
        This values are recommended by the author of the pilot study [1] and [3]
        
        step_size = 50.0
-       start_offset = 100
-       end_offset = 100
+       start_end_offset = [100, 100]
        delta = 0.5
        loco_band = [0.5, 3]
        freeze_band = [3, 8]
@@ -51,15 +59,43 @@ class GaitProcessor(Processor):
            in IEEE Transactions on Information Technology in Biomedicine, vol. 14, no. 2, pp. 436-446, March 2010.
     '''
 
-    def __init__(self, step_size=50.0, start_offset=100, end_offset=100, delta=0.5, loco_band=[0.5, 3], freeze_band=[3, 8]):
-        super().__init__()
+    def __init__(self,
+                 sampling_frequency=100.0,
+                 cutoff_frequency=2.0,
+                 filter_order=2,
+                 window=256,
+                 lower_frequency=2.0,
+                 upper_frequency=10.0,
+                 step_size=50.0,
+                 start_end_offset=[100, 100],
+                 delta=0.5,
+                 loco_band=[0.5, 3],
+                 freeze_band=[3, 8],
+                 stride_fraction=1.0/8.0,
+                 order=4,
+                 threshold=0.5,
+                 distance=90,
+                 step_period=2,
+                 stride_period=1):
+
+        super().__init__(sampling_frequency,
+                         cutoff_frequency,
+                         filter_order,
+                         window,
+                         lower_frequency,
+                         upper_frequency)
 
         self.step_size = step_size
-        self.start_offset = start_offset
-        self.end_offset = end_offset
+        self.start_end_offset = start_end_offset
         self.delta = delta
         self.loco_band = loco_band
         self.freeze_band = freeze_band
+        self.stride_fraction = stride_fraction
+        self.order = order
+        self.threshold = threshold
+        self.distance = distance
+        self.step_period = step_period
+        self.stride_period = stride_period
 
 
     def freeze_of_gait(self, data_frame):
@@ -114,6 +150,7 @@ class GaitProcessor(Processor):
 
         return [freeze_times, freeze_indexes, locomotion_freezes]
 
+
     def frequency_of_peaks(self, data_frame):
         ''' 
             This method assess the frequency of the peaks on the x-axis.
@@ -122,13 +159,14 @@ class GaitProcessor(Processor):
             :return float: The frequency of peaks on the x-axis.
         '''
 
-        peaks_data = data_frame[self.start_offset: -self.end_offset].x.values
+        peaks_data = data_frame[self.start_end_offset[0]: -self.start_end_offset[1]].x.values
         maxtab, mintab = peakdet(peaks_data, self.delta)
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
-        frequency_from_peaks = 1/x
+        frequency_of_peaks = 1/x
 
         return frequency_of_peaks
         
+
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
         ''' 
             This method assess the speed of gait following [2].
@@ -182,3 +220,230 @@ class GaitProcessor(Processor):
 
         return [step_regularity, stride_regularity, walk_symmetry]
 
+
+    def walk_direction_preheel(self, data_frame):
+
+        # Sum of absolute values across accelerometer axes:
+        data = data_frame.x.abs() + data_frame.y.abs() + data_frame.z.abs()
+        data = data.values
+
+        # Find maximum peaks of smoothed data:
+        dummy, ipeaks_smooth = self.heel_strikes(data_frame)
+
+        # Compute number of samples between peaks using the real part of the FFT:
+        interpeak = compute_interpeak(data, self.sampling_frequency)
+        decel = np.int(np.round(self.stride_fraction * interpeak))
+
+        # Find maximum peaks close to maximum peaks of smoothed data:
+        ipeaks = []
+        for ipeak_smooth in ipeaks_smooth:
+            ipeak = np.argmax(data[ipeak_smooth - decel:ipeak_smooth + decel])
+            ipeak += ipeak_smooth - decel
+            ipeaks.append(ipeak)
+
+        # Compute the average vector for each deceleration phase:
+        vectors = []
+        for ipeak in ipeaks:
+            decel_vectors = np.asarray([[data_frame.x[i], data_frame.y[i], data_frame.z[i]]
+                                        for i in range(ipeak - decel, ipeak)])
+            vectors.append(np.mean(decel_vectors, axis=0))
+
+        # Compute the average deceleration vector and take the opposite direction:
+        direction = -1 * np.mean(vectors, axis=0)
+
+        # Return the unit vector in this direction:
+        direction /= np.sqrt(direction.dot(direction))
+
+        return direction
+
+
+    def heel_strikes(self, data_frame_axis):
+
+        # Demean data:
+        data = data_frame_axis.abs()
+        data -= data.mean()
+        data = data.values
+
+        # Low-pass filter the AP accelerometer data by the 4th order zero lag
+        # Butterworth filter whose cut frequency is set to 5 Hz:
+        filtered = butter_lowpass_filter(data, self.sampling_frequency, self.cutoff_frequency, self.order)
+
+        # Find transitional positions where AP accelerometer changes from
+        # positive to negative.
+        transitions = crossings_nonzero_pos2neg(filtered)
+
+        # Find the peaks of AP acceleration preceding the transitional positions,
+        # and greater than the product of a threshold and the maximum value of
+        # the AP acceleration:
+        strike_indices_smooth = []
+        filter_threshold = np.abs(self.threshold * np.max(filtered))
+        for i in range(1, np.size(transitions)):
+            segment = range(transitions[i-1], transitions[i])
+            imax = np.argmax(filtered[segment])
+            if filtered[segment[imax]] > filter_threshold:
+                strike_indices_smooth.append(segment[imax])
+
+        # Compute number of samples between peaks using the real part of the FFT:
+        interpeak = compute_interpeak(data, self.sampling_frequency)
+        decel = np.int(interpeak / 2)
+
+        # Find maximum peaks close to maximum peaks of smoothed data:
+        strike_indices = []
+        for ismooth in strike_indices_smooth:
+            istrike = np.argmax(data[ismooth - decel:ismooth + decel])
+            istrike = istrike + ismooth - decel
+            strike_indices.append(istrike)
+
+        strikes = np.asarray(strike_indices)
+        strikes -= strikes[0]
+        strikes = strikes / self.sampling_frequency
+
+        return strikes, strike_indices
+
+
+    def gait_regularity_symmetry(self, data_frame_axis, unbias=1, normalize=2):
+
+        coefficients, _ = autocorrelate(data_frame_axis, unbias=1, normalize=2)
+
+        print(self.step_period, self.stride_period)
+
+        step_regularity = coefficients[self.step_period]
+        stride_regularity = coefficients[self.stride_period]
+        symmetry = np.abs(stride_regularity - step_regularity)
+
+        return step_regularity, stride_regularity, symmetry
+
+
+    def gait(self, data_frame, axis='x'):
+        """
+        Extract gait features from estimated heel strikes and accelerometer data.
+        This function extracts all of iGAIT's features
+        that depend on the estimate of heel strikes::
+            - cadence = number of steps divided by walk time
+            - step/stride regularity
+            - step/stride symmetry
+            - mean step/stride length and velocity (if distance supplied)
+        Parameters
+        ----------
+        strikes : numpy array
+            heel strike timings
+        data : list or numpy array
+            accelerometer data along forward axis
+        duration : float
+            duration of accelerometer reading (s)
+        distance : float
+            distance traversed
+        Returns
+        -------
+        number_of_steps : integer
+            estimated number of steps based on heel strikes
+        velocity : float
+            velocity (if distance)
+        avg_step_length : float
+            average step length (if distance)
+        avg_stride_length : float
+            average stride length (if distance)
+        cadence : float
+            number of steps divided by duration
+        step_durations : numpy array
+            step durations
+        avg_step_duration : float
+            average step duration
+        sd_step_durations : float
+            standard deviation of step durations
+        strides : list of two lists of floats
+            stride timings for each side
+        avg_number_of_strides : float
+            estimated number of strides based on alternating heel strikes
+        stride_durations : list of two lists of floats
+            estimated stride durations
+        avg_stride_duration : float
+            average stride duration
+        sd_step_durations : float
+            standard deviation of stride durations
+        step_regularity : float
+            measure of step regularity along axis
+        stride_regularity : float
+            measure of stride regularity along axis
+        symmetry : float
+            measure of gait symmetry along axis
+        Examples
+        --------
+        >>> from mhealthx.xio import read_accel_json, compute_sample_rate
+        >>> input_file = '/Users/arno/DriveWork/mhealthx/mpower_sample_data/deviceMotion_walking_outbound.json.items-a2ab9333-6d63-4676-977a-08591a5d837f5221783798792869048.tmp'
+        >>> device_motion = True
+        >>> start = 150
+        >>> t, axyz, gxyz, uxyz, rxyz, sample_rate, duration = read_accel_json(input_file, start, device_motion)
+        >>> ax, ay, az = axyz
+        >>> from mhealthx.extractors.pyGait import heel_strikes
+        >>> threshold = 0.2
+        >>> order = 4
+        >>> cutoff = 5
+        >>> data = ay
+        >>> plot_test = False
+        >>> strikes, strike_indices = heel_strikes(data, sample_rate, threshold, order, cutoff, plot_test)
+        >>> from mhealthx.extractors.pyGait import gait
+        >>> distance = 90
+        >>> a = gait(strikes, data, duration, distance)
+        """
+        self.duration = data_frame.td[-1]
+        data_frame = data_frame[axis]
+        
+        strikes, _ = self.heel_strikes(data_frame)
+
+        step_durations = []
+        for i in range(1, np.size(strikes)):
+            step_durations.append(strikes[i] - strikes[i-1])
+
+        avg_step_duration = np.mean(step_durations)
+        sd_step_durations = np.std(step_durations)
+
+        number_of_steps = np.size(strikes)
+
+        cadence = number_of_steps / self.duration
+
+        strides1 = strikes[0::2]
+        strides2 = strikes[1::2]
+        stride_durations1 = []
+        for i in range(1, np.size(strides1)):
+            stride_durations1.append(strides1[i] - strides1[i-1])
+        stride_durations2 = []
+        for i in range(1, np.size(strides2)):
+            stride_durations2.append(strides2[i] - strides2[i-1])
+
+        strides = [strides1, strides2]
+        stride_durations = [stride_durations1, stride_durations2]
+
+        avg_number_of_strides = np.mean([np.size(strides1), np.size(strides2)])
+        avg_stride_duration = np.mean((np.mean(stride_durations1),
+                                    np.mean(stride_durations2)))
+        sd_stride_durations = np.mean((np.std(stride_durations1),
+                                    np.std(stride_durations2)))
+
+        self.step_period = np.int(np.round(1 / avg_step_duration))
+        self.stride_period = np.int(np.round(1 / avg_stride_duration))
+
+        step_regularity, stride_regularity, symmetry = self.gait_regularity_symmetry(data_frame)
+
+        # Set distance-based measures to None if distance not set:
+        if self.distance:
+            velocity = self.distance / self.duration
+            avg_step_length = number_of_steps / self.distance
+            avg_stride_length = avg_number_of_strides / self.distance
+        else:
+            velocity = None
+            avg_step_length = None
+            avg_stride_length = None
+
+        return number_of_steps, cadence, velocity, \
+            avg_step_length, avg_stride_length, step_durations, \
+            avg_step_duration, sd_step_durations, strides, stride_durations, \
+            avg_number_of_strides, avg_stride_duration, sd_stride_durations, \
+            step_regularity, stride_regularity, symmetry
+
+
+if __name__ == '__main__':
+    ts = GaitTimeSeries()
+    ts = ts.load_data('../tests/data/cloudupdrs_gait.csv')
+
+    gp = GaitProcessor()
