@@ -244,10 +244,10 @@ class GaitProcessor(Processor):
 
         # Sum of absolute values across accelerometer axes:
         data = data_frame.x.abs() + data_frame.y.abs() + data_frame.z.abs()
-        data = data.values
 
         # Find maximum peaks of smoothed data:
-        dummy, ipeaks_smooth = self.heel_strikes(data_frame)
+        dummy, ipeaks_smooth = self.heel_strikes(data)
+        data = data.values
 
         # Compute number of samples between peaks using the real part of the FFT:
         interpeak = compute_interpeak(data, self.sampling_frequency)

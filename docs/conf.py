@@ -316,6 +316,8 @@ MOCK_MODULES = ['pygtk',
                 'numpy.lib.recfunctions',
                 'scipy.signal',
                 'scipy.linalg',
+                'scipy.fft',
+                'scipy.fftpack',
                 'tsfresh',
                 'tsfresh.feature_extraction',]
 
