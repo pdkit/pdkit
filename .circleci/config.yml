@@ -22,6 +22,7 @@ jobs:
           name: install dependencies
           command: |
             source bin/activate
+            pip install twine
             pip install -r requirements.txt --user
             pip install . --user
 
@@ -60,7 +61,6 @@ jobs:
       - run:
           name: create packages
           command: |
-            make clean
             make package
 
       - run:
