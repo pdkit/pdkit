@@ -91,3 +91,6 @@ ENV/
 
 # local files
 .local/
+
+# vscode
+.vscode/
