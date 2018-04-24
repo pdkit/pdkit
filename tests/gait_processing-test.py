@@ -70,8 +70,8 @@ class GaitProcessingTest(unittest.TestCase):
         self.stride_regularity = 0.99
         self.symmetry = 0.02
         
-        def tearDown(self):
-            self.gp = None
+    def tearDown(self):
+        self.gp = None
 
     @staticmethod
     def load_data(filename, format_file):
