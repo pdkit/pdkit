@@ -25,7 +25,7 @@ To calculate Welch, as a robust alternative to using Fast Fourier Transform, use
 
     >>> amplitude, frequency = tp.process(ts, 'welch')
 
-Example how to use pdkit to calculate Tremor amplitude and frequency:
+Example how to use pdkit to calculate various Gait features:
 
     >>> import pdkit
     >>> ts = pdkit.GaitTimeSeries().load(filename)
