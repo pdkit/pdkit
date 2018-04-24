@@ -38,3 +38,4 @@ jobs:
           command: |
             source bin/activate
             python tests/tremor_processing-test.py
+            python tests/gait_processing-test.py

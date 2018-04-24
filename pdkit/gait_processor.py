@@ -103,7 +103,10 @@ class GaitProcessor(Processor):
             This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
-            :return [list, list, list]: The returns are [freeze_times, freeze_indexes, locomotion_freezes].
+
+            :return list freeze_times: What times does freeze of gait occur.
+            :return list freeze_indexes: What are the index in the dataframe when freeze of gait occurs.
+            :return list locomotion_freezes: When does locomotion freeze happen,.
         '''
         
         # the sampling frequency was recommended by the author of the pilot study
@@ -148,7 +151,7 @@ class GaitProcessor(Processor):
         freeze_indexes = freezeIndex
         locomotion_freezes = sumLocoFreeze
 
-        return [freeze_times, freeze_indexes, locomotion_freezes]
+        return freeze_times, freeze_indexes, locomotion_freezes
 
 
     def frequency_of_peaks(self, data_frame):
@@ -156,7 +159,8 @@ class GaitProcessor(Processor):
             This method assess the frequency of the peaks on the x-axis.
 
             :param DataFrame data_frame: the data frame.
-            :return float: The frequency of peaks on the x-axis.
+
+            :return float frequency_of_peaks: The frequency of peaks on the x-axis.
         '''
 
         peaks_data = data_frame[self.start_end_offset[0]: -self.start_end_offset[1]].x.values
@@ -175,7 +179,8 @@ class GaitProcessor(Processor):
             :param DataFrame data_frame: the data frame.
             :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
-            :return float: The speed of gait.
+            
+            :return float gait_speed: The speed of gait.
         '''
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
@@ -199,7 +204,10 @@ class GaitProcessor(Processor):
             This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
-            :return [list, list, list]: The returns are [step_regularity, stride_regularity, walk_symmetry] and each list consists of [x, y, z].
+
+            :return list step_regularity: Regularity of steps on [x, y, z] coordinates.
+            :return list stride_regularity: Regularity of stride on [x, y, z] coordinates.
+            :return list walk_symmetry: Symmetry of walk on [x, y, z] coordinates.
         '''
         
         def _symmetry(v):
@@ -218,17 +226,28 @@ class GaitProcessor(Processor):
         stride_regularity = [stride_regularity_x, stride_regularity_y, stride_regularity_z]
         walk_symmetry = [symmetry_x, symmetry_y, symmetry_z]
 
-        return [step_regularity, stride_regularity, walk_symmetry]
+        return step_regularity, stride_regularity, walk_symmetry
 
 
     def walk_direction_preheel(self, data_frame):
+        '''
+            Estimate local walk (not cardinal) direction with pre-heel strike phase.
+
+            Inspired by Nirupam Roy's B.E. thesis: "WalkCompass:
+            Finding Walking Direction Leveraging Smartphone's Inertial Sensors,".
+
+            :param DataFrame data_frame: the data frame.
+
+            :return array direction: Unit vector of local walk (not cardinal) direction
+        '''
+
 
         # Sum of absolute values across accelerometer axes:
         data = data_frame.x.abs() + data_frame.y.abs() + data_frame.z.abs()
-        data = data.values
 
         # Find maximum peaks of smoothed data:
-        dummy, ipeaks_smooth = self.heel_strikes(data_frame)
+        dummy, ipeaks_smooth = self.heel_strikes(data)
+        data = data.values
 
         # Compute number of samples between peaks using the real part of the FFT:
         interpeak = compute_interpeak(data, self.sampling_frequency)
@@ -258,7 +277,14 @@ class GaitProcessor(Processor):
 
 
     def heel_strikes(self, data_frame_axis):
+        '''
+            Estimate heel strike times between sign changes in accelerometer data.
 
+            :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
+            
+            :return array strikes: Heel strike timings
+            :return list strike_indices: Heel strike timing indices.
+        '''
         # Demean data:
         data = data_frame_axis.abs()
         data -= data.mean()
@@ -302,6 +328,17 @@ class GaitProcessor(Processor):
 
 
     def gait_regularity_symmetry(self, data_frame_axis, unbias=1, normalize=2):
+        '''
+            Compute step and stride regularity and symmetry from accelerometer data.
+
+            :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
+            :param int unbias: Unbiased autocorrelation: divide by range (1) or by weighted range (2).
+            :param int normalize: Normalize: divide by 1st coefficient (1) or by maximum abs. value (2).
+
+            :return float step_regularity: Step regularity measure along axis.
+            :return float stride_regularity: Stride regularity measure along axis.
+            :return symmetry: Symmetry measure along axis.
+        '''
 
         coefficients, _ = autocorrelate(data_frame_axis, unbias=1, normalize=2)
 
@@ -315,77 +352,30 @@ class GaitProcessor(Processor):
 
 
     def gait(self, data_frame, axis='x'):
-        """
-        Extract gait features from estimated heel strikes and accelerometer data.
-        This function extracts all of iGAIT's features
-        that depend on the estimate of heel strikes::
-            - cadence = number of steps divided by walk time
-            - step/stride regularity
-            - step/stride symmetry
-            - mean step/stride length and velocity (if distance supplied)
-        Parameters
-        ----------
-        strikes : numpy array
-            heel strike timings
-        data : list or numpy array
-            accelerometer data along forward axis
-        duration : float
-            duration of accelerometer reading (s)
-        distance : float
-            distance traversed
-        Returns
-        -------
-        number_of_steps : integer
-            estimated number of steps based on heel strikes
-        velocity : float
-            velocity (if distance)
-        avg_step_length : float
-            average step length (if distance)
-        avg_stride_length : float
-            average stride length (if distance)
-        cadence : float
-            number of steps divided by duration
-        step_durations : numpy array
-            step durations
-        avg_step_duration : float
-            average step duration
-        sd_step_durations : float
-            standard deviation of step durations
-        strides : list of two lists of floats
-            stride timings for each side
-        avg_number_of_strides : float
-            estimated number of strides based on alternating heel strikes
-        stride_durations : list of two lists of floats
-            estimated stride durations
-        avg_stride_duration : float
-            average stride duration
-        sd_step_durations : float
-            standard deviation of stride durations
-        step_regularity : float
-            measure of step regularity along axis
-        stride_regularity : float
-            measure of stride regularity along axis
-        symmetry : float
-            measure of gait symmetry along axis
-        Examples
-        --------
-        >>> from mhealthx.xio import read_accel_json, compute_sample_rate
-        >>> input_file = '/Users/arno/DriveWork/mhealthx/mpower_sample_data/deviceMotion_walking_outbound.json.items-a2ab9333-6d63-4676-977a-08591a5d837f5221783798792869048.tmp'
-        >>> device_motion = True
-        >>> start = 150
-        >>> t, axyz, gxyz, uxyz, rxyz, sample_rate, duration = read_accel_json(input_file, start, device_motion)
-        >>> ax, ay, az = axyz
-        >>> from mhealthx.extractors.pyGait import heel_strikes
-        >>> threshold = 0.2
-        >>> order = 4
-        >>> cutoff = 5
-        >>> data = ay
-        >>> plot_test = False
-        >>> strikes, strike_indices = heel_strikes(data, sample_rate, threshold, order, cutoff, plot_test)
-        >>> from mhealthx.extractors.pyGait import gait
-        >>> distance = 90
-        >>> a = gait(strikes, data, duration, distance)
-        """
+        '''
+            Extract gait features from estimated heel strikes and accelerometer data.
+
+            :param DataFrame data_frame: The data frame.
+            :param string axis: The axis (preferably forward direction) from which to extract all gait features.
+
+            :return int number_of_steps: Estimated number of steps based on heel strikes.
+            :return float velocity: Velocity (if distance).
+            :return float avg_step_length: Average step length (if distance).
+            :return float avg_stride_length: Average stride length (if distance).
+            :return float cadence: Number of steps divided by duration.
+            :return array step_durations: Step duration.
+            :return float avg_step_duration: Average step duration.
+            :return float sd_step_durations: Standard deviation of step durations.
+            :return list strides: Stride timings for each side.
+            :return float avg_number_of_strides: Estimated number of strides based on alternating heel strikes.
+            :return list stride_durations: Estimated stride durations.
+            :return float avg_stride_duration: Average stride duration.
+            :return float sd_step_durations: Standard deviation of stride durations.
+            :return float step_regularity: Measure of step regularity along axis.
+            :return float stride_regularity: Measure of stride regularity along axis.
+            :return float symmetry: Measure of gait symmetry along axis.
+        '''
+
         self.duration = data_frame.td[-1]
         data_frame = data_frame[axis]
         
