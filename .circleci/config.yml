@@ -48,11 +48,6 @@ jobs:
           - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
           - v1-dependencies-
 
-      - save_cache:
-          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
-          paths:
-            - "bin"
-
       - run:
           name: install dependencies
           command: |
@@ -60,6 +55,11 @@ jobs:
             pip install -r requirements.txt --user
             pip install -U pip setuptools wheel twine --user
             pip install . --user
+
+      - save_cache:
+          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
+          paths:
+            - "bin"
 
       - run:
           name: verify git tag vs. version
