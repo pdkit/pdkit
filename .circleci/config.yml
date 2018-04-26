@@ -8,14 +8,12 @@ jobs:
     docker:
       - image: circleci/python:3.6
 
-    working_directory: ~/repo
-
     steps:
       - checkout
 
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
+          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
           - v1-dependencies-
 
       - run:
@@ -23,8 +21,13 @@ jobs:
           command: |
             source bin/activate
             pip install -r requirements.txt --user
-            pip install twine --user
+            pip install -U pip setuptools wheel twine --user
             pip install . --user
+
+      - save_cache:
+          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
+          paths:
+            - "bin"
 
       - run:
           name: run tests
@@ -42,8 +45,21 @@ jobs:
 
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
+          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
           - v1-dependencies-
+
+      - run:
+          name: install dependencies
+          command: |
+            source bin/activate
+            pip install -r requirements.txt --user
+            pip install -U pip setuptools wheel twine --user
+            pip install . --user
+
+      - save_cache:
+          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
+          paths:
+            - "bin"
 
       - run:
           name: verify git tag vs. version
@@ -67,7 +83,7 @@ jobs:
           name: upload to pypi
           command: |
             source bin/activate
-            twine upload dist/*
+            /home/circleci/.local/bin/twine upload dist/*
 
 workflows:
   version: 2
