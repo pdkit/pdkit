@@ -6,7 +6,7 @@
 # Author(s): J.S. Pons
 
 import logging
-from .utils import load_data
+from pdkit.utils import load_data
 import pandas_validator as pv
 
 

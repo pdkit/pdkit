@@ -441,12 +441,12 @@ class TremorProcessor:
         return _perc
 
     def abs_energy(self, x):
-        """
+        r"""
         As in tsfresh [absEnergy]_
 
         Returns the absolute energy of the time series which is the sum over the squared values
         .. math::
-            E = \\sum_{i=1,\ldots, n} x_i^2
+            E=\\sum_{i=1,\ldots, n}x_i^2
         
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
@@ -478,14 +478,14 @@ class TremorProcessor:
         return list(_fft_agg)
 
     def fft_coefficient(self, x, param):
-        """
+        r"""
         As in tsfresh [fftCoefficient]_
 
         Calculates the fourier coefficients of the one-dimensional discrete Fourier Transform for real input by fast
         fourier transformation algorithm
-        .. math::
-            A_k =  \\sum_{m=0}^{n-1} a_m \\exp \\left \\{ -2 \\pi i \\frac{m k}{n} \\right \\}, \\qquad k = 0,
-            \\ldots , n-1.
+        
+        .. math:: A_k =  \\sum_{m=0}^{n-1} a_m \\exp \\left \\{ -2 \\pi i \\frac{m k}{n} \\right \\}, \\qquad k = 0, \\ldots , n-1.
+
         The resulting coefficients will be complex, this feature calculator can return the real part (attr=="real"),
         the imaginary part (attr=="imag), the absolute value (attr=""abs) and the angle in degrees (attr=="angle).
         
