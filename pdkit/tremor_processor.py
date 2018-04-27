@@ -16,7 +16,7 @@ from tsfresh.feature_extraction import feature_calculators
 class TremorProcessor:
     '''
         This is the main Tremor Processor class. Once the data is loaded it will be
-        accessible at data_frame, where it looks like:
+        accessible at data_frame (pandas.DataFrame), where it looks like:
         data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
         data_frame.index is the datetime-like index
         
@@ -91,9 +91,9 @@ class TremorProcessor:
             filters the data frame along one-dimension using a `digital filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_. 
 
             :param data_frame: the input data frame
-            :type data_frame: numpy data_frame
+            :type data_frame: pandas.DataFrame
             :return data_frame: adds a column named 'filtered_signal' to the data frame
-            :rtype data_frame: numpy data_frame
+            :rtype data_frame: pandas.DataFrame
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
@@ -107,9 +107,9 @@ class TremorProcessor:
             This method perform Fast Fourier Transform on the data frame using a `hanning window <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html>`_
 
             :param data_frame: the data frame
-            :type data_frame: numpy data_frame
+            :type data_frame: pandas.DataFrame
             :return: data frame with a 'filtered_singal', 'transformed_signal' and 'dt' columns
-            :rtype: numpy data_frame
+            :rtype: pandas.DataFrame
         '''
         signal_length = len(data_frame.filtered_signal.values)
         ll = int ( signal_length / 2 - self.window / 2 )
