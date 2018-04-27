@@ -1,6 +1,9 @@
 # Python CircleCI 2.0 configuration file
+# Copyright 2018 Birkbeck College. All rights reserved.
 #
-# Check https://circleci.com/docs/2.0/language-python/ for more details
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): J.S. Pons
 #
 version: 2
 jobs:
@@ -12,27 +15,23 @@ jobs:
       - checkout
 
       - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
-          - v1-dependencies-
-
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
       - run:
           name: install dependencies
           command: |
-            source bin/activate
-            pip install -r requirements.txt --user
-            pip install -U pip setuptools wheel twine --user
-            pip install . --user
+            python3 -m venv venv
+            source venv/bin/activate
+            make dev
 
       - save_cache:
-          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
           paths:
-            - "bin"
+            - "venv"
 
       - run:
           name: run tests
           command: |
-            source bin/activate
+            source venv/bin/activate
             python tests/tremor_processing-test.py
             python tests/gait_processing-test.py
 
@@ -44,27 +43,24 @@ jobs:
       - checkout
 
       - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
-          - v1-dependencies-
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
 
       - run:
           name: install dependencies
           command: |
-            source bin/activate
-            pip install -r requirements.txt --user
-            pip install -U pip setuptools wheel twine --user
-            pip install . --user
+            python3 -m venv venv
+            source venv/bin/activate
+            make dev
 
       - save_cache:
-          key: v1-dependency-cache-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}-{{ checksum "Makefile" }}
+          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
           paths:
-            - "bin"
+            - "venv"
 
       - run:
           name: verify git tag vs. version
           command: |
-            source bin/activate
+            source venv/bin/activate
             python setup.py verify
 
       - run:
@@ -82,8 +78,8 @@ jobs:
       - run:
           name: upload to pypi
           command: |
-            source bin/activate
-            /home/circleci/.local/bin/twine upload dist/*
+            source venv/bin/activate
+            twine upload dist/*
 
 workflows:
   version: 2

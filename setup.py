@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): J.S. Pons
 # -*- coding: utf-8 -*-
-"""
-:copyright: (c) 2017 by Lev Lazinskiy
-:license: MIT, see LICENSE for more details.
-"""
 import os
 import sys
+
 
 from setuptools import setup
 from setuptools.command.install import install
