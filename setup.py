@@ -8,13 +8,11 @@
 import os
 import sys
 
-
 from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
 VERSION = "0.3.4"
-
 
 def readme():
     with open('README.rst') as f:
