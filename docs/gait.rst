@@ -9,5 +9,3 @@ Gait Time Series
 
 .. automodule:: gait_time_series
    :members:
-
-============================

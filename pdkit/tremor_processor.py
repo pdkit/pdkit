@@ -20,7 +20,7 @@ class TremorProcessor:
         data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
         data_frame.index is the datetime-like index
         
-        These values are recommended by the author of the pilot study [1]
+        These values are recommended by the author of the pilot study :cite:`Kassavetis2015`
         
         sampling_frequency = 100.0Hz
         cutoff_frequency = 2.0Hz
@@ -28,12 +28,6 @@ class TremorProcessor:
         window = 256
         lower_frequency = 2.0Hz
         upper_frequency = 10.0Hz
-
-        :References:
-       
-        [1] Developing a tool for remote digital assessment of Parkinson s disease Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
-            
-        [2] The use of the fast Fourier transform for the estimation of power spectra: A method based on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. vol. 15, pp. 70-73, 1967) P. Welch
             
         :Example:
          
@@ -76,8 +70,10 @@ class TremorProcessor:
             acceleration values and the x,y,z values of the data frame acceleration
 
             :param data_frame: the data frame to resample
-            :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
-            :return data_frame: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+            :type data_frame: pandas.DataFrame
+            :return: the resampled data frame
+            :rtype: pandas.DataFrame
+
         '''
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
@@ -91,11 +87,13 @@ class TremorProcessor:
     def filter_signal(self, data_frame):
         '''
             This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
-            frame using a [Butterworth]_ digital and analog filter. Then this method 
-            filters the data frame along one-dimension using a [digital]_ filter. 
+            frame using a `Butterworth <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html>`_ digital and analog filter. Then this method 
+            filters the data frame along one-dimension using a `digital filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_. 
 
-            :param data_frame: the data frame    
-            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+            :param data_frame: the input data frame
+            :type data_frame: numpy data_frame
+            :return data_frame: adds a column named 'filtered_signal' to the data frame
+            :rtype data_frame: numpy data_frame
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
@@ -106,11 +104,12 @@ class TremorProcessor:
 
     def fft_signal(self, data_frame):
         '''
-            This method perform Fast Fourier Transform on the data frame using a [hanning]_ window
+            This method perform Fast Fourier Transform on the data frame using a `hanning window <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html>`_
 
-            :param data_frame: the data frame    
-            :param str window: hanning window size
-            :return data_frame: data_frame.filtered_signal, data_frame.transformed_signal, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+            :param data_frame: the data frame
+            :type data_frame: numpy data_frame
+            :return: data frame with a 'filtered_singal', 'transformed_signal' and 'dt' columns
+            :rtype: numpy data_frame
         '''
         signal_length = len(data_frame.filtered_signal.values)
         ll = int ( signal_length / 2 - self.window / 2 )
@@ -133,11 +132,12 @@ class TremorProcessor:
         '''
             This methods extract the fft components and sum the ones from lower to upper freq as per [1]
 
-            :param data_frame: the data frame    
-            :param str lower_frequency: LOWER_FREQUENCY_TREMOR
-            :param str upper_frequency: UPPER_FREQUENCY_TREMOR
-            :return: amplitude is the the amplitude of the Tremor
-            :return: frequency is the frequency of the Tremor
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return amplitude: the amplitude of the Tremor
+            :rtype amplitude: float
+            :return frequency: the frequency of the Tremor
+            :rtype frequency: float
         '''
         signal_length = len(data_frame.filtered_signal)
         normalised_transformed_signal = data_frame.transformed_signal.values / signal_length
@@ -157,14 +157,15 @@ class TremorProcessor:
 
     def tremor_amplitude_by_welch(self, data_frame):
         '''
-            This methods uses the Welch method [2] to obtain the power spectral density, this is a robust 
+            This methods uses the Welch method :cite:`Welch1967` to obtain the power spectral density, this is a robust 
             alternative to using fft_signal & calc_tremor_amplitude
 
-            :param data_frame: the data frame    
-            :param str lower_frequency: LOWER_FREQUENCY_TREMOR
-            :param str upper_frequency: UPPER_FREQUENCY_TREMOR
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
             :return: amplitude is the the amplitude of the Tremor
+            :rtype amplitude: float
             :return: frequency is the frequency of the Tremor
+            :rtype frequency: float
         '''
         frq, Pxx_den = signal.welch(data_frame.filtered_signal.values, self.sampling_frequency, nperseg=self.window)
         frequency = frq[Pxx_den.argmax(axis=0)]
@@ -176,17 +177,11 @@ class TremorProcessor:
 
     def approximate_entropy(self, x, m=None, r=None):
         """
-        As in tsfresh [approximateEntropy]_
+        As in tsfresh `approximate_entropy <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1601>`_
 
-        Implements a vectorized Approximate entropy algorithm.
-            https://en.wikipedia.org/wiki/Approximate_entropy
+        Implements a `vectorized approximate entropy algorithm <https://en.wikipedia.org/wiki/Approximate_entropy>`_ 
         For short time-series this method is highly dependent on the parameters,
-        but should be stable for N > 2000, see [3]. Other shortcomings and alternatives discussed in [4]
-            
-        :References:
-        
-        [3] Yentes et al. (2012) - The Appropriate Use of Approximate Entropy and Sample Entropy with Short Data Sets
-        [4] Richman & Moorman (2000) - Physiological time-series analysis using approximate entropy and sample entropy
+        but should be stable for N > 2000, see :cite:`Yentes2013`. Other shortcomings and alternatives discussed in :cite:`Richman2000`
         
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
@@ -195,7 +190,7 @@ class TremorProcessor:
         :param r: Filtering level, must be positive
         :type r: float
         :return: Approximate entropy
-        :return type: float
+        :rtype: float
         """
         if m is None or r is None:
             m = 2.0
@@ -206,23 +201,23 @@ class TremorProcessor:
 
     def autocorrelation(self, x, lag):
         """
-        As in tsfresh [autocorrelation]_
+        As in tsfresh `autocorrelation <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1457>`_
 
-        Calculates the autocorrelation of the specified lag, according to the formula [1]
+        Calculates the autocorrelation of the specified lag, according to the `formula <https://en.wikipedia.org/wiki/Autocorrelation#Estimation>`_:
+        
         .. math::
+            
             \\frac{1}{(n-l)\sigma^{2}} \\sum_{t=1}^{n-l}(X_{t}-\\mu )(X_{t+l}-\\mu)
+        
         where :math:`n` is the length of the time series :math:`X_i`, :math:`\sigma^2` its variance and :math:`\mu` its
         mean. `l` denotes the lag.
-
-        .. rubric:: References
-        [5] https://en.wikipedia.org/wiki/Autocorrelation#Estimation
 
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :param lag: the lag
         :type lag: int
         :return: the value of this feature
-        :return type: float
+        :rtype: float
         """
         # This is important: If a series is passed, the product below is calculated
         # based on the index, which corresponds to squaring the series.
@@ -234,34 +229,33 @@ class TremorProcessor:
 
     def partial_autocorrelation(self, x, param):
         """
-        As in tsfresh [partialAutocorrelation]_
+        As in tsfresh `partial_autocorrelation <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L308>`_
 
         Calculates the value of the partial autocorrelation function at the given lag. The lag `k` partial autocorrelation
         of a time series :math:`\\lbrace x_t, t = 1 \\ldots T \\rbrace` equals the partial correlation of :math:`x_t` and
         :math:`x_{t-k}`, adjusted for the intermediate variables
-        :math:`\\lbrace x_{t-1}, \\ldots, x_{t-k+1} \\rbrace` ([1]).
-        Following [7], it can be defined as
+        :math:`\\lbrace x_{t-1}, \\ldots, x_{t-k+1} \\rbrace` (:cite:`Wilson2015`).
+        Following `this notes <https://onlinecourses.science.psu.edu/stat510/node/62>`_, it can be defined as
+        
+        
         .. math::
+        
             \\alpha_k = \\frac{ Cov(x_t, x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1})}
             {\\sqrt{ Var(x_t | x_{t-1}, \\ldots, x_{t-k+1}) Var(x_{t-k} | x_{t-1}, \\ldots, x_{t-k+1} )}}
+        
         with (a) :math:`x_t = f(x_{t-1}, \\ldots, x_{t-k+1})` and (b) :math:`x_{t-k} = f(x_{t-1}, \\ldots, x_{t-k+1})`
         being AR(k-1) models that can be fitted by OLS. Be aware that in (a), the regression is done on past values to
         predict :math:`x_t` whereas in (b), future values are used to calculate the past value :math:`x_{t-k}`.
-        It is said in [6] that "for an AR(p), the partial autocorrelations [ :math:`\\alpha_k` ] will be nonzero for `k<=p`
+        It is said in :cite:`Wilson2015` that "for an AR(p), the partial autocorrelations [ :math:`\\alpha_k` ] will be nonzero for `k<=p`
         and zero for `k>p`."
         With this property, it is used to determine the lag of an AR-Process.
-        
-        .. rubric:: References
-        |  [6] Box, G. E., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015).
-        |  Time series analysis: forecasting and control. John Wiley & Sons.
-        |  [7] https://onlinecourses.science.psu.edu/stat510/node/62
         
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :param param: contains dictionaries {"lag": val} with int val indicating the lag to be returned
         :type param: list
         :return: the value of this feature
-        :return type: float
+        :rtype: float
         """
         if param is None:
             param = [{'lag': 3}, {'lag': 5}, {'lag': 6}]
@@ -272,10 +266,11 @@ class TremorProcessor:
     def minimum(self, x):
         """
         Calculates the lowest value of the time series x.
+        
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :return: the value of this feature
-        :return type: float
+        :rtype: float
         """
         return np.min(x)
 
@@ -285,7 +280,7 @@ class TremorProcessor:
             :param x: the time series to calculate the feature of
             :type x: pandas.Series
             :return: the value of this feature
-            :return type: float
+            :rtype: float
             """
         logging.debug("mean calculated")
 
@@ -293,16 +288,16 @@ class TremorProcessor:
 
     def ratio_value_number_to_time_series_length(self, x):
         """
-            As in tsfresh [ratioValueNumberToTimeSeriesLength]_
+            As in tsfresh `ratio_value_number_to_time_series_length <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L830>`_
 
             Returns a factor which is 1 if all values in the time series occur only once,
             and below one if this is not the case.
-            In principle, it just returns
-                # unique values / # values
+            In principle, it just returns: # unique values / # values
+            
             :param x: the time series to calculate the feature of
             :type x: pandas.Series
             :return: the value of this feature
-            :return type: float
+            :rtype: float
         """
         ratio = feature_calculators.ratio_value_number_to_time_series_length(x)
         logging.debug("ratio value number to time series length by tsfresh calculated")
@@ -310,12 +305,14 @@ class TremorProcessor:
 
     def change_quantiles(self, x, ql=None, qh=None, isabs=None, f_agg=None):
         """
-            As in tsfresh [changeQuantiles]_
+            As in tsfresh `change_quantiles <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1248>`_
 
             First fixes a corridor given by the quantiles ql and qh of the distribution of x.
             Then calculates the average, absolute value of consecutive changes of the series x inside this corridor.
             Think about selecting a corridor on the
             y-Axis and only calculating the mean of the absolute change of the time series inside this corridor.
+            
+            
             :param x: the time series to calculate the feature of
             :type x: pandas.Series
             :param ql: the lower quantile of the corridor
@@ -327,7 +324,7 @@ class TremorProcessor:
             :param f_agg: the aggregator function that is applied to the differences in the bin
             :type f_agg: str, name of a numpy function (e.g. mean, var, std, median)
             :return: the value of this feature
-            :return type: float
+            :rtype: float
         """
         if ql is None or qh is None or isabs is None or f_agg is None:
             f_agg = 'mean'
@@ -340,8 +337,8 @@ class TremorProcessor:
 
     def number_peaks(self, x, n = None):
         """
-            As in tsfresh [numberPeaks]_
-
+            As in tsfresh `number_peaks <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1003>`_
+            
             Calculates the number of peaks of at least support n in the time series x. A peak of support n is defined as a
             subsequence of x where a value occurs, which is bigger than its n neighbours to the left and to the right.
 
@@ -362,7 +359,7 @@ class TremorProcessor:
             :param n: the support of the peak
             :type n: int
             :return: the value of this feature
-            :return type: float
+            :rtype: float
             """
         if n is None:
             n = 5
@@ -372,7 +369,7 @@ class TremorProcessor:
 
     def agg_linear_trend(self, x, param = None):
         """
-            As in tsfresh [aggLinearTrend]_
+            As in tsfresh `agg_inear_trend <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1727>`_
             
             Calculates a linear least-squares regression for values of the time series that were aggregated over chunks versus
             the sequence from 0 up to the number of chunks minus one.
@@ -391,7 +388,7 @@ class TremorProcessor:
             :param param: contains dictionaries {"attr": x, "chunk_len": l, "f_agg": f} with x, f an string and l an int
             :type param: list
             :return: the different feature values
-            :return type: pandas.Series
+            :rtype: pandas.Series
         """
         if param is None:
             param = [{'attr': 'intercept', 'chunk_len': 5, 'f_agg': 'min'},{'attr': 'rvalue', 'chunk_len': 10, 'f_agg': 'var'},{'attr': 'intercept', 'chunk_len': 10, 'f_agg': 'min'}]
@@ -401,20 +398,18 @@ class TremorProcessor:
 
     def spkt_welch_density(self, x, param = None):
         '''
-            As in tsfresh [spktWelchDensity]_
+            As in tsfresh `spkt_welch_density <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L1162>`_
             This feature calculator estimates the cross power spectral density of the time series x at different frequencies.
             To do so, the time series is first shifted from the time domain to the frequency domain.
             
             The feature calculators returns the power spectrum of the different frequencies.
-            
-    
             
             :param x: the time series to calculate the feature of
             :type x: pandas.Series
             :param param: contains dictionaries {"coeff": x} with x int
             :type param: list
             :return: the different feature values
-            :return type: pandas.Series
+            :rtype: pandas.Series
         '''
         if param is None:
             param = [{'coeff': 2}, {'coeff': 5}, {'coeff': 8}]
@@ -424,34 +419,44 @@ class TremorProcessor:
 
     def percentage_of_reoccurring_datapoints_to_all_datapoints(self, x):
         """
-        As in tsfresh [percentageOfReoccurringDatapointsToAllDatapoints]_
+        As in tsfresh `percentage_of_reoccurring_datapoints_to_all_datapoints <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L739>`_
 
         Returns the percentage of unique values, that are present in the time series
         more than once.
-            len(different values occurring more than once) / len(different values)
+        
+        
+        len(different values occurring more than once) / len(different values)
+            
+            
         This means the percentage is normalized to the number of unique values,
         in contrast to the percentage_of_reoccurring_values_to_all_values.
+        
+        
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :return: the value of this feature
-        :return type: float
+        :rtype: float
         """
         _perc = feature_calculators.percentage_of_reoccurring_datapoints_to_all_datapoints(x)
         logging.debug("percentage of reoccurring datapoints to all datapoints by tsfresh calculated")
         return _perc
 
     def abs_energy(self, x):
-        r"""
-        As in tsfresh [absEnergy]_
+        """
+        As in tsfresh `abs_energy <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L390>`_
 
         Returns the absolute energy of the time series which is the sum over the squared values
-        .. math::
+        
+        
+        .. math:: 
+        
             E=\\sum_{i=1,\ldots, n}x_i^2
+        
         
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :return: the value of this feature
-        :return type: float
+        :rtype: float
         """
         _energy = feature_calculators.abs_energy(x)
         logging.debug("abs energy by tsfresh calculated")
@@ -459,7 +464,7 @@ class TremorProcessor:
 
     def fft_aggregated(self, x, param):
         """
-        As in tsfresh [fftAggregated]_
+        As in tsfresh `fft_aggregated <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L896>`_
 
         Returns the spectral centroid (mean), variance, skew, and kurtosis of the absolute fourier transform spectrum.
         
@@ -469,7 +474,7 @@ class TremorProcessor:
             "skew", "kurtosis"]
         :type param: list
         :return: the different feature values
-        :return type: pandas.Series
+        :rtype: pandas.Series
         """
         if param is None:
             param = [{'aggtype': 'centroid'}]
@@ -478,13 +483,17 @@ class TremorProcessor:
         return list(_fft_agg)
 
     def fft_coefficient(self, x, param):
-        r"""
-        As in tsfresh [fftCoefficient]_
+        """
+        As in tsfresh `fft_coefficient <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L852>`_
 
         Calculates the fourier coefficients of the one-dimensional discrete Fourier Transform for real input by fast
         fourier transformation algorithm
         
-        .. math:: A_k =  \\sum_{m=0}^{n-1} a_m \\exp \\left \\{ -2 \\pi i \\frac{m k}{n} \\right \\}, \\qquad k = 0, \\ldots , n-1.
+        
+        .. math:: 
+        
+            A_k =  \\sum_{m=0}^{n-1} a_m \\exp \\left \\{ -2 \\pi i \\frac{m k}{n} \\right \\}, \\qquad k = 0, \\ldots , n-1.
+
 
         The resulting coefficients will be complex, this feature calculator can return the real part (attr=="real"),
         the imaginary part (attr=="imag), the absolute value (attr=""abs) and the angle in degrees (attr=="angle).
@@ -495,7 +504,7 @@ class TremorProcessor:
             "abs", "angle"]
         :type param: list
         :return: the different feature values
-        :return type: pandas.Series
+        :rtype: pandas.Series
         """
         if param is None:
             param = [{'attr': 'abs', 'coeff': 44},{'attr': 'abs', 'coeff': 63},{'attr': 'abs', 'coeff': 0},{'attr': 'real', 'coeff': 0},{'attr': 'real', 'coeff': 23}]
@@ -509,7 +518,7 @@ class TremorProcessor:
         :param x: the time series to calculate the feature of
         :type x: pandas.Series
         :return: the value of this feature
-        :return type: bool
+        :rtype: bool
         """
         if len(x) == 0:
             return 0
@@ -521,10 +530,15 @@ class TremorProcessor:
             This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
             'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
 
-            :param data_frame: the data frame    
-            :param str method: fft or welch.
-            :return: amplitude is the the amplitude of the Tremor
-            :return: frequency is the frequency of the Tremor
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :param method: fft or welch.
+            :type method: str
+            :return amplitude: the amplitude of the Tremor
+            :rtype amplitude: float
+            :return frequency: the frequency of the Tremor
+            :rtype frequency: float
+
         '''
         try:
             data_frame_resampled = self.resample_signal(data_frame)
