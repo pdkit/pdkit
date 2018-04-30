@@ -50,9 +50,10 @@ def load_cloudupdrs_data(filename, time_difference=1000000000.0):
 
 def load_mpower_data(filename, time_difference=1000000000.0):
     '''
-        This method loads data in the [mpower]_ format \
+        This method loads data in the `mpower <https://www.synapse.org/#!Synapse:syn4993293/wiki/247859>`_ format
         
         The format is like: 
+        
        .. code-block:: json
             
             [
@@ -68,6 +69,7 @@ def load_mpower_data(filename, time_difference=1000000000.0):
 
        :param str filename: The path to load data from
        :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
+       
     '''
     raw_data = pd.read_json(filename)
     date_times = pd.to_datetime(raw_data.timestamp * time_difference - raw_data.timestamp[0] * time_difference)
@@ -109,8 +111,7 @@ def numerical_integration(signal, sampling_frequency):
 
 def autocorrelation(signal):
     ''' 
-        The correlation of a signal with a delayed copy of itself.
-        More info here: https://en.wikipedia.org/wiki/Autocorrelation#Estimation
+        The `correlation <https://en.wikipedia.org/wiki/Autocorrelation#Estimation>`_ of a signal with a delayed copy of itself.
 
         :param array signal: A 1-dimensional array or list (the signal).
     '''
@@ -129,7 +130,7 @@ def autocorrelation(signal):
 def peakdet(signal, delta, x = None):
     '''
         Find the local maxima and minima ("peaks") in a 1-dimensional signal.
-        Converted from MATLAB script at http://billauer.co.il/peakdet.html
+        Converted from `MATLAB script <http://billauer.co.il/peakdet.html>`_ 
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
@@ -185,23 +186,24 @@ def peakdet(signal, delta, x = None):
 def compute_interpeak(data, sample_rate):
     """
     Compute number of samples between signal peaks using the real part of FFT.
-    Parameters
-    ----------
-    data : list or numpy array
-        time series data
-    sample_rate : float
-        sample rate of accelerometer reading (Hz)
-    Returns
-    -------
-    interpeak : integer
-        number of samples between peaks
-    Examples
-    --------
+
+    :param data: list or numpy array
+    :type data: time series
+    :param sample_rate: sample rate of accelerometer reading (Hz)
+    :type sample_rate: float
+        
+    :return interpeak: number of samples between peaks 
+    :rtype interpeak: integer
+        
+        
+    :Examples:
+    
     >>> import numpy as np
     >>> from mhealthx.signals import compute_interpeak
     >>> data = np.random.random(10000)
     >>> sample_rate = 100
     >>> interpeak = compute_interpeak(data, sample_rate)
+    
     """
 
     # Real part of FFT:
@@ -219,32 +221,30 @@ def compute_interpeak(data, sample_rate):
 
 def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
     """
-    Low-pass filter data by the [order]th order zero lag Butterworth filter
+    `Low-pass filter <http://stackoverflow.com/questions/25191620/
+    creating-lowpass-filter-in-scipy-understanding-methods-and-units>`_ data by the [order]th order zero lag Butterworth filter
     whose cut frequency is set to [cutoff] Hz.
-    After http://stackoverflow.com/questions/25191620/
-    creating-lowpass-filter-in-scipy-understanding-methods-and-units
-    Parameters
-    ----------
-    data : numpy array of floats
-        time-series data
-    sample_rate : integer
-        data sample rate
-    cutoff : float
-        filter cutoff
-    order : integer
-        order
-    Returns
-    -------
-    y : numpy array of floats
-        low-pass-filtered data
-    Examples
-    --------
+    
+    :param data: time-series data,
+    :type data: numpy array of floats
+    :param: sample_rate: data sample rate
+    :type sample_rate: integer
+    :param cutoff: filter cutoff 
+    :type cutoff: float
+    :param order: order
+    :type order: integer
+    :return y: low-pass-filtered data
+    :rtype y: numpy array of floats
+        
+    :Examples:
+    
     >>> from mhealthx.signals import butter_lowpass_filter
     >>> data = np.random.random(100)
     >>> sample_rate = 10
     >>> cutoff = 5
     >>> order = 4
     >>> y = butter_lowpass_filter(data, sample_rate, cutoff, order)
+    
     """
     
 
@@ -259,22 +259,21 @@ def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
 
 def crossings_nonzero_pos2neg(data):
     """
-    Find indices of zero crossings from positive to negative values.
-    From: http://stackoverflow.com/questions/3843017/
-                 efficiently-detect-sign-changes-in-python
-    Parameters
-    ----------
-    data : numpy array of floats
-    Returns
-    -------
-    crossings : numpy array of integers
-        crossing indices to data
-    Examples
-    --------
+    Find `indices of zero crossings from positive to negative values <http://stackoverflow.com/questions/3843017/efficiently-detect-sign-changes-in-python>`_.
+    
+    
+    :param data: numpy array of floats
+    :type data: numpy array of floats
+    :return crossings: crossing indices to data 
+    :rtype crossings: numpy array of integers
+        
+    :Examples:
+    
     >>> import numpy as np
     >>> from mhealthx.signals import crossings_nonzero_pos2neg
     >>> data = np.random.random(100)
     >>> crossings = crossings_nonzero_pos2neg(data)
+    
     """
     import numpy as np
 
@@ -296,33 +295,37 @@ def autocorrelate(data, unbias=2, normalize=2):
     Compute the autocorrelation coefficients for time series data.
     Here we use scipy.signal.correlate, but the results are the same as in
     Yang, et al., 2012 for unbias=1:
+    
+    
     "The autocorrelation coefficient refers to the correlation of a time
     series with its own past or future values. iGAIT uses unbiased
     autocorrelation coefficients of acceleration data to scale the regularity
     and symmetry of gait.
-    The autocorrelation coefficients are divided by fc(0) in Eq. (6),
-    so that the autocorrelation coefficient is equal to 1 when t=0 ::
-        NFC(t) = fc(t) / fc(0)
-    Here NFC(t) is the normalised autocorrelation coefficient, and fc(t) are
+    The autocorrelation coefficients are divided by :math:`fc(0)`,
+    so that the autocorrelation coefficient is equal to :math:`1` when :math:`t=0`:
+    
+    .. math::
+        
+        NFC(t) = \\frac{fc(t)}{fc(0)}
+    
+    
+    Here :math: `NFC(t)` is the normalised autocorrelation coefficient, and :math:`fc(t)` are
     autocorrelation coefficients."
-    Parameters
-    ----------
-    data : numpy array
-        time series data
-    unbias : integer or None
-        unbiased autocorrelation: divide by range (1) or by weighted range (2)
-    normalize : integer or None
-        normalize: divide by 1st coefficient (1) or by maximum abs. value (2)
-    plot_test : Boolean
-        plot?
-    Returns
-    -------
-    coefficients : numpy array
-        [normalized, unbiased] autocorrelation coefficients
-    N : integer
-        number of coefficients
-    Examples
-    --------
+    
+    :param data: time series data
+    :type data: numpy array
+    :param unbias: autocorrelation, divide by range (1) or by weighted range (2)
+    :type unbias: integer or None
+    :param normalize: divide by 1st coefficient (1) or by maximum abs. value (2)
+    :type normalize: integer or None
+    :return coefficients: autocorrelation coefficients [normalized, unbiased]
+    :rtype coefficients: numpy array
+    :return N: number of coefficients
+    :rtype N: integer
+
+
+    :Examples:
+
     >>> import numpy as np
     >>> from mhealthx.signals import autocorrelate
     >>> data = np.random.random(100)
