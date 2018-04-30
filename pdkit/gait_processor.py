@@ -172,7 +172,7 @@ class GaitProcessor(Processor):
         
 
     def speed_of_gait(self, data_frame, wavelet_type='db3', wavelet_level=6):
-        r"""
+        """
             This method assess the speed of gait following [2].
             It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
 
@@ -181,15 +181,6 @@ class GaitProcessor(Processor):
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
             
             :return float gait_speed: The speed of gait.
-
-            .. math::
-                :label: some_label3
-
-                \begin{eqnarray}
-                    a^2+ b^2= c^2\\
-                    a^2+ b^2= c^2\\
-                    a^2+ b^2= c^2\\
-                \end{eqnarray}
         """
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
@@ -350,8 +341,6 @@ class GaitProcessor(Processor):
         '''
 
         coefficients, _ = autocorrelate(data_frame_axis, unbias=1, normalize=2)
-
-        print(self.step_period, self.stride_period)
 
         step_regularity = coefficients[self.step_period]
         stride_regularity = coefficients[self.stride_period]
