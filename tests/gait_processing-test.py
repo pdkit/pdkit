@@ -66,9 +66,9 @@ class GaitProcessingTest(unittest.TestCase):
         self.avg_number_of_strides = 7.50
         self.avg_stride_duration = 1.27
         self.sd_stride_durations = 0.21
-        self.step_regularity = 0.97
-        self.stride_regularity = 0.99
-        self.symmetry = 0.02
+        self.step_regularity = 0.51
+        self.stride_regularity = 0.82
+        self.symmetry = 0.31
         
     def tearDown(self):
         self.gp = None
