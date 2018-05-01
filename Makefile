@@ -8,6 +8,14 @@ help:
 clean:
 	rm -rf dist/*
 
+dev:
+	pip install --upgrade pip wheel setuptools
+	pip install twine
+	pip install git+https://github.com/blue-yonder/tsfresh
+	pip install -r requirements.txt
+	pip install -e .
+	pip freeze
+
 package:
 	python setup.py sdist
 	python setup.py bdist_wheel --universal

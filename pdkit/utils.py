@@ -309,7 +309,7 @@ def autocorrelate(data, unbias=2, normalize=2):
         NFC(t) = \\frac{fc(t)}{fc(0)}
     
     
-    Here :math: `NFC(t)` is the normalised autocorrelation coefficient, and :math:`fc(t)` are
+    Here :math:`NFC(t)` is the normalised autocorrelation coefficient, and :math:`fc(t)` are
     autocorrelation coefficients."
     
     :param data: time series data
