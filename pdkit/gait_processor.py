@@ -286,9 +286,8 @@ class GaitProcessor(Processor):
             :return list strike_indices: Heel strike timing indices.
         '''
         # Demean data:
-        data = data_frame_axis.abs()
+        data = data_frame_axis.values
         data -= data.mean()
-        data = data.values
 
         # Low-pass filter the AP accelerometer data by the 4th order zero lag
         # Butterworth filter whose cut frequency is set to 5 Hz:
