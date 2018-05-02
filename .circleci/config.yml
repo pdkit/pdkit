@@ -32,8 +32,7 @@ jobs:
           name: run tests
           command: |
             source venv/bin/activate
-            python tests/tremor_processing-test.py
-            python tests/gait_processing-test.py
+            make test
 
   deploy:
     docker:
