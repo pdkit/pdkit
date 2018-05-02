@@ -86,7 +86,7 @@ class TremorProcessor:
 
     def filter_signal(self, data_frame):
         '''
-            This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
+            This method filters a data frame signal as suggested in :cite:`Kassavetis2015`. First step is to high pass filter the data
             frame using a `Butterworth <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html>`_ digital and analog filter. Then this method 
             filters the data frame along one-dimension using a `digital filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_. 
 
@@ -130,7 +130,7 @@ class TremorProcessor:
 
     def tremor_amplitude(self, data_frame):
         '''
-            This methods extract the fft components and sum the ones from lower to upper freq as per [1]
+            This methods extract the fft components and sum the ones from lower to upper freq as per :cite:`Kassavetis2015`
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
@@ -158,7 +158,7 @@ class TremorProcessor:
     def tremor_amplitude_by_welch(self, data_frame):
         '''
             This methods uses the Welch method :cite:`Welch1967` to obtain the power spectral density, this is a robust 
-            alternative to using fft_signal & calc_tremor_amplitude
+            alternative to using fft_signal & tremor_amplitude
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
