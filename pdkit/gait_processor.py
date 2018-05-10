@@ -16,6 +16,8 @@ from pywt import wavedec
 from pdkit.processor import Processor
 from pdkit.gait_time_series import GaitTimeSeries
 
+from scipy.integrate import cumtrapz
+
 from pdkit.utils import (load_data,
                         numerical_integration, 
                         autocorrelation,
@@ -76,7 +78,8 @@ class GaitProcessor(Processor):
                  threshold=0.5,
                  distance=90,
                  step_period=2,
-                 stride_period=1):
+                 stride_period=1,
+                 pendulum_length=1):
 
         super().__init__(sampling_frequency,
                          cutoff_frequency,
@@ -96,6 +99,7 @@ class GaitProcessor(Processor):
         self.distance = distance
         self.step_period = step_period
         self.stride_period = stride_period
+        self.pendulum_length = pendulum_length
 
 
     def freeze_of_gait(self, data_frame):
@@ -391,6 +395,7 @@ class GaitProcessor(Processor):
 
         strides1 = strikes[0::2]
         strides2 = strikes[1::2]
+
         stride_durations1 = []
         for i in range(1, np.size(strides1)):
             stride_durations1.append(strides1[i] - strides1[i-1])
@@ -427,6 +432,82 @@ class GaitProcessor(Processor):
             avg_step_duration, sd_step_durations, strides, stride_durations, \
             avg_number_of_strides, avg_stride_duration, sd_stride_durations, \
             step_regularity, stride_regularity, symmetry
+
+    def micro_pace(self, data_frame, axis='x'):
+        time = data_frame.td.values
+        data = data_frame[axis].values
+        # data = butter_lowpass_filter(data, self.sampling_frequency, cutoff=self.cutoff_frequency)
+
+        velocity = cumtrapz(data, time)
+        # velocity = butter_lowpass_filter(velocity, self.sampling_frequency, cutoff=self.cutoff_frequency)
+
+        displacement = cumtrapz(velocity, time[0: -1])
+
+        step_length = 2 * np.sqrt(2 * self.pendulum_length * displacement - displacement ** 2)
+        step_velocity = step_length / time[1: -1]
+
+        mean_step_length = np.mean(step_length)
+        mean_step_velocity = np.mean(step_velocity)
+
+        return  mean_step_velocity,\
+                mean_step_length,\
+                # swing_time_variability,\
+                # stance_time_variability,\
+                # step_time_variability 
+
+    def micro_rythm(self, data_frame):
+        strikes, _ = self.heel_strikes(data_frame)
+        step_durations = [strikes[i] - strikes[i-1] for i in range(1, np.size(strikes))]
+
+        mean_step_time = np.mean(step_durations)
+
+        return  mean_step_time,\
+                # mean_swing_time,\
+                # mean_stance_time
+
+    def micro_variability(self, data_frame, axis='x'):
+        time = data_frame.td.values
+        data = data_frame[axis].values
+        # data = butter_lowpass_filter(data, self.sampling_frequency, cutoff=self.cutoff_frequency)
+
+        velocity = cumtrapz(data, time)
+        # velocity = butter_lowpass_filter(velocity, self.sampling_frequency, cutoff=self.cutoff_frequency)
+
+        displacement = cumtrapz(velocity, time[0: -1])
+
+        step_length = 2 * np.sqrt(2 * self.pendulum_length * displacement - displacement ** 2)
+        step_velocity = step_length / time[1: -1]
+
+        step_length_variability = np.std(step_length)
+        step_velocity_variability = np.std(step_velocity)
+
+        return  step_velocity_variability,\
+                step_length_variability
+
+    def micro_asymmetry(self):
+        pass
+
+        # return  swing_time_asymmetry,\
+        #         step_time_asymmetry,\
+        #         stance_time_asymmetry
+
+    def micro_pastural_control(self):
+        pass
+
+        # return step_length_asymmetry
+
+    def macro_volume(self, data_frame):
+        total_walking_time = data_frame.td[-1]
+        data_frame = data_frame['x']
+
+        strikes, _ = self.heel_strikes(data_frame)
+        total_steps = np.size(strikes)
+
+        return  total_walking_time,\
+                total_steps,\
+                # total_bouts,\
+                # mean_bout_length
+
 
 
 if __name__ == '__main__':
