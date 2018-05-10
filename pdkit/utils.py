@@ -135,6 +135,8 @@ def peakdet(signal, delta, x = None):
         :param array signal: A 1-dimensional array or list (the signal).
         :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
         :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
+    
+        :return np.array(maxtab), np.array(mintab)
     '''
     
     maxtab = []
