@@ -10,6 +10,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+from numpy import mean
 from scipy import interpolate, signal, fft
 from tsfresh.feature_extraction import feature_calculators
 
@@ -84,7 +85,7 @@ class TremorProcessor:
         logging.debug("resample signal")
         return df_resampled.interpolate(method='linear')
 
-    def filter_signal(self, data_frame):
+    def filter_signal(self, data_frame, ts = 'mag_sum_acc'):
         '''
             This method filters a data frame signal as suggested in :cite:`Kassavetis2015`. First step is to high pass filter the data
             frame using a `Butterworth <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html>`_ digital and analog filter. Then this method 
@@ -92,11 +93,13 @@ class TremorProcessor:
 
             :param data_frame: the input data frame
             :type data_frame: pandas.DataFrame
+            :param ts: time series name of data frame to filter
+            :type ts: string
             :return data_frame: adds a column named 'filtered_signal' to the data frame
             :rtype data_frame: pandas.DataFrame
         '''
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
-        filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
+        filtered_signal = signal.lfilter(b, a, data_frame[ts].values)
         data_frame['filtered_signal'] = filtered_signal
 
         logging.debug("filter signal")
@@ -128,15 +131,15 @@ class TremorProcessor:
         logging.debug("fft signal")
         return data_frame_fft
 
-    def tremor_amplitude(self, data_frame):
+    def calculate_amplitude(self, data_frame):
         '''
             This methods extract the fft components and sum the ones from lower to upper freq as per :cite:`Kassavetis2015`
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return amplitude: the amplitude of the Tremor
+            :return amplitude: the amplitude
             :rtype amplitude: float
-            :return frequency: the frequency of the Tremor
+            :return frequency: the frequency
             :rtype frequency: float
         '''
         signal_length = len(data_frame.filtered_signal)
@@ -155,16 +158,16 @@ class TremorProcessor:
 
         return amplitude, frequency
 
-    def tremor_amplitude_by_welch(self, data_frame):
+    def calculate_amplitude_by_welch(self, data_frame):
         '''
             This methods uses the Welch method :cite:`Welch1967` to obtain the power spectral density, this is a robust 
-            alternative to using fft_signal & tremor_amplitude
+            alternative to using fft_signal & calculate_amplitude
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: amplitude is the the amplitude of the Tremor
+            :return: the amplitude
             :rtype amplitude: float
-            :return: frequency is the frequency of the Tremor
+            :return: the frequency
             :rtype frequency: float
         '''
         frq, Pxx_den = signal.welch(data_frame.filtered_signal.values, self.sampling_frequency, nperseg=self.window)
@@ -525,6 +528,50 @@ class TremorProcessor:
 
         return np.sum(x)
 
+    def dc_remove_signal(self, data_frame):
+        '''
+            This method remove the dc component of the signal as per :cite:`Kassavetis2015`
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return: the data frame with dc remove signal field
+            :rtype: pandas.DataFrame
+        '''
+
+        mean_signal = mean(data_frame.mag_sum_acc)
+        data_frame['dc_mag_sum_acc'] = data_frame.mag_sum_acc - mean_signal
+        logging.debug("dc remove signal")
+        return data_frame
+
+    def bradykinesia(self, data_frame, method = 'fft'):
+        '''
+            This method calculates the bradykinesia amplitude of the data frame. It accepts two different methods,
+            'fft' and 'welch'. First the signal gets re-sampled, dc removed and then high pass filtered.
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :param method: fft or welch.
+            :type method: str
+            :return amplitude: the amplitude of the Bradykinesia
+            :rtype amplitude: float
+            :return frequency: the frequency of the Bradykinesia
+            :rtype frequency: float
+
+        '''
+        try:
+            data_frame_resampled = self.resample_signal(data_frame)
+            data_frame_dc = self.dc_remove_signal(data_frame_resampled)
+            data_frame_filtered = self.filter_signal(data_frame_dc, 'dc_mag_sum_acc')
+
+            if method == 'fft':
+                data_frame_fft = self.fft_signal(data_frame_filtered)
+                return self.calculate_amplitude(data_frame_fft)
+            else:
+                return self.calculate_amplitude_by_welch(data_frame_filtered)
+        except ValueError as verr:
+            logging.error("TremorProcessor bradykinesia ValueError ->%s", verr.message)
+        except:
+            logging.error("Unexpected error on TemorProcessor bradykinesia: %s", sys.exc_info()[0])
+
     def process(self, data_frame, method='fft'):
         '''
             This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
@@ -546,9 +593,9 @@ class TremorProcessor:
 
             if method == 'fft':
                 data_frame_fft = self.fft_signal(data_frame_filtered)
-                return self.tremor_amplitude(data_frame_fft)
+                return self.calculate_amplitude(data_frame_fft)
             else:
-                return self.tremor_amplitude_by_welch(data_frame_filtered)
+                return self.calculate_amplitude_by_welch(data_frame_filtered)
 
         except ValueError as verr:
             logging.error("TremorProcessor ValueError ->%s", verr.message)
