@@ -10,7 +10,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-from numpy import mean
 from scipy import interpolate, signal, fft
 from tsfresh.feature_extraction import feature_calculators
 
@@ -530,14 +529,15 @@ class TremorProcessor:
 
     def dc_remove_signal(self, data_frame):
         '''
-            This method remove the dc component of the signal as per :cite:`Kassavetis2015`
+            Removes the dc component of the signal as per :cite:`Kassavetis2015`
+
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
             :return: the data frame with dc remove signal field
             :rtype: pandas.DataFrame
         '''
 
-        mean_signal = mean(data_frame.mag_sum_acc)
+        mean_signal = np.mean(data_frame.mag_sum_acc)
         data_frame['dc_mag_sum_acc'] = data_frame.mag_sum_acc - mean_signal
         logging.debug("dc remove signal")
         return data_frame
@@ -574,7 +574,7 @@ class TremorProcessor:
 
     def process(self, data_frame, method='fft'):
         '''
-            This methods calculates the tremor amplitude of the data frame. It accepts two different methods,
+            This method calculates the tremor amplitude of the data frame. It accepts two different methods,
             'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
 
             :param data_frame: the data frame
