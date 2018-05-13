@@ -45,10 +45,10 @@ class FingerTappingProcessingTest(unittest.TestCase):
         mmt = self.ftp.mean_moving_time(ts)
         self.assertEqual(float("{0:.14f}".format(mmt)), float("{0:.14f}".format(136.75369458128074)))
 
-    def test_tremor_amplitude_welch_cloudupdrs(self):
+    def test_finger_tapping_mean_alnt_target_distance(self):
         ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
         matd = self.ftp.mean_alnt_target_distance(ts)
-        self.assertEqual(float("{0:.14f}".format(matd)), float("{0:.14f}".format(5.0055189177887085)))
+        self.assertEqual(float("{0:.14f}".format(matd)), float("{0:.14f}".format(480.04403524710443)))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(FingerTappingProcessingTest)
