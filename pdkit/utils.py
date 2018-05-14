@@ -23,13 +23,13 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
        
       .. code-block:: json
       
-         timestamp0, x0, y0, z0
-         timestamp1, x1, y1, z1
-         timestamp0, x2, y2, z2
+         timestamp_0, x_0, y_0, z_0
+         timestamp_1, x_1, y_1, z_1
+         timestamp_2, x_2, y_2, z_2
          .
          .
          .
-         timestampn, xn, yn, zn
+         timestamp_n, x_n, y_n, z_n
        
       where x, y, z are the components of the acceleration
 
@@ -84,6 +84,27 @@ def load_mpower_data(filename, convert_times=1000000000.0):
 
 
 def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
+    '''
+           This method loads data in the cloudupdrs format for the finger tapping processor
+
+           Usually the data will be saved in a csv file and it should look like this:
+
+          .. code-block:: json
+
+             timestamp_0, . , action_type_0, x_0, y_0, . , . , x_target_0, y_target_0
+             timestamp_1, . , action_type_1, x_1, y_1, . , . , x_target_1, y_target_1
+             timestamp_2, . , action_type_2, x_2, y_2, . , . , x_target_2, y_target_2
+             .
+             .
+             .
+             timestamp_n, . , action_type_n, x_n, y_n, . , . , x_target_n, y_target_n
+
+          where data_frame.x, data_frame.y: components of tapping position. data_frame.x_target,
+            data_frame.y_target their target.
+
+          :param str filename: The path to load data from
+          :param float convert_times: Convert times. The default is from from milliseconds to seconds.
+    '''
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False, skip_footer=1)
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
     time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times

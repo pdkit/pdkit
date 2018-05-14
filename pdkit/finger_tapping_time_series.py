@@ -33,8 +33,8 @@ class FingerTappingTimeSeries:
 
             :param str filename: The path to load data from
             :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-            :return dataframe: data_frame.x, data_frame.y, data_frame.x_target, data_frame.x_target: x, y, components of
-             tapping position. x_target, y_target their target. data_frame.index is the datetime-like index
+            :return dataframe: data_frame.x, data_frame.y: components of tapping position. data_frame.x_target,
+            data_frame.y_target their target. data_frame.index is the datetime-like index
         '''
         try:
             ts = load_data(filename, format_file)

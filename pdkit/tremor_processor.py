@@ -33,8 +33,7 @@ class TremorProcessor:
          
         >>> import pdkit
         >>> tp = pdkit.TremorProcessor()
-        >>> path = 'path/to/data.csv’
-        >>> ts = TremorTimeSeries().load(path)
+        >>> ts = pdkit.TremorTimeSeries().load(path_to_data)
         >>> amplitude, frequency = tp.process(ts)
     '''
 
