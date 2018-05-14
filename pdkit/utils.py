@@ -15,7 +15,7 @@ from scipy.fftpack import rfft, fftfreq
 from scipy.signal import butter, lfilter, correlate
 
 
-def load_cloudupdrs_data(filename, time_difference=1000000000.0):
+def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     '''
        This method loads data in the cloudupdrs format
        
@@ -23,23 +23,23 @@ def load_cloudupdrs_data(filename, time_difference=1000000000.0):
        
       .. code-block:: json
       
-         timestamp0, x0, y0, z0
-         timestamp1, x1, y1, z1
-         timestamp0, x2, y2, z2
+         timestamp_0, x_0, y_0, z_0
+         timestamp_1, x_1, y_1, z_1
+         timestamp_2, x_2, y_2, z_2
          .
          .
          .
-         timestampn, xn, yn, zn
+         timestamp_n, x_n, y_n, z_n
        
       where x, y, z are the components of the acceleration
 
       :param str filename: The path to load data from
-      :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
+      :param float convert_times: Convert times. The default is from from nanoseconds to seconds.
     '''
     # data_m = pd.read_table(filename, sep=',', header=None)
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
-    time_difference = (data_m[:, 0] - data_m[0, 0]) / time_difference
+    time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
     magnitude_sum_acceleration = \
         np.sqrt(data_m[:, 1] ** 2 + data_m[:, 2] ** 2 + data_m[:, 3] ** 2)
     data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'z': data_m[:, 3],
@@ -48,7 +48,7 @@ def load_cloudupdrs_data(filename, time_difference=1000000000.0):
     return data_frame
 
 
-def load_mpower_data(filename, time_difference=1000000000.0):
+def load_mpower_data(filename, convert_times=1000000000.0):
     '''
         This method loads data in the `mpower <https://www.synapse.org/#!Synapse:syn4993293/wiki/247859>`_ format
         
@@ -72,7 +72,7 @@ def load_mpower_data(filename, time_difference=1000000000.0):
        
     '''
     raw_data = pd.read_json(filename)
-    date_times = pd.to_datetime(raw_data.timestamp * time_difference - raw_data.timestamp[0] * time_difference)
+    date_times = pd.to_datetime(raw_data.timestamp * convert_times - raw_data.timestamp[0] * convert_times)
     time_difference = (raw_data.timestamp - raw_data.timestamp[0])
     time_difference = time_difference.values
     magnitude_sum_acceleration = \
@@ -80,6 +80,37 @@ def load_mpower_data(filename, time_difference=1000000000.0):
     data = {'td': time_difference, 'x': raw_data.x.values, 'y': raw_data.y.values,
             'z': raw_data.z.values, 'mag_sum_acc': magnitude_sum_acceleration}
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
+    return data_frame
+
+
+def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
+    '''
+           This method loads data in the cloudupdrs format for the finger tapping processor
+
+           Usually the data will be saved in a csv file and it should look like this:
+
+          .. code-block:: json
+
+             timestamp_0, . , action_type_0, x_0, y_0, . , . , x_target_0, y_target_0
+             timestamp_1, . , action_type_1, x_1, y_1, . , . , x_target_1, y_target_1
+             timestamp_2, . , action_type_2, x_2, y_2, . , . , x_target_2, y_target_2
+             .
+             .
+             .
+             timestamp_n, . , action_type_n, x_n, y_n, . , . , x_target_n, y_target_n
+
+          where data_frame.x, data_frame.y: components of tapping position. data_frame.x_target,
+            data_frame.y_target their target.
+
+          :param str filename: The path to load data from
+          :param float convert_times: Convert times. The default is from from milliseconds to seconds.
+    '''
+    data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False, skip_footer=1)
+    date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
+    time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
+    data = {'td': time_difference, 'action_type': data_m[:, 2],'x': data_m[:, 3], 'y': data_m[:, 4],
+            'x_target': data_m[:, 7], 'y_target': data_m[:, 8]}
+    data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'action_type','x', 'y', 'x_target', 'y_target'])
     return data_frame
 
 
@@ -93,7 +124,10 @@ def load_data(filename, format_file='cloudupdrs'):
     if format_file == 'mpower':
         return load_mpower_data(filename)
     else:
-        return load_cloudupdrs_data(filename)
+        if format_file == 'ft_cloudupdrs':
+            return load_finger_tapping_cloudupdrs_data(filename)
+        else:
+            return load_cloudupdrs_data(filename)
 
 
 def numerical_integration(signal, sampling_frequency):
@@ -108,6 +142,7 @@ def numerical_integration(signal, sampling_frequency):
     integrate /= sampling_frequency * 2
     
     return integrate
+
 
 def autocorrelation(signal):
     ''' 
@@ -185,6 +220,7 @@ def peakdet(signal, delta, x = None):
 
     return np.array(maxtab), np.array(mintab)
 
+
 def compute_interpeak(data, sample_rate):
     """
     Compute number of samples between signal peaks using the real part of FFT.
@@ -220,6 +256,7 @@ def compute_interpeak(data, sample_rate):
     interpeak = np.int(np.round(sample_rate / freq))
 
     return interpeak
+
 
 def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
     """
@@ -291,6 +328,7 @@ def crossings_nonzero_pos2neg(data):
     crossings = (pos[:-1] & ~pos[1:]).nonzero()[0]
 
     return crossings
+
 
 def autocorrelate(data, unbias=2, normalize=2):
     """

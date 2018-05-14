@@ -8,6 +8,7 @@ Contents:
 
    tremor
    gait
+   tapping
    utils
 
 Indices and tables

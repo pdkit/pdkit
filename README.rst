@@ -6,6 +6,8 @@
 
 #PDKIT
 
+## TREMOR PROCESSOR
+
 Example how to use pdkit to calculate Tremor amplitude and frequency:
 
     >>> import pdkit
@@ -25,6 +27,14 @@ To calculate Welch, as a robust alternative to using Fast Fourier Transform, use
 
     >>> amplitude, frequency = tp.process(ts, 'welch')
 
+## BRADYKINESIA
+
+    >> import pdkit
+    >> ts = pdkit.TremorTimeSeries().load(filename)
+    >> tp = pdkit.TremorProcessor(lower_frequency=0.0, upper_frequency=4.0)
+    >> amplitude, frequency = tp.bradykinesia(ts)
+
+## GAIT
 Example how to use pdkit to calculate various Gait features:
 
     >>> import pdkit
