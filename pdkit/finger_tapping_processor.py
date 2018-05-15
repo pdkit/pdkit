@@ -14,10 +14,7 @@ import pandas as pd
 
 class FingerTappingProcessor:
     '''
-            This is the main Finger Tapping Processor class. Once the data is loaded it will be
-            accessible at data_frame (pandas.DataFrame), where it looks like:
-            data_frame.x, data_frame.y: components of tapping position. data_frame.x_target,
-            data_frame.y_target their target.
+            This is the main Finger Tapping Processor class. Once the data is loaded it will be accessible at data_frame (pandas.DataFrame), where it looks like: data_frame.x, data_frame.y: components of tapping position. data_frame.x_target, data_frame.y_target their target.
 
             These values are recommended by the author of the pilot study :cite:`Kassavetis2015`. Check reference for more details.
 
@@ -122,3 +119,17 @@ class FingerTappingProcessor:
         matd = np.mean(dist[np.arange(1,len(dist),2)])
 
         return matd
+
+    def kinesia_score_30(self, data_frame):
+        '''
+            This method calculates the mean number of key taps in 30 seconds (KS30)
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return: KS30
+            :rtype: float
+
+        '''
+        tap_timestamps = data_frame.td[data_frame.action_type == 1]
+        grouped = tap_timestamps.groupby(pd.TimeGrouper('30u'))
+        return np.mean(grouped.size().values)
