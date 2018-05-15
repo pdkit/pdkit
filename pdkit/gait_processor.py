@@ -11,12 +11,14 @@ import numpy as np
 import pandas as pd
 
 from scipy import interpolate, signal, fft
+from scipy.fftpack import rfft
 from pywt import wavedec
 
 from pdkit.processor import Processor
 from pdkit.gait_time_series import GaitTimeSeries
 
 from scipy.integrate import cumtrapz
+
 
 from pdkit.utils import (load_data,
                         numerical_integration, 
@@ -380,7 +382,7 @@ class GaitProcessor(Processor):
         self.duration = data_frame.td[-1]
         data_frame = data_frame[axis]
         
-        strikes, _ = self.heel_strikes(data_frame)
+        strikes, strikes_ids = self.heel_strikes(data_frame)
 
         step_durations = []
         for i in range(1, np.size(strikes)):
@@ -391,6 +393,7 @@ class GaitProcessor(Processor):
 
         number_of_steps = np.size(strikes)
 
+        # Cadence
         cadence = number_of_steps / self.duration
 
         strides1 = strikes[0::2]
@@ -399,6 +402,7 @@ class GaitProcessor(Processor):
         stride_durations1 = []
         for i in range(1, np.size(strides1)):
             stride_durations1.append(strides1[i] - strides1[i-1])
+
         stride_durations2 = []
         for i in range(1, np.size(strides2)):
             stride_durations2.append(strides2[i] - strides2[i-1])
@@ -426,6 +430,12 @@ class GaitProcessor(Processor):
             velocity = None
             avg_step_length = None
             avg_stride_length = None
+
+        # Acceleration amplitude variability
+        acceleration_amplitude_variability = [data_frame[strikes_ids[i]: strikes_ids[i+1]].std() for i in range(len(strikes_ids) -1)]
+
+        # Cycle frequency in Hertz
+        cycle_frequency = self.sampling_frequency * rfft(data_frame).argmax() / data_frame.shape[0]
 
         return number_of_steps, cadence, velocity, \
             avg_step_length, avg_stride_length, step_durations, \
@@ -456,8 +466,10 @@ class GaitProcessor(Processor):
                 # step_time_variability 
 
     def micro_rythm(self, data_frame):
-        strikes, _ = self.heel_strikes(data_frame)
+        strikes, indices = self.heel_strikes(data_frame)
         step_durations = [strikes[i] - strikes[i-1] for i in range(1, np.size(strikes))]
+
+
 
         mean_step_time = np.mean(step_durations)
 
@@ -515,3 +527,16 @@ if __name__ == '__main__':
     ts = ts.load_data('../tests/data/cloudupdrs_gait.csv')
 
     gp = GaitProcessor()
+
+# fix readthedocs!!!!! !!!
+
+# put this list in pivotal
+# list of implented vs lackcing gait features from paper (ieee-xplore)
+# george will send wavelet for step length without distance :)
+# identify the mid-section in walking and characterize:
+    # count number of steps it takes to fully rotate body
+    # rotational acceleration
+    # use quaternions for this
+
+# add units of measurement for all outputs
+# add references to functions
