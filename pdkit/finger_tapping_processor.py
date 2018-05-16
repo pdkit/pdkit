@@ -10,6 +10,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import math
 
 
 class FingerTappingProcessor:
@@ -120,16 +121,37 @@ class FingerTappingProcessor:
 
         return matd
 
-    def kinesia_score_30(self, data_frame):
+    def kinesia_scores(self, data_frame):
         '''
-            This method calculates the mean number of key taps in 30 seconds (KS30)
+            This method calculates the number of key taps
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: KS30
+            :return ks: key taps
+            :rtype ks: float
+            :return duration: test duration (seconds)
             :rtype: float
 
         '''
-        tap_timestamps = data_frame.td[data_frame.action_type == 1]
-        grouped = tap_timestamps.groupby(pd.TimeGrouper('30u'))
-        return np.mean(grouped.size().values)
+        # tap_timestamps = data_frame.td[data_frame.action_type == 1]
+        # grouped = tap_timestamps.groupby(pd.TimeGrouper('30u'))
+        # return np.mean(grouped.size().values)
+        ks = sum(data_frame.action_type == 1)
+        duration = math.ceil(data_frame.td[-1])
+        return ks, duration
+
+    def akinesia_times(self, data_frame):
+        '''
+            This method calculates akinesia times, mean dwell time on each key in milliseconds
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return: AT30
+            :rtype: float
+        '''
+
+        raise_timestamps = data_frame.td[data_frame.action_type == 1]
+        down_timestamps = data_frame.td[data_frame.action_type == 0]
+        at = np.mean(down_timestamps.values - raise_timestamps.values)
+        duration = math.ceil(data_frame.td[-1])
+        return np.abs(at), duration
