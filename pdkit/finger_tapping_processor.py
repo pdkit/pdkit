@@ -118,7 +118,7 @@ class FingerTappingProcessor:
         '''
         diff = data_frame.td[1:-1].values - data_frame.td[0:-2].values
 
-        return np.var(diff[np.arange(1, len(diff), 2)]) * 1000.0
+        return np.var(diff[np.arange(1, len(diff), 2)], dtype=np.float64) * 1000.0
 
     def mean_alnt_target_distance(self, data_frame):
         '''
@@ -172,3 +172,16 @@ class FingerTappingProcessor:
         duration = math.ceil(data_frame.td[-1])
         return np.abs(at), duration
 
+    def dysmetria_score(self, data_frame):
+        '''
+            This method calculates accuracy of target taps in pixels
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return ds: dysmetria score in pixels
+            :rtype ds: float
+
+        '''
+        tap_data = data_frame[data_frame.action_type == 0]
+        ds = np.mean(np.sqrt((tap_data.x - tap_data.x_target) ** 2 + (tap_data.y - tap_data.y_target) ** 2))
+        return ds
