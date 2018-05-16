@@ -50,8 +50,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return frequency: frequency
+            :rtype frequency: float
 
         '''
         freq = sum(data_frame.action_type == 1) / data_frame.td[-1]
@@ -63,8 +63,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return diff_mov_freq: frequency
+            :rtype diff_mov_freq: float
 
         '''
         f = []
@@ -81,8 +81,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return cont_freq: frequency
+            :rtype cont_freq: float
 
         '''
         tap_timestamps = data_frame.td[data_frame.action_type==1]
@@ -96,8 +96,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: the mean moving time in ms
-            :rtype: float
+            :return mmt: the mean moving time in ms
+            :rtype mmt: float
 
         '''
         diff = data_frame.td[1:-1].values-data_frame.td[0:-2].values
@@ -106,14 +106,28 @@ class FingerTappingProcessor:
         # convert to ms
         return mmt * 1000.0
 
+    def incoordination_score(self, data_frame):
+        '''
+            This method calculates the variance of the time interval in msec between taps
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return is: incoordination score
+            :rtype is: float
+
+        '''
+        diff = data_frame.td[1:-1].values - data_frame.td[0:-2].values
+
+        return np.var(diff[np.arange(1, len(diff), 2)]) * 1000.0
+
     def mean_alnt_target_distance(self, data_frame):
         '''
             This method calculates the distance (number of pixels) between alternate tapping
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: the mean alternate target distance in pixels
-            :rtype: float
+            :return matd: the mean alternate target distance in pixels
+            :rtype matd: float
 
         '''
         dist = np.sqrt((data_frame.x[1:-1].values-data_frame.x[0:-2].values)**2+(data_frame.y[1:-1].values-data_frame.y[0:-2].values)**2)
@@ -130,7 +144,7 @@ class FingerTappingProcessor:
             :return ks: key taps
             :rtype ks: float
             :return duration: test duration (seconds)
-            :rtype: float
+            :rtype duration: float
 
         '''
         # tap_timestamps = data_frame.td[data_frame.action_type == 1]
@@ -146,8 +160,10 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: AT30
-            :rtype: float
+            :return at: akinesia times
+            :rtype at: float
+            :return duration: test duration (seconds)
+            :rtype duration: float
         '''
 
         raise_timestamps = data_frame.td[data_frame.action_type == 1]
@@ -155,3 +171,4 @@ class FingerTappingProcessor:
         at = np.mean(down_timestamps.values - raise_timestamps.values)
         duration = math.ceil(data_frame.td[-1])
         return np.abs(at), duration
+
