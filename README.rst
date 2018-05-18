@@ -51,3 +51,17 @@ Example how to use pdkit to calculate various Gait features:
     >>> step_regularity, stride_regularity, walk_symmetry = gp.walk_regularity_symmetry(ts)
 
 where, filename is the data path to load, by default in the cloudUPDRS format.
+
+FINGER TAPPING
+**************
+
+Example how to use pdkit to calculate the mean alternate distance of the finger tapping tests:
+
+    >>> import pdkit
+    >>> ts = pdkit.FingerTappingTimeSeries().load(filename, 'ft_cloudupdrs')
+    >>> ftp = pdkit.FingerTappingProcessor()
+    >>> ftp.mean_alnt_target_distance(ts)
+
+kinesia scores (the number of key taps)
+
+    >>> ftp.kinesia_scores(ts)
