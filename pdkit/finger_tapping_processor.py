@@ -10,14 +10,12 @@ import logging
 
 import numpy as np
 import pandas as pd
+import math
 
 
 class FingerTappingProcessor:
     '''
-            This is the main Finger Tapping Processor class. Once the data is loaded it will be
-            accessible at data_frame (pandas.DataFrame), where it looks like:
-            data_frame.x, data_frame.y: components of tapping position. data_frame.x_target,
-            data_frame.y_target their target.
+            This is the main Finger Tapping Processor class. Once the data is loaded it will be accessible at data_frame (pandas.DataFrame), where it looks like: data_frame.x, data_frame.y: components of tapping position. data_frame.x_target, data_frame.y_target their target.
 
             These values are recommended by the author of the pilot study :cite:`Kassavetis2015`. Check reference for more details.
 
@@ -52,8 +50,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return frequency: frequency
+            :rtype frequency: float
 
         '''
         freq = sum(data_frame.action_type == 1) / data_frame.td[-1]
@@ -65,8 +63,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return diff_mov_freq: frequency
+            :rtype diff_mov_freq: float
 
         '''
         f = []
@@ -83,8 +81,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: frequency
-            :rtype: float
+            :return cont_freq: frequency
+            :rtype cont_freq: float
 
         '''
         tap_timestamps = data_frame.td[data_frame.action_type==1]
@@ -98,8 +96,8 @@ class FingerTappingProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: the mean moving time in ms
-            :rtype: float
+            :return mmt: the mean moving time in ms
+            :rtype mmt: float
 
         '''
         diff = data_frame.td[1:-1].values-data_frame.td[0:-2].values
@@ -108,17 +106,82 @@ class FingerTappingProcessor:
         # convert to ms
         return mmt * 1000.0
 
+    def incoordination_score(self, data_frame):
+        '''
+            This method calculates the variance of the time interval in msec between taps
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return is: incoordination score
+            :rtype is: float
+
+        '''
+        diff = data_frame.td[1:-1].values - data_frame.td[0:-2].values
+
+        return np.var(diff[np.arange(1, len(diff), 2)], dtype=np.float64) * 1000.0
+
     def mean_alnt_target_distance(self, data_frame):
         '''
             This method calculates the distance (number of pixels) between alternate tapping
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: the mean alternate target distance in pixels
-            :rtype: float
+            :return matd: the mean alternate target distance in pixels
+            :rtype matd: float
 
         '''
         dist = np.sqrt((data_frame.x[1:-1].values-data_frame.x[0:-2].values)**2+(data_frame.y[1:-1].values-data_frame.y[0:-2].values)**2)
         matd = np.mean(dist[np.arange(1,len(dist),2)])
 
         return matd
+
+    def kinesia_scores(self, data_frame):
+        '''
+            This method calculates the number of key taps
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return ks: key taps
+            :rtype ks: float
+            :return duration: test duration (seconds)
+            :rtype duration: float
+
+        '''
+        # tap_timestamps = data_frame.td[data_frame.action_type == 1]
+        # grouped = tap_timestamps.groupby(pd.TimeGrouper('30u'))
+        # return np.mean(grouped.size().values)
+        ks = sum(data_frame.action_type == 1)
+        duration = math.ceil(data_frame.td[-1])
+        return ks, duration
+
+    def akinesia_times(self, data_frame):
+        '''
+            This method calculates akinesia times, mean dwell time on each key in milliseconds
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return at: akinesia times
+            :rtype at: float
+            :return duration: test duration (seconds)
+            :rtype duration: float
+        '''
+
+        raise_timestamps = data_frame.td[data_frame.action_type == 1]
+        down_timestamps = data_frame.td[data_frame.action_type == 0]
+        at = np.mean(down_timestamps.values - raise_timestamps.values)
+        duration = math.ceil(data_frame.td[-1])
+        return np.abs(at), duration
+
+    def dysmetria_score(self, data_frame):
+        '''
+            This method calculates accuracy of target taps in pixels
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return ds: dysmetria score in pixels
+            :rtype ds: float
+
+        '''
+        tap_data = data_frame[data_frame.action_type == 0]
+        ds = np.mean(np.sqrt((tap_data.x - tap_data.x_target) ** 2 + (tap_data.y - tap_data.y_target) ** 2))
+        return ds
