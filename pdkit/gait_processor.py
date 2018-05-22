@@ -353,6 +353,8 @@ class GaitProcessor(Processor):
 
         return step_regularity, stride_regularity, symmetry
 
+    def root_mean_square(self, data_frame):
+        return 
 
     def gait(self, data_frame, axis='x'):
         '''
@@ -380,9 +382,9 @@ class GaitProcessor(Processor):
         '''
 
         self.duration = data_frame.td[-1]
-        data_frame = data_frame[axis]
+        data = data_frame[axis]
         
-        strikes, strikes_ids = self.heel_strikes(data_frame)
+        strikes, strikes_ids = self.heel_strikes(data)
 
         step_durations = []
         for i in range(1, np.size(strikes)):
@@ -393,7 +395,7 @@ class GaitProcessor(Processor):
 
         number_of_steps = np.size(strikes)
 
-        # Cadence
+        # Cadence in steps / duration
         cadence = number_of_steps / self.duration
 
         strides1 = strikes[0::2]
@@ -419,7 +421,7 @@ class GaitProcessor(Processor):
         self.step_period = np.int(np.round(1 / avg_step_duration))
         self.stride_period = np.int(np.round(1 / avg_stride_duration))
 
-        step_regularity, stride_regularity, symmetry = self.gait_regularity_symmetry(data_frame)
+        step_regularity, stride_regularity, symmetry = self.gait_regularity_symmetry(data)
 
         # Set distance-based measures to None if distance not set:
         if self.distance:
@@ -432,10 +434,57 @@ class GaitProcessor(Processor):
             avg_stride_length = None
 
         # Acceleration amplitude variability
-        acceleration_amplitude_variability = [data_frame[strikes_ids[i]: strikes_ids[i+1]].std() for i in range(len(strikes_ids) -1)]
+        acceleration_amplitude_variability = [data[strikes_ids[i]: strikes_ids[i+1]].std() for i in range(len(strikes_ids) -1)]
 
         # Cycle frequency in Hertz
-        cycle_frequency = self.sampling_frequency * rfft(data_frame).argmax() / data_frame.shape[0]
+        cycle_frequency = self.sampling_frequency * rfft(data).argmax() / data.shape[0]
+
+        # Foot symmetry
+        walking = data[strikes_ids[0]: strikes_ids[-1]]
+        total_steps = len(walking)
+
+        steps = []
+
+        for z in range(len(strikes_ids) - 1):
+            steps.append([data[strikes_ids[z]: strikes_ids[z+1]]])
+
+        first_foot= [len(a[0]) for a in steps[::2]]
+        second_foot = [len(a[0])  for a in steps[1::2]]
+
+        first_sym = np.sum([a / total_steps for a in first_foot])
+        second_sym = np.sum([a / total_steps for a in second_foot])
+
+        # Gait irregularity
+        first_foot_gait_irreg = [a / self.sampling_frequency for a in first_foot]
+        second_foot_gait_irreg = [a / self.sampling_frequency for a in second_foot]
+
+        gait_irregularity = np.mean([first_foot_gait_irreg, second_foot_gait_irreg])
+
+        # Gait variability
+
+        # Harmonic ratio
+        sig_fft = np.fft.fft(data)
+        bins, _ = np.histogram(sig_fft, 100)
+
+        harmonic_ratio = np.sum(bins[::2]) / np.sum(bins[1::2])
+
+        # Root mean square
+        root_mean_square = np.sqrt(np.mean(data_frame.mag_sum_acc))
+
+        # Step timing variability
+        step_timing_variability = np.std([len(a) for a in steps])
+
+        # Strides
+        first_strides = list(zip(first_foot[::2], first_foot[1::2]))
+        second_strides = list(zip(second_foot[::2], second_foot[1::2]))
+
+        # Stride duration
+        first_str_duration = [np.sum(a) / self.sampling_frequency for a in first_strides]
+        second_str_duration = [np.sum(a) / self.sampling_frequency for a in second_strides]
+
+        # Stride frequency
+        
+
 
         return number_of_steps, cadence, velocity, \
             avg_step_length, avg_stride_length, step_durations, \
