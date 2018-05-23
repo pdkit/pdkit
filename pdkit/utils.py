@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Copyright 2018 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
