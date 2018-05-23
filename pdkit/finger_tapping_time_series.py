@@ -12,12 +12,12 @@ import pandas_validator as pv
 
 class FTCloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     column_num = 6
-    td = pv.FloatColumnValidator('td', min_value=-1, max_value=1000)
+    td = pv.FloatColumnValidator('td', min_value=-1, max_value=10000)
     action_type = pv.FloatColumnValidator('action_type', min_value=0, max_value=1)
-    x = pv.FloatColumnValidator('x', min_value=-1000, max_value=1000)
-    y = pv.FloatColumnValidator('y', min_value=-1000, max_value=1000)
-    x_target = pv.FloatColumnValidator('x_target', min_value=-1000, max_value=1000)
-    y_target = pv.FloatColumnValidator('y_target', min_value=-1000, max_value=1000)
+    x = pv.FloatColumnValidator('x', min_value=-10000, max_value=10000)
+    y = pv.FloatColumnValidator('y', min_value=-10000, max_value=10000)
+    x_target = pv.FloatColumnValidator('x_target', min_value=-10000, max_value=10000)
+    y_target = pv.FloatColumnValidator('y_target', min_value=-10000, max_value=10000)
 
 
 class FingerTappingTimeSeries:
