@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Copyright 2018 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
@@ -120,6 +122,7 @@ class GaitProcessor(Processor):
         data = data.y.values
 
         f_res = self.sampling_frequency / self.window
+
         f_nr_LBs = int(self.loco_band[0] / f_res)
         f_nr_LBe = int(self.loco_band[1] / f_res)
         f_nr_FBs = int(self.freeze_band[0] / f_res)
@@ -517,9 +520,7 @@ class GaitProcessor(Processor):
     def micro_rythm(self, data_frame):
         strikes, indices = self.heel_strikes(data_frame)
         step_durations = [strikes[i] - strikes[i-1] for i in range(1, np.size(strikes))]
-
-
-
+        
         mean_step_time = np.mean(step_durations)
 
         return  mean_step_time,\
