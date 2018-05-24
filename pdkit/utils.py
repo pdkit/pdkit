@@ -6,7 +6,8 @@
 # Author(s): J.S. Pons, Cosmin Stamate
 
 import sys
-import functools
+import re
+import math
 
 import pandas as pd
 import numpy as np
@@ -114,7 +115,43 @@ def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
     return data_frame
 
 
-def load_data(filename, format_file='cloudupdrs'):
+def load_finger_tapping_mpower_data(filename, button_left_rect, button_right_rect, convert_times=1000.0):
+    raw_data = pd.read_json(filename)
+    date_times = pd.to_datetime(raw_data.TapTimeStamp * convert_times - raw_data.TapTimeStamp[0] * convert_times)
+    time_difference = (raw_data.TapTimeStamp - raw_data.TapTimeStamp[0])
+    time_difference = time_difference.values
+    x = []
+    y = []
+    x_target = []
+    y_target = []
+
+    x_left, y_left, width_left, height_left = re.findall(r'-?\d+\.?\d*', button_left_rect)
+    x_right, y_right, width_right, height_right = re.findall(r'-?\d+\.?\d*', button_right_rect)
+
+    x_left_target = float(x_left) + ( float(width_left) / 2.0 )
+    y_left_target = float(y_left) + ( float(height_left) / 2.0 )
+
+    x_right_target = float(x_right) + ( float(width_right) / 2.0 )
+    y_right_target = float(y_right) + ( float(height_right) / 2.0 )
+
+    for row_index, row in raw_data.iterrows():
+        x_coord, y_coord = re.findall(r'-?\d+\.?\d*', row.TapCoordinate)
+        x.append(float(x_coord))
+        y.append(float(y_coord))
+        if row.TappedButtonId == 'TappedButtonLeft':
+            x_target.append(x_left_target)
+            y_target.append(y_left_target)
+        else:
+            x_target.append(x_right_target)
+            y_target.append(y_right_target)
+
+    data = {'td': time_difference, 'action_type': 1.0, 'x': x, 'y': y, 'x_target': x_target, 'y_target': y_target}
+    data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'action_type', 'x', 'y', 'x_target', 'y_target'])
+    data_frame.index.name = 'timestamp'
+    return data_frame
+
+
+def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_right_rect=None):
     '''
         This is a general load data method where the format of data to load can be passed as a parameter,
 
@@ -127,7 +164,11 @@ def load_data(filename, format_file='cloudupdrs'):
         if format_file == 'ft_cloudupdrs':
             return load_finger_tapping_cloudupdrs_data(filename)
         else:
-            return load_cloudupdrs_data(filename)
+            if format_file == 'ft_mpower':
+                if button_left_rect is not None and button_right_rect is not None:
+                    return load_finger_tapping_mpower_data(filename, button_left_rect, button_right_rect)
+            else:
+                return load_cloudupdrs_data(filename)
 
 
 def numerical_integration(signal, sampling_frequency):

@@ -6,7 +6,7 @@
 # Author(s): J.S. Pons
 
 import logging
-from pdkit.utils import load_data
+from _pdkit.utils import load_data
 import pandas_validator as pv
 
 
@@ -27,7 +27,7 @@ class FingerTappingTimeSeries:
     def __init__(self):
         logging.debug("FingerTappingTimeSeries init")
 
-    def load(self, filename, format_file='ft_cloudupdrs'):
+    def load(self, filename, format_file='ft_cloudupdrs', button_left_rect=None, button_right_rect=None):
         '''
             This is a general load data method where the format of data to load can be passed as a parameter,
 
@@ -37,7 +37,7 @@ class FingerTappingTimeSeries:
             data_frame.y_target their target. data_frame.index is the datetime-like index
         '''
         try:
-            ts = load_data(filename, format_file)
+            ts = load_data(filename, format_file, button_left_rect, button_right_rect)
             validator = FTCloudUPDRSDataFrameValidator()
 
             if validator.is_valid(ts):

@@ -55,7 +55,9 @@ class FingerTappingProcessor:
 
         '''
         freq = sum(data_frame.action_type == 1) / data_frame.td[-1]
-        return freq
+        duration = math.ceil(data_frame.td[-1])
+
+        return freq, duration
 
     def moving_frequency(self, data_frame):
         '''
@@ -73,7 +75,9 @@ class FingerTappingProcessor:
 
         diff_mov_freq = (np.array(f[1:-1]) - np.array(f[0:-2])) / np.array(f[0:-2])
 
-        return diff_mov_freq
+        duration = math.ceil(data_frame.td[-1])
+
+        return diff_mov_freq, duration
 
     def continuous_frequency(self, data_frame):
         '''
@@ -87,8 +91,9 @@ class FingerTappingProcessor:
         '''
         tap_timestamps = data_frame.td[data_frame.action_type==1]
         cont_freq = 1.0/(np.array(tap_timestamps[1:-1])-np.array(tap_timestamps[0:-2]))
+        duration = math.ceil(data_frame.td[-1])
 
-        return cont_freq
+        return cont_freq, duration
 
     def mean_moving_time(self, data_frame):
         '''
@@ -101,10 +106,10 @@ class FingerTappingProcessor:
 
         '''
         diff = data_frame.td[1:-1].values-data_frame.td[0:-2].values
-        mmt = np.mean(diff[np.arange(1,len(diff),2)])
+        mmt = np.mean(diff[np.arange(1,len(diff),2)]) * 1000.0
+        duration = math.ceil(data_frame.td[-1])
 
-        # convert to ms
-        return mmt * 1000.0
+        return mmt, duration
 
     def incoordination_score(self, data_frame):
         '''
@@ -117,8 +122,9 @@ class FingerTappingProcessor:
 
         '''
         diff = data_frame.td[1:-1].values - data_frame.td[0:-2].values
-
-        return np.var(diff[np.arange(1, len(diff), 2)], dtype=np.float64) * 1000.0
+        inc_s = np.var(diff[np.arange(1, len(diff), 2)], dtype=np.float64) * 1000.0
+        duration = math.ceil(data_frame.td[-1])
+        return inc_s, duration
 
     def mean_alnt_target_distance(self, data_frame):
         '''
@@ -132,8 +138,8 @@ class FingerTappingProcessor:
         '''
         dist = np.sqrt((data_frame.x[1:-1].values-data_frame.x[0:-2].values)**2+(data_frame.y[1:-1].values-data_frame.y[0:-2].values)**2)
         matd = np.mean(dist[np.arange(1,len(dist),2)])
-
-        return matd
+        duration = math.ceil(data_frame.td[-1])
+        return matd, duration
 
     def kinesia_scores(self, data_frame):
         '''
@@ -184,4 +190,5 @@ class FingerTappingProcessor:
         '''
         tap_data = data_frame[data_frame.action_type == 0]
         ds = np.mean(np.sqrt((tap_data.x - tap_data.x_target) ** 2 + (tap_data.y - tap_data.y_target) ** 2))
-        return ds
+        duration = math.ceil(data_frame.td[-1])
+        return ds, duration
