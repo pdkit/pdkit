@@ -35,14 +35,14 @@ class TremorProcessor:
         >>> import pdkit
         >>> tp = pdkit.TremorProcessor()
         >>> ts = pdkit.TremorTimeSeries().load(path_to_data)
-        >>> amplitude, frequency = tp.process(ts)
+        >>> amplitude, frequency = tp.amplitude(ts)
     '''
 
     def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
                  window=256, lower_frequency=2.0, upper_frequency=10.0):
         try:
-            self.amplitude = 0
-            self.frequency = 0
+            self.ampl = 0
+            self.freq = 0
 
             self.sampling_frequency = sampling_frequency
             self.cutoff_frequency = cutoff_frequency
@@ -130,52 +130,52 @@ class TremorProcessor:
         logging.debug("fft signal")
         return data_frame_fft
 
-    def calculate_amplitude(self, data_frame):
+    def amplitude_by_fft(self, data_frame):
         '''
             This methods extract the fft components and sum the ones from lower to upper freq as per :cite:`Kassavetis2015`
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return amplitude: the amplitude
-            :rtype amplitude: float
-            :return frequency: the frequency
-            :rtype frequency: float
+            :return ampl: the ampl
+            :rtype ampl: float
+            :return freq: the freq
+            :rtype freq: float
         '''
         signal_length = len(data_frame.filtered_signal)
         normalised_transformed_signal = data_frame.transformed_signal.values / signal_length
 
         k = np.arange(signal_length)
         T = signal_length / self.sampling_frequency
-        frq = k / T  # two sides frequency range
+        f = k / T  # two sides frequency range
 
-        frq = frq[range(int(signal_length / 2))]  # one side frequency range
+        f = f[range(int(signal_length / 2))]  # one side frequency range
         ts = normalised_transformed_signal[range(int(signal_length / 2))]
-        amplitude = sum(abs(ts[(frq > self.lower_frequency) & (frq < self.upper_frequency)]))
-        frequency = frq[abs(ts).argmax(axis=0)]
+        ampl = sum(abs(ts[(f > self.lower_frequency) & (f < self.upper_frequency)]))
+        freq = f[abs(ts).argmax(axis=0)]
 
-        logging.debug("tremor amplitude calculated")
+        logging.debug("tremor ampl calculated")
 
-        return amplitude, frequency
+        return ampl, freq
 
-    def calculate_amplitude_by_welch(self, data_frame):
+    def amplitude_by_welch(self, data_frame):
         '''
             This methods uses the Welch method :cite:`Welch1967` to obtain the power spectral density, this is a robust 
-            alternative to using fft_signal & calculate_amplitude
+            alternative to using fft_signal & amplitude
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: the amplitude
-            :rtype amplitude: float
-            :return: the frequency
-            :rtype frequency: float
+            :return: the ampl
+            :rtype ampl: float
+            :return: the freq
+            :rtype freq: float
         '''
         frq, Pxx_den = signal.welch(data_frame.filtered_signal.values, self.sampling_frequency, nperseg=self.window)
-        frequency = frq[Pxx_den.argmax(axis=0)]
-        amplitude = sum(Pxx_den[(frq > self.lower_frequency) & (frq < self.upper_frequency)])
+        freq = frq[Pxx_den.argmax(axis=0)]
+        ampl = sum(Pxx_den[(frq > self.lower_frequency) & (frq < self.upper_frequency)])
 
         logging.debug("tremor amplitude by welch calculated")
 
-        return amplitude, frequency
+        return ampl, freq
 
     def approximate_entropy(self, x, m=None, r=None):
         """
@@ -551,10 +551,10 @@ class TremorProcessor:
             :type data_frame: pandas.DataFrame
             :param method: fft or welch.
             :type method: str
-            :return amplitude: the amplitude of the Bradykinesia
-            :rtype amplitude: float
-            :return frequency: the frequency of the Bradykinesia
-            :rtype frequency: float
+            :return ampl: the ampl of the Bradykinesia
+            :rtype ampl: float
+            :return freq: the freq of the Bradykinesia
+            :rtype freq: float
 
         '''
         try:
@@ -564,27 +564,27 @@ class TremorProcessor:
 
             if method == 'fft':
                 data_frame_fft = self.fft_signal(data_frame_filtered)
-                return self.calculate_amplitude(data_frame_fft)
+                return self.amplitude_by_fft(data_frame_fft)
             else:
-                return self.calculate_amplitude_by_welch(data_frame_filtered)
+                return self.amplitude_by_welch(data_frame_filtered)
         except ValueError as verr:
             logging.error("TremorProcessor bradykinesia ValueError ->%s", verr.message)
         except:
             logging.error("Unexpected error on TemorProcessor bradykinesia: %s", sys.exc_info()[0])
 
-    def process(self, data_frame, method='fft'):
+    def amplitude(self, data_frame, method='fft'):
         '''
             This method calculates the tremor amplitude of the data frame. It accepts two different methods,
             'fft' and 'welch'. First the signal gets re-sampled and then high pass filtered.
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :param method: fft or welch.
+            :param method: fft or welch
             :type method: str
-            :return amplitude: the amplitude of the Tremor
-            :rtype amplitude: float
-            :return frequency: the frequency of the Tremor
-            :rtype frequency: float
+            :return ampl: the ampl of the Tremor
+            :rtype ampl: float
+            :return freq: the freq of the Tremor
+            :rtype freq: float
 
         '''
         try:
@@ -593,9 +593,9 @@ class TremorProcessor:
 
             if method == 'fft':
                 data_frame_fft = self.fft_signal(data_frame_filtered)
-                return self.calculate_amplitude(data_frame_fft)
+                return self.amplitude_by_fft(data_frame_fft)
             else:
-                return self.calculate_amplitude_by_welch(data_frame_filtered)
+                return self.amplitude_by_welch(data_frame_filtered)
 
         except ValueError as verr:
             logging.error("TremorProcessor ValueError ->%s", verr.message)
