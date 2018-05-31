@@ -195,7 +195,7 @@ class TremorProcessor:
         :rtype: float
         """
         if m is None or r is None:
-            m = 2.0
+            m = 2
             r = 0.3
         entropy = feature_calculators.approximate_entropy(x, m, r)
         logging.debug("approximate entropy by tsfresh calculated")
@@ -229,7 +229,7 @@ class TremorProcessor:
         logging.debug("autocorrelation by tsfresh calculated")
         return _autoc
 
-    def partial_autocorrelation(self, x, param):
+    def partial_autocorrelation(self, x, param=None):
         """
         As in tsfresh `partial_autocorrelation <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L308>`_
 
@@ -303,7 +303,7 @@ class TremorProcessor:
         """
         ratio = feature_calculators.ratio_value_number_to_time_series_length(x)
         logging.debug("ratio value number to time series length by tsfresh calculated")
-        return list(ratio)
+        return ratio
 
     def change_quantiles(self, x, ql=None, qh=None, isabs=None, f_agg=None):
         """
@@ -464,7 +464,7 @@ class TremorProcessor:
         logging.debug("abs energy by tsfresh calculated")
         return _energy
 
-    def fft_aggregated(self, x, param):
+    def fft_aggregated(self, x, param=None):
         """
         As in tsfresh `fft_aggregated <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L896>`_
 
@@ -484,7 +484,7 @@ class TremorProcessor:
         logging.debug("fft aggregated by tsfresh calculated")
         return list(_fft_agg)
 
-    def fft_coefficient(self, x, param):
+    def fft_coefficient(self, x, param=None):
         """
         As in tsfresh `fft_coefficient <https://github.com/blue-yonder/tsfresh/blob/master/tsfresh/feature_extraction/feature_calculators.py#L852>`_
 
@@ -551,9 +551,9 @@ class TremorProcessor:
             :type data_frame: pandas.DataFrame
             :param method: fft or welch.
             :type method: str
-            :return ampl: the ampl of the Bradykinesia
+            :return ampl: the amplitude of the Bradykinesia
             :rtype ampl: float
-            :return freq: the freq of the Bradykinesia
+            :return freq: the frequency of the Bradykinesia
             :rtype freq: float
 
         '''
@@ -581,9 +581,9 @@ class TremorProcessor:
             :type data_frame: pandas.DataFrame
             :param method: fft or welch
             :type method: str
-            :return ampl: the ampl of the Tremor
+            :return ampl: the amplitude of the Tremor
             :rtype ampl: float
-            :return freq: the freq of the Tremor
+            :return freq: the frequency of the Tremor
             :rtype freq: float
 
         '''
@@ -601,3 +601,55 @@ class TremorProcessor:
             logging.error("TremorProcessor ValueError ->%s", verr.message)
         except:
             logging.error("Unexpected error on TremorProcessor process: %s", sys.exc_info()[0])
+
+    def extract_features(self, data_frame):
+        amplitude_by_fft, frequency_by_fft = self.amplitude(data_frame)
+        amplitude_by_welch, frequency_by_fft = self.amplitude(data_frame, 'welch')
+        bradykinesia_amplitude_by_fft, bradykinesia_frequency_by_fft = self.bradykinesia(data_frame)
+        bradykinesia_amplitude_by_welch, bradykinesia_frequency_by_welch = self.bradykinesia(data_frame, 'welch')
+        magnitude_approximate_entropy = self.approximate_entropy(data_frame.mag_sum_acc)
+        magnitude_autocorrelation_lag_8 = self.autocorrelation(data_frame.mag_sum_acc, 8)
+        magnitude_autocorrelation_lag_9 = self.autocorrelation(data_frame.mag_sum_acc, 9)
+        magnitude_partial_autocorrelation = self.partial_autocorrelation(data_frame.mag_sum_acc)
+        magnitude_partial_autocorrelation_lag_3 = magnitude_partial_autocorrelation[0][1]
+        magnitude_partial_autocorrelation_lag_5 = magnitude_partial_autocorrelation[1][1]
+        magnitude_partial_autocorrelation_lag_6 = magnitude_partial_autocorrelation[2][1]
+        magnitude_minimum = self.minimum(data_frame.mag_sum_acc)
+        magnitude_mean = self.mean(data_frame.mag_sum_acc)
+        magnitude_ratio_value_number_to_time_series_length = self.ratio_value_number_to_time_series_length(data_frame.mag_sum_acc)
+        magnitude_change_quantiles = self.change_quantiles(data_frame.mag_sum_acc)
+        magnitude_number_peaks = self.number_peaks(data_frame.mag_sum_acc)
+        magnitude_agg_linear = self.agg_linear_trend(data_frame.mag_sum_acc)
+        magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept = magnitude_agg_linear[0][1]
+        magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue = magnitude_agg_linear[1][1]
+        magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept= magnitude_agg_linear[2][1]
+        magnitude_spkt_welch_density = self.spkt_welch_density(data_frame.mag_sum_acc)
+        magnitude_spkt_welch_density_coeff_2 = magnitude_spkt_welch_density[0][1]
+        magnitude_spkt_welch_density_coeff_5 = magnitude_spkt_welch_density[1][1]
+        magnitude_spkt_welch_density_coeff_8 = magnitude_spkt_welch_density[2][1]
+        magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints = self.percentage_of_reoccurring_datapoints_to_all_datapoints(data_frame.mag_sum_acc)
+        magnitude_abs_energy = self.abs_energy(data_frame.mag_sum_acc)
+        magnitude_fft_aggregated_centroid = self.fft_aggregated(data_frame.mag_sum_acc)[0][1]
+        magnitude_fft_coefficient = self.fft_coefficient(data_frame.mag_sum_acc)
+        magnitude_fft_coefficient_abs_coeff_44 = magnitude_fft_coefficient[0][1]
+        magnitude_fft_coefficient_abs_coeff_63 = magnitude_fft_coefficient[1][1]
+        magnitude_fft_coefficient_abs_coeff_0 = magnitude_fft_coefficient[2][1]
+        magnitude_fft_coefficient_real_coeff_0 = magnitude_fft_coefficient[3][1]
+        magnitude_fft_coefficient_real_coeff_23 = magnitude_fft_coefficient[4][1]
+        magnitude_sum_values = self.sum_values(data_frame.mag_sum_acc)
+
+        return amplitude_by_fft, frequency_by_fft, amplitude_by_welch, frequency_by_fft, bradykinesia_amplitude_by_fft, \
+               bradykinesia_frequency_by_fft, bradykinesia_amplitude_by_welch, bradykinesia_frequency_by_welch, \
+               magnitude_approximate_entropy, magnitude_autocorrelation_lag_8, magnitude_autocorrelation_lag_9, \
+               magnitude_partial_autocorrelation_lag_3, magnitude_partial_autocorrelation_lag_5, \
+               magnitude_partial_autocorrelation_lag_6, magnitude_minimum, magnitude_mean, \
+               magnitude_ratio_value_number_to_time_series_length, magnitude_change_quantiles, magnitude_number_peaks, \
+               magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept, \
+               magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue, \
+               magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept, magnitude_spkt_welch_density, \
+               magnitude_spkt_welch_density_coeff_2, magnitude_spkt_welch_density_coeff_5, \
+               magnitude_spkt_welch_density_coeff_8, magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints, \
+               magnitude_abs_energy, magnitude_fft_aggregated_centroid, magnitude_fft_aggregated_centroid, \
+               magnitude_fft_coefficient_abs_coeff_44, magnitude_fft_coefficient_abs_coeff_63, \
+               magnitude_fft_coefficient_abs_coeff_0, magnitude_fft_coefficient_real_coeff_0, \
+               magnitude_fft_coefficient_real_coeff_23, magnitude_sum_values
