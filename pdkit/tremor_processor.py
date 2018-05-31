@@ -603,6 +603,29 @@ class TremorProcessor:
             logging.error("Unexpected error on TremorProcessor process: %s", sys.exc_info()[0])
 
     def extract_features(self, data_frame):
+        '''
+            This method extracts all the features available to the Tremor Processor class.
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return: amplitude_by_fft, frequency_by_fft, amplitude_by_welch, frequency_by_fft, bradykinesia_amplitude_by_fft, \
+                   bradykinesia_frequency_by_fft, bradykinesia_amplitude_by_welch, bradykinesia_frequency_by_welch, \
+                   magnitude_approximate_entropy, magnitude_autocorrelation_lag_8, magnitude_autocorrelation_lag_9, \
+                   magnitude_partial_autocorrelation_lag_3, magnitude_partial_autocorrelation_lag_5, \
+                   magnitude_partial_autocorrelation_lag_6, magnitude_minimum, magnitude_mean, \
+                   magnitude_ratio_value_number_to_time_series_length, magnitude_change_quantiles, magnitude_number_peaks, \
+                   magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept, \
+                   magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue, \
+                   magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept, \
+                   magnitude_spkt_welch_density_coeff_2, magnitude_spkt_welch_density_coeff_5, \
+                   magnitude_spkt_welch_density_coeff_8, magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints, \
+                   magnitude_abs_energy, magnitude_fft_aggregated_centroid, magnitude_fft_aggregated_centroid, \
+                   magnitude_fft_coefficient_abs_coeff_44, magnitude_fft_coefficient_abs_coeff_63, \
+                   magnitude_fft_coefficient_abs_coeff_0, magnitude_fft_coefficient_real_coeff_0, \
+                   magnitude_fft_coefficient_real_coeff_23, magnitude_sum_values
+            :rtype: array
+
+        '''
         try:
             amplitude_by_fft, frequency_by_fft = self.amplitude(data_frame)
             amplitude_by_welch, frequency_by_fft = self.amplitude(data_frame, 'welch')
