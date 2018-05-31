@@ -646,7 +646,7 @@ class TremorProcessor:
                magnitude_ratio_value_number_to_time_series_length, magnitude_change_quantiles, magnitude_number_peaks, \
                magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept, \
                magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue, \
-               magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept, magnitude_spkt_welch_density, \
+               magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept, \
                magnitude_spkt_welch_density_coeff_2, magnitude_spkt_welch_density_coeff_5, \
                magnitude_spkt_welch_density_coeff_8, magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints, \
                magnitude_abs_energy, magnitude_fft_aggregated_centroid, magnitude_fft_aggregated_centroid, \
