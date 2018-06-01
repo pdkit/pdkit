@@ -49,6 +49,16 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
     return data_frame
 
+def load_accapp_data(filename, convert_times=1000000000.0):
+    df = pd.read_csv(filename, sep='\t', header=None)
+    df.drop(columns=[0, 5], inplace=True)
+    df.columns = ['td', 'x', 'y', 'z']
+    df.td = (df.td - df.td[0])
+    df.index = pd.to_datetime(df.td * 10000000)
+    df.td = df.td / 100.
+    del df.index.name
+    df['mag_sum_acc'] = np.sqrt(df.x ** 2 + df.y ** 2 + df.z ** 2)
+    return df
 
 def load_mpower_data(filename, convert_times=1000000000.0):
     '''
@@ -161,6 +171,10 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
     '''
     if format_file == 'mpower':
         return load_mpower_data(filename)
+
+    elif format_file == 'accapp':
+        return load_accapp_data(filename)
+
     else:
         if format_file == 'ft_cloudupdrs':
             return load_finger_tapping_cloudupdrs_data(filename)
