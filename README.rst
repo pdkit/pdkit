@@ -29,8 +29,7 @@ To calculate Welch, as a robust alternative to using Fast Fourier Transform, use
 
     >>> amplitude, frequency = tp.process(ts, 'welch')
 
-This  class also provides a method to extract all the features available in `Tremor Processor
-<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
+This  class also provides a method named `extract_features<http://pdkit.readthedocs.io/en/latest/tremor.html#tremor_processor.TremorProcessor.extract_features>`_ to extract all the features available in `Tremor Processor<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
 
     >>> tp.extract_features(tp)
 
