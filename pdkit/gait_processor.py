@@ -112,9 +112,9 @@ class GaitProcessor(Processor):
 
             :param DataFrame data_frame: the data frame.
 
-            :return list freeze_times: What times does freeze of gait occur.
-            :return list freeze_indexes: What are the index in the dataframe when freeze of gait occurs.
-            :return list locomotion_freezes: When does locomotion freeze happen,.
+            :return list freeze_time: What times do freeze of gait events occur. [measured in time h:m:s]
+            :return list freeze_indexe: Freeze Index is defined as the power in the “freeze” band [3–8 Hz] di-vided by the power in the “locomotor” band [0.5–3 Hz] [3]. [measured in power]
+            :return list locomotor_freeze_index: Locomotor freeze index is the power in the “freeze” band [3–8 Hz] added to power in the “locomotor” band [0.5–3 Hz]. [measured in power]
         '''
         
         # the sampling frequency was recommended by the author of the pilot study
@@ -156,11 +156,11 @@ class GaitProcessor(Processor):
             jPos = jPos + self.step_size
             i = i + 1
 
-        freeze_times = time
-        freeze_indexes = freezeIndex
-        locomotion_freezes = sumLocoFreeze
+        freeze_time = np.asarray(time, dtype=np.int32)
+        freeze_index = np.asarray(freezeIndex, dtype=np.float32)
+        locomotor_freeze_index = np.asarray(sumLocoFreeze, dtype=np.float32)
 
-        return freeze_times, freeze_indexes, locomotion_freezes
+        return freeze_time, freeze_index, locomotor_freeze_index
 
 
     def frequency_of_peaks(self, data_frame):
