@@ -40,7 +40,7 @@ class TestResultSet:
         else:
             return folder_relative_path.split('/')[-1]
 
-    def process(self, params=None, output=True, output_format='csv'):
+    def process(self, params=None):
         features_df = pd.DataFrame()
 
         if 'tremor' in params:
@@ -49,12 +49,29 @@ class TestResultSet:
 
             for f in self.files_list:
                 if f.startswith(abr_measurent_type + ' - '):
-                    ts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
-                    features = tp.extract_features(ts)
+                    tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
+                    features = tp.extract_features(tts)
+                    features['name'] = f.split('.')[0]
 
                     if features_df.empty:
                         features_df = pd.DataFrame(features, columns=list(features.keys()), index=[0])
                     else:
                         features_df = features_df.append(features, ignore_index=True)
+            # else:
+            #     if 'finger_tapping' in params:
+            #         abr_measurent_type = 'FT'
+            #
+            #         for f in self.files_list:
+            #             if f.startswith(abr_measurent_type + ' - '):
+            #                 ts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
 
         return features_df
+
+    def write_output(self, data_frame, filename, output_format='csv'):
+        if output_format == 'json':
+            data_frame.to_json(path_or_buf=filename, index=False)
+        else:
+            if output_format == 'sql':
+                data_frame.to_sql(path_or_buf=filename, index=False)
+            else:
+                data_frame.to_csv(path_or_buf=filename, index=False)
