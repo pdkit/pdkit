@@ -51,12 +51,15 @@ class TestResultSet:
                 if f.startswith(abr_measurent_type + ' - '):
                     tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
                     features = tp.extract_features(tts)
-                    features['name'] = f.split('.')[0]
 
                     if features_df.empty:
                         features_df = pd.DataFrame(features, columns=list(features.keys()), index=[0])
+                        features_df.insert(0, 'name', f.split('.')[0])
                     else:
+                        features['name'] = f.split('.')[0]
                         features_df = features_df.append(features, ignore_index=True)
+
+
             # else:
             #     if 'finger_tapping' in params:
             #         abr_measurent_type = 'FT'
@@ -68,6 +71,9 @@ class TestResultSet:
         return features_df
 
     def write_output(self, data_frame, filename, output_format='csv'):
+        filename = join(self.folder_absolute_path, filename) + '.' + output_format
+        # filename = self.folder_absolute_path + filename + '.' + output_format
+
         if output_format == 'json':
             data_frame.to_json(path_or_buf=filename, index=False)
         else:
