@@ -23,13 +23,19 @@ class TremorProcessor:
         data_frame.index is the datetime-like index
         
         These values are recommended by the author of the pilot study :cite:`Kassavetis2015`
-        
-        sampling_frequency = 100.0Hz
-        cutoff_frequency = 2.0Hz
-        filter_order = 2
-        window = 256
-        lower_frequency = 2.0Hz
-        upper_frequency = 10.0Hz
+
+        :param sampling_frequency: (optional) the sampling frequency in Hz (100.0Hz)
+        :type sampling_frequency: float
+        :param cutoff_frequency: (optional) the cutoff frequency in Hz (2.0Hz)
+        :type cutoff_frequency: float
+        :param filter_order: (optional) filter order (2)
+        :type filter_order: int
+        :param window: (optional) window (256)
+        :type window: int
+        :param lower_frequency: (optional) lower frequency in Hz (2.0Hz)
+        :type lower_frequency: float
+        :param upper_frequency: (optional) upper frequency in Hz (10.0Hz)
+        :type upper_frequency: float
             
         :Example:
          

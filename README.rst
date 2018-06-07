@@ -71,7 +71,7 @@ kinesia scores (the number of key taps)
 
     >>> ftp.kinesia_scores(ts)
 
-TEST RESULT TEST
+TEST RESULT SET
 ****************
 
 Pdkit can be used to extract all the features (e.g. tremor) for different measurements placed in a single folder. The result
