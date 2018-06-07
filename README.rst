@@ -31,7 +31,7 @@ To calculate Welch, as a robust alternative to using Fast Fourier Transform, use
 
 This  class also provides a method named `extract_features<http://pdkit.readthedocs.io/en/latest/tremor.html#tremor_processor.TremorProcessor.extract_features>`_ to extract all the features available in `Tremor Processor<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
 
-    >>> tp.extract_features(tp)
+    >>> tp.extract_features(ts)
 
 BRADYKINESIA
 ************
@@ -69,3 +69,20 @@ Example how to use pdkit to calculate the mean alternate distance of the finger 
 kinesia scores (the number of key taps)
 
     >>> ftp.kinesia_scores(ts)
+
+TEST RESULT TEST
+****************
+
+Pdkit can be used to extract all the features (e.g. tremor) for different measurements placed in a single folder. The result
+is a dataframe where the measurements are rows and the columns are the features extracted.
+
+>>> import pdkit
+>>> testResultSet = pdkit.TestResultSet(folderpath)
+>>> dataframe = testResultSet.process(['tremor'])
+
+where folderpath is the relative folder with the different measurements. For CLOUDUPDRS there are measurements in the following
+folder `./tests/data/S5`.
+
+We can also write the dataframe to a output file like:
+
+>>> testResultSet.write_output(dataframe, name)
