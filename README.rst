@@ -10,26 +10,27 @@ PDKIT
 TREMOR PROCESSOR
 ****************
 
-Example how to use pdkit to calculate Tremor amplitude and frequency:
+Example how to use pdkit to calculate tremor amplitude and frequency:
 
     >>> import pdkit
     >>> tp = pdkit.TremorProcessor()
     >>> ts = pdkit.TremorTimeSeries().load(filename)
     >>> amplitude, frequency = tp.amplitude(ts)
 
-where, filename is the data path to load, by default in the cloudUPDRS format.
+where, `filename` is the data path to load, by default in the cloudUPDRS format.
 
-PDKit can also read data in the MPower format, just like:
+Pdkit can also read data in the MPower format, just like:
 
     >>> ts = pdkit.TremorTimeSeries().load(filename, 'mpower')
 
-where, filename is the data path to load in mpower format.
+where, `filename` is the data path to load in MPower format.
 
 To calculate Welch, as a robust alternative to using Fast Fourier Transform, use like:
 
     >>> amplitude, frequency = tp.amplitude(ts, 'welch')
 
-This  class also provides a method named `extract_features<http://pdkit.readthedocs.io/en/latest/tremor.html#tremor_processor.TremorProcessor.extract_features>`_ to extract all the features available in `Tremor Processor<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
+This  class also provides a method named `extract_features<http://pdkit.readthedocs.io/en/latest/tremor.html#tremor_processor.TremorProcessor.extract_features>`_
+to extract all the features available in `Tremor Processor<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
 
     >>> tp.extract_features(ts)
 
@@ -54,7 +55,7 @@ Example how to use pdkit to calculate various Gait features:
     >>> speed_of_gait = gp.speed_of_gait(ts)
     >>> step_regularity, stride_regularity, walk_symmetry = gp.walk_regularity_symmetry(ts)
 
-where, filename is the data path to load, by default in the cloudUPDRS format.
+where, `filename` is the data path to load, by default in the CloudUPDRS format.
 
 FINGER TAPPING
 **************
@@ -74,15 +75,15 @@ TEST RESULT TEST
 ****************
 
 Pdkit can be used to extract all the features (e.g. tremor) for different measurements placed in a single folder. The result
-is a dataframe where the measurements are rows and the columns are the features extracted.
+is a `data frame` where the measurements are rows and the columns are the features extracted.
 
 >>> import pdkit
 >>> testResultSet = pdkit.TestResultSet(folderpath)
 >>> dataframe = testResultSet.process(['tremor'])
 
-where folderpath is the relative folder with the different measurements. For CLOUDUPDRS there are measurements in the following
+where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
 folder `./tests/data/S5`.
 
-We can also write the dataframe to a output file like:
+We can also write the `data frame` to a output file like:
 
 >>> testResultSet.write_output(dataframe, name)
