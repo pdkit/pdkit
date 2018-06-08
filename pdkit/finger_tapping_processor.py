@@ -207,13 +207,13 @@ class FingerTappingProcessor:
         '''
         try:
             return {'frequency':self.frequency(data_frame)[0], 'moving_frequency':self.moving_frequency(data_frame)[0],
-                    'continuous_frequency':self.continuous_frequency(data_frame),
-                    'mean_moving_time':self.mean_moving_time(data_frame),
-                    'incoordination_score':self.incoordination_score(data_frame),
-                    'mean_alnt_target_distance':self.mean_alnt_target_distance(data_frame),
-                    'kinesia_scores':self.kinesia_scores(data_frame),
-                    'akinesia_times':self.akinesia_times(data_frame),
-                    'dysmetria_score':self.dysmetria_score(data_frame)}
+                    'continuous_frequency':self.continuous_frequency(data_frame)[0],
+                    'mean_moving_time':self.mean_moving_time(data_frame)[0],
+                    'incoordination_score':self.incoordination_score(data_frame)[0],
+                    'mean_alnt_target_distance':self.mean_alnt_target_distance(data_frame)[0],
+                    'kinesia_scores':self.kinesia_scores(data_frame)[0],
+                    'akinesia_times':self.akinesia_times(data_frame)[0],
+                    'dysmetria_score':self.dysmetria_score(data_frame)[0]}
         except:
             logging.error("Error on FingerTappingProcessor process, extract features: %s", sys.exc_info()[0])
 
