@@ -55,14 +55,17 @@ class GaitProcessor(Processor):
 
        [1] Developing a tool for remote digital assessment of Parkinson s disease
             Kassavetis	P,	Saifee	TA,	Roussos	G,	Drougas	L,	Kojovic	M,	Rothwell	JC,	Edwards	MJ,	Bhatia	KP
-            
-       [2] The use of the fast Fourier transform for the estimation of power spectra: A method based 
-            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
-            vol. 15, pp. 70-73, 1967)
-            P. Welch
+
+       [2] Determination of a Patient's Speed and Stride Length Minimizing Hardware Requirements (Body Sensor Networks (BSN), 2011 International Conference on, 144-149)
+            Martin, E. ; EECS Dept., Univ. of California, Berkeley, Berkeley, CA, USA ; Shia, V. ; Bajcsy, R.
 
        [3] M. Bachlin et al., "Wearable Assistant for Parkinson’s Disease Patients With the Freezing of Gait Symptom,"
            in IEEE Transactions on Information Technology in Biomedicine, vol. 14, no. 2, pp. 436-446, March 2010.
+
+       [4] The use of the fast Fourier transform for the estimation of power spectra: A method based 
+            on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
+            vol. 15, pp. 70-73, 1967)
+            P. Welch
     '''
 
     def __init__(self,
@@ -83,7 +86,8 @@ class GaitProcessor(Processor):
                  distance=90,
                  step_period=2,
                  stride_period=1,
-                 pendulum_length=1):
+                 pendulum_length=1,
+                 ):
 
         super().__init__(sampling_frequency,
                          cutoff_frequency,
@@ -106,20 +110,39 @@ class GaitProcessor(Processor):
         self.pendulum_length = pendulum_length
 
 
-    def freeze_of_gait(self, data_frame):
+    def remove_static_signal(self, data_frame, axis='x', signal_threshold=0.1):
+
+        signal = butter_lowpass_filter(data_frame[axis], self.sampling_frequency, cutoff=self.cutoff_frequency, order=self.filter_order)
+        
+        # go forwards
+        for i, s in enumerate(signal):
+            if not (-signal_threshold <= s <= signal_threshold):
+                start = i
+                break
+        
+        # go backwards
+        for i, s in reversed(list(enumerate(signal))):
+            if not (-signal_threshold <= s <= signal_threshold):
+                stop = i
+                break
+        
+        return start, stop
+
+    def freeze_of_gait(self, data_frame, axis='x'):
         ''' 
             This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
+            :param string axis: The axis (preferably forward direction) from which to extract all gait features.
 
-            :return list freeze_time: What times do freeze of gait events occur. [measured in time h:m:s]
-            :return list freeze_indexe: Freeze Index is defined as the power in the “freeze” band [3–8 Hz] di-vided by the power in the “locomotor” band [0.5–3 Hz] [3]. [measured in power]
-            :return list locomotor_freeze_index: Locomotor freeze index is the power in the “freeze” band [3–8 Hz] added to power in the “locomotor” band [0.5–3 Hz]. [measured in power]
+            :return list freeze_time: What times do freeze of gait events occur. [measured in time (h:m:s)]
+            :return list freeze_indexe: Freeze Index is defined as the power in the “freeze” band [3–8 Hz] di-vided by the power in the “locomotor” band [0.5–3 Hz] [3]. [measured in Hz]
+            :return list locomotor_freeze_index: Locomotor freeze index is the power in the “freeze” band [3–8 Hz] added to power in the “locomotor” band [0.5–3 Hz]. [measured in Hz]
         '''
         
         # the sampling frequency was recommended by the author of the pilot study
         data = self.resample_signal(data_frame) 
-        data = data.y.values
+        data = data[axis].values
 
         f_res = self.sampling_frequency / self.window
 
@@ -163,19 +186,22 @@ class GaitProcessor(Processor):
         return freeze_time, freeze_index, locomotor_freeze_index
 
 
-    def frequency_of_peaks(self, data_frame):
+    def frequency_of_peaks(self, data_frame, axis='x'):
         ''' 
-            This method assess the frequency of the peaks on the x-axis.
+            This method assess the frequency of the peaks on any given axis.
 
-            :param DataFrame data_frame: the data frame.
+            :param DataFrame data_frame: The data frame.
+            :param string axis: The axis (preferably forward direction) from which to extract all gait features.
 
-            :return float frequency_of_peaks: The frequency of peaks on the x-axis.
+            :return float frequency_of_peaks: The frequency of peaks on the x-axis. [measured in Hz]
         '''
 
-        peaks_data = data_frame[self.start_end_offset[0]: -self.start_end_offset[1]].x.values
+        peaks_data = data_frame[self.start_end_offset[0]: -self.start_end_offset[1]][axis].values
         maxtab, mintab = peakdet(peaks_data, self.delta)
+
         x = np.mean(peaks_data[maxtab[1:,0].astype(int)] - peaks_data[maxtab[:-1,0].astype(int)])
-        frequency_of_peaks = 1/x
+
+        frequency_of_peaks = abs(1/x)
 
         return frequency_of_peaks
         
@@ -189,7 +215,7 @@ class GaitProcessor(Processor):
             :param str wavelet_type: the type of wavelet to use. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a full list.
             :param int wavelet_level: the number of cycles the used wavelet should have. See https://pywavelets.readthedocs.io/en/latest/ref/wavelets.html for a fill list.
             
-            :return float gait_speed: The speed of gait.
+            :return float gait_speed: The speed of gait. [measured in meters/second]
         """
 
         coeffs = wavedec(data_frame.mag_sum_acc, wavelet=wavelet_type, level=wavelet_level)
@@ -214,9 +240,9 @@ class GaitProcessor(Processor):
 
             :param DataFrame data_frame: the data frame.
 
-            :return list step_regularity: Regularity of steps on [x, y, z] coordinates.
-            :return list stride_regularity: Regularity of stride on [x, y, z] coordinates.
-            :return list walk_symmetry: Symmetry of walk on [x, y, z] coordinates.
+            :return list step_regularity: Regularity of steps on [x, y, z] coordinates. Defined as the consistency of the step-to-step pattern.
+            :return list stride_regularity: Regularity of stride on [x, y, z] coordinates. Defined as the consistency of the stride-to-stride pattern.
+            :return list walk_symmetry: Symmetry of walk on [x, y, z] coordinates. Defined as the difference between step and stride regularity.
         '''
         
         def _symmetry(v):
@@ -227,9 +253,9 @@ class GaitProcessor(Processor):
         step_regularity_y, stride_regularity_y = _symmetry(autocorrelation(data_frame.y))
         step_regularity_z, stride_regularity_z = _symmetry(autocorrelation(data_frame.z))
 
-        symmetry_x = stride_regularity_x - step_regularity_x
-        symmetry_y = stride_regularity_y - step_regularity_y
-        symmetry_z = stride_regularity_z - step_regularity_z
+        symmetry_x = step_regularity_x - stride_regularity_x
+        symmetry_y = step_regularity_y - stride_regularity_y
+        symmetry_z = step_regularity_z - stride_regularity_z
 
         step_regularity = [step_regularity_x, step_regularity_y, step_regularity_z]
         stride_regularity = [stride_regularity_x, stride_regularity_y, stride_regularity_z]
@@ -247,7 +273,7 @@ class GaitProcessor(Processor):
 
             :param DataFrame data_frame: the data frame.
 
-            :return array direction: Unit vector of local walk (not cardinal) direction
+            :return array direction: Unit vector of local walk (not cardinal) direction.
         '''
 
 
@@ -285,17 +311,18 @@ class GaitProcessor(Processor):
         return direction
 
 
-    def heel_strikes(self, data_frame_axis):
+    def heel_strikes(self, data_frame, axis='x'):
         '''
             Estimate heel strike times between sign changes in accelerometer data.
 
-            :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
-            
+            :param DataFrame data_frame: The data frame.
+            :param string axis: The axis (preferably forward direction) from which to extract all gait features.
+
             :return array strikes: Heel strike timings
             :return list strike_indices: Heel strike timing indices.
         '''
         # Demean data:
-        data = data_frame_axis.values
+        data = data_frame[axis].values
         data -= data.mean()
 
         # Low-pass filter the AP accelerometer data by the 4th order zero lag
@@ -335,11 +362,12 @@ class GaitProcessor(Processor):
         return strikes, strike_indices
 
 
-    def gait_regularity_symmetry(self, data_frame_axis, unbias=1, normalize=2):
+    def gait_regularity_symmetry(self, data_frame, axis='x', unbias=1, normalize=2):
         '''
             Compute step and stride regularity and symmetry from accelerometer data.
 
-            :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
+            :param DataFrame data_frame: The data frame.
+            :param string axis: The axis (preferably forward direction) from which to extract all gait features.
             :param int unbias: Unbiased autocorrelation: divide by range (1) or by weighted range (2).
             :param int normalize: Normalize: divide by 1st coefficient (1) or by maximum abs. value (2).
 
@@ -348,7 +376,7 @@ class GaitProcessor(Processor):
             :return symmetry: Symmetry measure along axis.
         '''
 
-        coefficients, _ = autocorrelate(data_frame_axis, unbias=1, normalize=2)
+        coefficients, _ = autocorrelate(data_frame[axis], unbias=1, normalize=2)
 
         step_regularity = coefficients[self.step_period]
         stride_regularity = coefficients[self.stride_period]
@@ -356,8 +384,6 @@ class GaitProcessor(Processor):
 
         return step_regularity, stride_regularity, symmetry
 
-    def root_mean_square(self, data_frame):
-        return 
 
     def gait(self, data_frame, axis='x'):
         '''
@@ -366,22 +392,22 @@ class GaitProcessor(Processor):
             :param DataFrame data_frame: The data frame.
             :param string axis: The axis (preferably forward direction) from which to extract all gait features.
 
-            :return int number_of_steps: Estimated number of steps based on heel strikes.
-            :return float velocity: Velocity (if distance).
-            :return float avg_step_length: Average step length (if distance).
-            :return float avg_stride_length: Average stride length (if distance).
-            :return float cadence: Number of steps divided by duration.
-            :return array step_durations: Step duration.
-            :return float avg_step_duration: Average step duration.
-            :return float sd_step_durations: Standard deviation of step durations.
-            :return list strides: Stride timings for each side.
-            :return float avg_number_of_strides: Estimated number of strides based on alternating heel strikes.
-            :return list stride_durations: Estimated stride durations.
-            :return float avg_stride_duration: Average stride duration.
-            :return float sd_step_durations: Standard deviation of stride durations.
-            :return float step_regularity: Measure of step regularity along axis.
-            :return float stride_regularity: Measure of stride regularity along axis.
-            :return float symmetry: Measure of gait symmetry along axis.
+            :return int number_of_steps: Estimated number of steps based on heel strikes. [number of steps]
+            :return float velocity: Velocity (if distance). [meters/second]
+            :return float avg_step_length: Average step length (if distance). [meters]
+            :return float avg_stride_length: Average stride length (if distance). [meters]
+            :return float cadence: Number of steps divided by duration. [steps / second]
+            :return array step_durations: Step duration. [array of seconds]
+            :return float avg_step_duration: Average step duration. [seconds]
+            :return float sd_step_durations: Standard deviation of step durations. [array of seconds]
+            :return list strides: Stride timings for each side. [array of seconds]
+            :return float avg_number_of_strides: Estimated number of strides based on alternating heel strikes. [number of strides]
+            :return list stride_durations: Estimated stride durations. [array of seconds]
+            :return float avg_stride_duration: Average stride duration. [seconds]
+            :return float sd_step_durations: Standard deviation of stride durations. [seconds]
+            :return float step_regularity: Measure of step regularity along axis. [percentage consistency of the step-to-step pattern]
+            :return float stride_regularity: Measure of stride regularity along axis. [percentage consistency of the stride-to-stride pattern]
+            :return float symmetry: Measure of gait symmetry along axis. [difference between step and stride regularity]
         '''
 
         self.duration = data_frame.td[-1]
@@ -436,20 +462,25 @@ class GaitProcessor(Processor):
             avg_step_length = None
             avg_stride_length = None
 
+        return number_of_steps, cadence, velocity, \
+            avg_step_length, avg_stride_length, step_durations, \
+            avg_step_duration, sd_step_durations, strides, stride_durations, \
+            avg_number_of_strides, avg_stride_duration, sd_stride_durations, \
+            step_regularity, stride_regularity, symmetry
+
+    def coarse_gait_features(self):
+
+        # Foot symmetry
+        walking = data[strikes_ids[0]: strikes_ids[-1]]
+        steps = [ [data[strikes_ids[z]: strikes_ids[z+1]]] for z in  range(len(strikes_ids) - 1)]
+
         # Acceleration amplitude variability
         acceleration_amplitude_variability = [data[strikes_ids[i]: strikes_ids[i+1]].std() for i in range(len(strikes_ids) -1)]
 
         # Cycle frequency in Hertz
         cycle_frequency = self.sampling_frequency * rfft(data).argmax() / data.shape[0]
-
-        # Foot symmetry
-        walking = data[strikes_ids[0]: strikes_ids[-1]]
+        
         total_steps = len(walking)
-
-        steps = []
-
-        for z in range(len(strikes_ids) - 1):
-            steps.append([data[strikes_ids[z]: strikes_ids[z+1]]])
 
         first_foot= [len(a[0]) for a in steps[::2]]
         second_foot = [len(a[0])  for a in steps[1::2]]
@@ -486,14 +517,6 @@ class GaitProcessor(Processor):
         second_str_duration = [np.sum(a) / self.sampling_frequency for a in second_strides]
 
         # Stride frequency
-        
-
-
-        return number_of_steps, cadence, velocity, \
-            avg_step_length, avg_stride_length, step_durations, \
-            avg_step_duration, sd_step_durations, strides, stride_durations, \
-            avg_number_of_strides, avg_stride_duration, sd_stride_durations, \
-            step_regularity, stride_regularity, symmetry
 
     def micro_pace(self, data_frame, axis='x'):
         time = data_frame.td.values
