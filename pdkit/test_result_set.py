@@ -100,13 +100,25 @@ class TestResultSet:
                     else:
                         features['name'] = f.split('.')[0]
                         features_df = features_df.append(features, ignore_index=True)
-            # else:
-            #     if 'finger_tapping' in params:
-            #         abr_measurent_type = 'FT'
-            #
-            #         for f in self.files_list:
-            #             if f.startswith(abr_measurent_type + ' - '):
-            #                 ts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
+        #
+        # @TODO: should we join dataframes?
+        #
+        else:
+            if 'finger_tapping' in params:
+                abr_measurent_type = 'FT'
+                ftp = pdkit.FingerTappingProcessor()
+
+                for f in self.files_list:
+                    if f.startswith(abr_measurent_type + ' - '):
+                        ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
+                        features = ftp.extract_features(ftts)
+
+                        if features_df.empty:
+                            features_df = pd.DataFrame(features, columns=list(features.keys()), index=[0])
+                            features_df.insert(0, 'name', f.split('.')[0])
+                        else:
+                            features['name'] = f.split('.')[0]
+                            features_df = features_df.append(features, ignore_index=True)
 
         return features_df
 

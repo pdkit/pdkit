@@ -63,7 +63,7 @@ FINGER TAPPING
 Example how to use pdkit to calculate the mean alternate distance of the finger tapping tests:
 
     >>> import pdkit
-    >>> ts = pdkit.FingerTappingTimeSeries().load(filename, 'ft_cloudupdrs')
+    >>> ts = pdkit.FingerTappingTimeSeries().load(filename)
     >>> ftp = pdkit.FingerTappingProcessor()
     >>> ftp.mean_alnt_target_distance(ts)
 
