@@ -635,7 +635,7 @@ class TremorProcessor:
                    magnitude_fft_coefficient_abs_coeff_44, magnitude_fft_coefficient_abs_coeff_63, \
                    magnitude_fft_coefficient_abs_coeff_0, magnitude_fft_coefficient_real_coeff_0, \
                    magnitude_fft_coefficient_real_coeff_23, magnitude_sum_values
-            :rtype: array
+            :rtype: list
 
         '''
         try:

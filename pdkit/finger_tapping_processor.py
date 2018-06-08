@@ -193,3 +193,27 @@ class FingerTappingProcessor:
         ds = np.mean(np.sqrt((tap_data.x - tap_data.x_target) ** 2 + (tap_data.y - tap_data.y_target) ** 2))
         duration = math.ceil(data_frame.td[-1])
         return ds, duration
+
+    def extract_features(self, data_frame):
+        '''
+            This method extracts all the features available to the Finger Tapping Processor class.
+
+            :param data_frame: the data frame
+            :type data_frame: pandas.DataFrame
+            :return: 'frequency', 'moving_frequency','continuous_frequency','mean_moving_time','incoordination_score', \
+                    'mean_alnt_target_distance','kinesia_scores', 'akinesia_times','dysmetria_score'
+            :rtype: list
+
+        '''
+        try:
+            return {'frequency':self.frequency(data_frame)[0], 'moving_frequency':self.moving_frequency(data_frame)[0],
+                    'continuous_frequency':self.continuous_frequency(data_frame),
+                    'mean_moving_time':self.mean_moving_time(data_frame),
+                    'incoordination_score':self.incoordination_score(data_frame),
+                    'mean_alnt_target_distance':self.mean_alnt_target_distance(data_frame),
+                    'kinesia_scores':self.kinesia_scores(data_frame),
+                    'akinesia_times':self.akinesia_times(data_frame),
+                    'dysmetria_score':self.dysmetria_score(data_frame)}
+        except:
+            logging.error("Error on FingerTappingProcessor process, extract features: %s", sys.exc_info()[0])
+
