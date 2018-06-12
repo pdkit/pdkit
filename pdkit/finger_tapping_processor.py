@@ -206,8 +206,7 @@ class FingerTappingProcessor:
 
         '''
         try:
-            return {'frequency':self.frequency(data_frame)[0], 'moving_frequency':self.moving_frequency(data_frame)[0],
-                    'continuous_frequency':self.continuous_frequency(data_frame)[0],
+            return {'frequency':self.frequency(data_frame)[0],
                     'mean_moving_time':self.mean_moving_time(data_frame)[0],
                     'incoordination_score':self.incoordination_score(data_frame)[0],
                     'mean_alnt_target_distance':self.mean_alnt_target_distance(data_frame)[0],

@@ -73,52 +73,63 @@ class TestResultSet:
         else:
             return folder_relative_path.split('/')[-1]
 
+    def get_tremor_measurements(self, data_frame):
+        abr_measurement_type = 'T'
+        tp = pdkit.TremorProcessor()
+
+        for f in self.files_list:
+            if f.startswith(abr_measurement_type + ' - '):
+                tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
+                features = tp.extract_features(tts)
+                data_frame = self.save_features_to_dataframe(features, data_frame, f)
+
+        return data_frame
+
+    def get_finger_tapping_measurements(self, data_frame):
+        abr_measurement_type = 'FT'
+        ftp = pdkit.FingerTappingProcessor()
+
+        for f in self.files_list:
+            if f.startswith(abr_measurement_type + ' - '):
+                ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
+                features = ftp.extract_features(ftts)
+                data_frame = self.save_features_to_dataframe(features, data_frame, f)
+
+        return data_frame
+
+    @staticmethod
+    def save_features_to_dataframe(features, data_frame, f):
+        if data_frame.empty:
+            data_frame = pd.DataFrame(features, columns=list(features.keys()), index=[0])
+            data_frame.insert(0, 'name', f.split('.')[0])
+        else:
+            features['name'] = f.split('.')[0]
+            data_frame = data_frame.append(features, ignore_index=True)
+        return data_frame
+
     def process(self, params=None):
         '''
             This method reads all the files (measurements) within a given path and extract the features. It will return a
-            data frame where the rows are the measurements and the columns correspond to the extracted features.
+            data frame where the rows are the measurements and the columns correspond to the extracted features. The data
+            frame will have a column 'name' with the name of the measurement
 
-            :param params: the params ('tremor' for now)
+            :param params: the params ('tremor' or 'finger tapping'] (missing 'gait')
             :type params: string
             :return data_frame: the dataframe for the measurements placed in the folder
             :rtype data_frame: pandas.DataFrame
         '''
         features_df = pd.DataFrame()
 
+        #
+        # @TODO: What about...
+        # if no params given should get tremor, finger tapping and gait features and return'em
+        # if any param given then go get only those features
+        #
         if 'tremor' in params:
-            abr_measurent_type='T'
-            tp = pdkit.TremorProcessor()
-
-            for f in self.files_list:
-                if f.startswith(abr_measurent_type + ' - '):
-                    tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
-                    features = tp.extract_features(tts)
-
-                    if features_df.empty:
-                        features_df = pd.DataFrame(features, columns=list(features.keys()), index=[0])
-                        features_df.insert(0, 'name', f.split('.')[0])
-                    else:
-                        features['name'] = f.split('.')[0]
-                        features_df = features_df.append(features, ignore_index=True)
-        #
-        # @TODO: should we join dataframes?
-        #
+            features_df = self.get_tremor_measurements(features_df)
         else:
-            if 'finger_tapping' in params:
-                abr_measurent_type = 'FT'
-                ftp = pdkit.FingerTappingProcessor()
-
-                for f in self.files_list:
-                    if f.startswith(abr_measurent_type + ' - '):
-                        ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
-                        features = ftp.extract_features(ftts)
-
-                        if features_df.empty:
-                            features_df = pd.DataFrame(features, columns=list(features.keys()), index=[0])
-                            features_df.insert(0, 'name', f.split('.')[0])
-                        else:
-                            features['name'] = f.split('.')[0]
-                            features_df = features_df.append(features, ignore_index=True)
+            # else finger tapping (for now)
+            features_df = self.get_finger_tapping_measurements(features_df)
 
         return features_df
 
