@@ -13,6 +13,7 @@ import sys
 from os import listdir
 from os.path import isfile, join
 import pandas as pd
+import re
 
 
 class TestResultSet:
@@ -28,7 +29,7 @@ class TestResultSet:
 
             >>> import pdkit
             >>> testResultSet = pdkit.TestResultSet(folderpath)
-            >>> dataframe = testResultSet.process(['tremor'])
+            >>> dataframe = testResultSet.process()
 
             where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements
             in the following folder `./tests/data/S5`.
@@ -59,6 +60,16 @@ class TestResultSet:
         return [f for f in os.listdir(self.folder_absolute_path) if isfile(join(self.folder_absolute_path, f))]
 
     @staticmethod
+    def get_session_id(filename):
+        m = re.search(r"_(\d+).csv", filename, re.IGNORECASE)
+        return m.group(1)
+
+    @staticmethod
+    def get_measurement_name(abr_measurement_type, filename):
+        m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE)
+        return m.group(0)
+
+    @staticmethod
     def get_folder_absolute_path(folder_relative_path):
         pwd = os.getcwd()
         if folder_relative_path.startswith('.'):
@@ -74,64 +85,68 @@ class TestResultSet:
             return folder_relative_path.split('/')[-1]
 
     def get_tremor_measurements(self, data_frame):
-        abr_measurement_type = 'T'
+        abr_measurement_type = 'T_-_'
         tp = pdkit.TremorProcessor()
 
         for f in self.files_list:
-            if f.startswith(abr_measurement_type + ' - '):
+            if f.startswith(abr_measurement_type):
                 tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
-                features = tp.extract_features(tts)
+                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type, f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
     def get_finger_tapping_measurements(self, data_frame):
-        abr_measurement_type = 'FT'
+        abr_measurement_type = 'FT_-_'
         ftp = pdkit.FingerTappingProcessor()
 
         for f in self.files_list:
-            if f.startswith(abr_measurement_type + ' - '):
+            if f.startswith(abr_measurement_type):
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
-                features = ftp.extract_features(ftts)
+                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type, f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
-    @staticmethod
-    def save_features_to_dataframe(features, data_frame, f):
+    def save_features_to_dataframe(self, features, data_frame, f):
+        session_id = self.get_session_id(f)
         if data_frame.empty:
-            data_frame = pd.DataFrame(features, columns=list(features.keys()), index=[0])
-            data_frame.insert(0, 'name', f.split('.')[0])
+            data_frame = pd.DataFrame(features,columns=list(features.keys()),index=[0])
+            data_frame.insert(0, 'id', session_id)
         else:
-            features['name'] = f.split('.')[0]
-            data_frame = data_frame.append(features, ignore_index=True)
+            found = False
+            # iterate the dataframe, if it's the same session concat the data
+            for index, row in data_frame.iterrows():
+                if row['id'] == session_id:
+                    data_frame = pd.concat(
+                        [
+                            data_frame,
+                            pd.DataFrame(features, index=data_frame.index, columns=list(features.keys()))
+                        ], axis=1
+                    )
+                    found = True
+            # if it isn't the same session save in new row, if session data is in same folder this shouldn't happen
+            if not found:
+                features['id'] = session_id
+                data_frame = data_frame.append(features, ignore_index=True)
+
         return data_frame
 
-    def process(self, params=None):
+    def process(self):
         '''
             This method reads all the files (measurements) within a given path and extract the features. It will return a
             data frame where the rows are the measurements and the columns correspond to the extracted features. The data
             frame will have a column 'name' with the name of the measurement
 
-            :param params: the params ('tremor' or 'finger tapping'] (missing 'gait')
-            :type params: string
             :return data_frame: the dataframe for the measurements placed in the folder
             :rtype data_frame: pandas.DataFrame
         '''
-        features_df = pd.DataFrame()
 
-        #
-        # @TODO: What about...
-        # if no params given should get tremor, finger tapping and gait features and return'em
-        # if any param given then go get only those features
-        #
-        if 'tremor' in params:
-            features_df = self.get_tremor_measurements(features_df)
-        else:
-            # else finger tapping (for now)
-            features_df = self.get_finger_tapping_measurements(features_df)
-
-        return features_df
+        features = pd.DataFrame()
+        features = self.get_tremor_measurements(features)
+        features = self.get_finger_tapping_measurements(features)
+        # features = self.get_gait_measurements(features)
+        return features
 
     def write_output(self, data_frame, filename=None, output_format='csv'):
         '''

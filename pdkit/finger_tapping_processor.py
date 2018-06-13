@@ -194,7 +194,7 @@ class FingerTappingProcessor:
         duration = math.ceil(data_frame.td[-1])
         return ds, duration
 
-    def extract_features(self, data_frame):
+    def extract_features(self, data_frame, pre=None):
         '''
             This method extracts all the features available to the Finger Tapping Processor class.
 
@@ -206,13 +206,13 @@ class FingerTappingProcessor:
 
         '''
         try:
-            return {'frequency':self.frequency(data_frame)[0],
-                    'mean_moving_time':self.mean_moving_time(data_frame)[0],
-                    'incoordination_score':self.incoordination_score(data_frame)[0],
-                    'mean_alnt_target_distance':self.mean_alnt_target_distance(data_frame)[0],
-                    'kinesia_scores':self.kinesia_scores(data_frame)[0],
-                    'akinesia_times':self.akinesia_times(data_frame)[0],
-                    'dysmetria_score':self.dysmetria_score(data_frame)[0]}
+            return {pre+'frequency': self.frequency(data_frame)[0],
+                    pre+'mean_moving_time': self.mean_moving_time(data_frame)[0],
+                    pre+'incoordination_score': self.incoordination_score(data_frame)[0],
+                    pre+'mean_alnt_target_distance': self.mean_alnt_target_distance(data_frame)[0],
+                    pre+'kinesia_scores': self.kinesia_scores(data_frame)[0],
+                    pre+'akinesia_times': self.akinesia_times(data_frame)[0],
+                    pre+'dysmetria_score': self.dysmetria_score(data_frame)[0]}
         except:
             logging.error("Error on FingerTappingProcessor process, extract features: %s", sys.exc_info()[0])
 

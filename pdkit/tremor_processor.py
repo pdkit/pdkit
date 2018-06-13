@@ -614,7 +614,7 @@ class TremorProcessor:
         except:
             logging.error("Unexpected error on TremorProcessor process: %s", sys.exc_info()[0])
 
-    def extract_features(self, data_frame):
+    def extract_features(self, data_frame, pre=None):
         '''
             This method extracts all the features available to the Tremor Processor class.
 
@@ -644,41 +644,42 @@ class TremorProcessor:
             magnitude_spkt_welch_density = self.spkt_welch_density(data_frame.mag_sum_acc)
             magnitude_fft_coefficient = self.fft_coefficient(data_frame.mag_sum_acc)
 
-            return {'amplitude_by_fft': self.amplitude(data_frame)[0],
-                    'frequency_by_fft': self.amplitude(data_frame)[1],
-                    'amplitude_by_welch': self.amplitude(data_frame, 'welch')[0],
-                    'frequency_by_welch': self.amplitude(data_frame, 'welch')[1],
-                    'bradykinesia_amplitude_by_fft': self.bradykinesia(data_frame)[0],
-                    'bradykinesia_frequency_by_fft': self.bradykinesia(data_frame)[1],
-                    'bradykinesia_amplitude_by_welch': self.bradykinesia(data_frame, 'welch')[0],
-                    'bradykinesia_frequency_by_welch': self.bradykinesia(data_frame, 'welch')[1],
-                    'magnitude_approximate_entropy': self.approximate_entropy(data_frame.mag_sum_acc),
-                    'magnitude_autocorrelation_lag_8': self.autocorrelation(data_frame.mag_sum_acc, 8),
-                    'magnitude_autocorrelation_lag_9': self.autocorrelation(data_frame.mag_sum_acc, 9),
-                    'magnitude_partial_autocorrelation_lag_3': magnitude_partial_autocorrelation[0][1],
-                    'magnitude_partial_autocorrelation_lag_5': magnitude_partial_autocorrelation[1][1],
-                    'magnitude_partial_autocorrelation_lag_6': magnitude_partial_autocorrelation[2][1],
-                    'magnitude_minimum': self.minimum(data_frame.mag_sum_acc),
-                    'magnitude_mean': self.mean(data_frame.mag_sum_acc),
-                    'magnitude_ratio_value_number_to_time_series_length': self.ratio_value_number_to_time_series_length(
+            return {pre+'amplitude_by_fft': self.amplitude(data_frame)[0],
+                    pre+'frequency_by_fft': self.amplitude(data_frame)[1],
+                    pre+'amplitude_by_welch': self.amplitude(data_frame, 'welch')[0],
+                    pre+'frequency_by_welch': self.amplitude(data_frame, 'welch')[1],
+                    pre+'bradykinesia_amplitude_by_fft': self.bradykinesia(data_frame)[0],
+                    pre+'bradykinesia_frequency_by_fft': self.bradykinesia(data_frame)[1],
+                    pre+'bradykinesia_amplitude_by_welch': self.bradykinesia(data_frame, 'welch')[0],
+                    pre+'bradykinesia_frequency_by_welch': self.bradykinesia(data_frame, 'welch')[1],
+                    pre+'magnitude_approximate_entropy': self.approximate_entropy(data_frame.mag_sum_acc),
+                    pre+'magnitude_autocorrelation_lag_8': self.autocorrelation(data_frame.mag_sum_acc, 8),
+                    pre+'magnitude_autocorrelation_lag_9': self.autocorrelation(data_frame.mag_sum_acc, 9),
+                    pre+'magnitude_partial_autocorrelation_lag_3': magnitude_partial_autocorrelation[0][1],
+                    pre+'magnitude_partial_autocorrelation_lag_5': magnitude_partial_autocorrelation[1][1],
+                    pre+'magnitude_partial_autocorrelation_lag_6': magnitude_partial_autocorrelation[2][1],
+                    pre+'magnitude_minimum': self.minimum(data_frame.mag_sum_acc),
+                    pre+'magnitude_mean': self.mean(data_frame.mag_sum_acc),
+                    pre+'magnitude_ratio_value_number_to_time_series_length': self.ratio_value_number_to_time_series_length(
                         data_frame.mag_sum_acc),
-                    'magnitude_change_quantiles': self.change_quantiles(data_frame.mag_sum_acc),
-                    'magnitude_number_peaks': self.number_peaks(data_frame.mag_sum_acc),
-                    'magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept': magnitude_agg_linear[0][1],
-                    'magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue': magnitude_agg_linear[1][1],
-                    'magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept': magnitude_agg_linear[2][1],
-                    'magnitude_spkt_welch_density_coeff_2': magnitude_spkt_welch_density[0][1],
-                    'magnitude_spkt_welch_density_coeff_5': magnitude_spkt_welch_density[1][1],
-                    'magnitude_spkt_welch_density_coeff_8': magnitude_spkt_welch_density[2][1],
-                    'magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints': self.percentage_of_reoccurring_datapoints_to_all_datapoints(
-                        data_frame.mag_sum_acc), 'magnitude_abs_energy': self.abs_energy(data_frame.mag_sum_acc),
-                    'magnitude_fft_aggregated_centroid': self.fft_aggregated(data_frame.mag_sum_acc)[0][1],
-                    'magnitude_fft_coefficient_abs_coeff_44': magnitude_fft_coefficient[0][1],
-                    'magnitude_fft_coefficient_abs_coeff_63': magnitude_fft_coefficient[1][1],
-                    'magnitude_fft_coefficient_abs_coeff_0': magnitude_fft_coefficient[2][1],
-                    'magnitude_fft_coefficient_real_coeff_0': magnitude_fft_coefficient[3][1],
-                    'magnitude_fft_coefficient_real_coeff_23': magnitude_fft_coefficient[4][1],
-                    'magnitude_sum_values': self.sum_values(data_frame.mag_sum_acc)}
+                    pre+'magnitude_change_quantiles': self.change_quantiles(data_frame.mag_sum_acc),
+                    pre+'magnitude_number_peaks': self.number_peaks(data_frame.mag_sum_acc),
+                    pre+'magnitude_agg_linear_trend_min_chunk_len_5_attr_intercept': magnitude_agg_linear[0][1],
+                    pre+'magnitude_agg_linear_trend_var_chunk_len_10_attr_rvalue': magnitude_agg_linear[1][1],
+                    pre+'magnitude_agg_linear_trend_min_chunk_len_10_attr_intercept': magnitude_agg_linear[2][1],
+                    pre+'magnitude_spkt_welch_density_coeff_2': magnitude_spkt_welch_density[0][1],
+                    pre+'magnitude_spkt_welch_density_coeff_5': magnitude_spkt_welch_density[1][1],
+                    pre+'magnitude_spkt_welch_density_coeff_8': magnitude_spkt_welch_density[2][1],
+                    pre+'magnitude_percentage_of_reoccurring_datapoints_to_all_datapoints': self.percentage_of_reoccurring_datapoints_to_all_datapoints(
+                        data_frame.mag_sum_acc),
+                    pre+'magnitude_abs_energy': self.abs_energy(data_frame.mag_sum_acc),
+                    pre+'magnitude_fft_aggregated_centroid': self.fft_aggregated(data_frame.mag_sum_acc)[0][1],
+                    pre+'magnitude_fft_coefficient_abs_coeff_44': magnitude_fft_coefficient[0][1],
+                    pre+'magnitude_fft_coefficient_abs_coeff_63': magnitude_fft_coefficient[1][1],
+                    pre+'magnitude_fft_coefficient_abs_coeff_0': magnitude_fft_coefficient[2][1],
+                    pre+'magnitude_fft_coefficient_real_coeff_0': magnitude_fft_coefficient[3][1],
+                    pre+'magnitude_fft_coefficient_real_coeff_23': magnitude_fft_coefficient[4][1],
+                    pre+'magnitude_sum_values': self.sum_values(data_frame.mag_sum_acc)}
 
         except:
             logging.error("Error on TremorProcessor process, extract features: %s", sys.exc_info()[0])
