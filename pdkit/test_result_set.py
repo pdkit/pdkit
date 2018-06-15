@@ -11,7 +11,7 @@ import pdkit
 import os
 import sys
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, isdir
 import pandas as pd
 import re
 
@@ -42,9 +42,10 @@ class TestResultSet:
         '''
     def __init__(self, folder_relative_path):
         try:
+            self.folder_relative_path = folder_relative_path
             self.folder_absolute_path = self.get_folder_absolute_path(folder_relative_path)
             self.folder_name = self.get_folder_name(folder_relative_path)
-            self.files_list = self.get_files_list()
+            self.dir_list = self.get_dirs_list()
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("TestResultSet I/O error %s", ierr)
@@ -56,8 +57,14 @@ class TestResultSet:
             logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
         logging.debug("TestRestultSet init")
 
-    def get_files_list(self):
-        return [f for f in os.listdir(self.folder_absolute_path) if isfile(join(self.folder_absolute_path, f))]
+    def get_files_list(self, folder_absolute_path):
+        return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f))]
+
+    def get_dirs_list(self):
+        return [f for f in os.listdir(self.folder_absolute_path) if isdir(join(self.folder_absolute_path, f))]
+
+    def build_folder_path(self, folder_name):
+        return join(self.folder_absolute_path, folder_name)
 
     @staticmethod
     def get_session_id(filename):
@@ -67,7 +74,7 @@ class TestResultSet:
     @staticmethod
     def get_measurement_name(abr_measurement_type, filename):
         m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE)
-        return m.group(0)
+        return m.group(0)[3:]
 
     @staticmethod
     def get_folder_absolute_path(folder_relative_path):
@@ -84,26 +91,26 @@ class TestResultSet:
         else:
             return folder_relative_path.split('/')[-1]
 
-    def get_tremor_measurements(self, data_frame):
+    def get_tremor_measurements(self, data_frame, directory, files_list):
         abr_measurement_type = 'T'
         tp = pdkit.TremorProcessor()
 
-        for f in self.files_list:
+        for f in files_list:
             if f.startswith(abr_measurement_type):
-                tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
-                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type+'_\-_', f))
+                tts = pdkit.TremorTimeSeries().load(join(self.build_folder_path(directory), f))
+                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type, f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
-    def get_finger_tapping_measurements(self, data_frame):
+    def get_finger_tapping_measurements(self, data_frame, directory, files_list):
         abr_measurement_type = 'FT'
         ftp = pdkit.FingerTappingProcessor()
 
-        for f in self.files_list:
+        for f in files_list:
             if f.startswith(abr_measurement_type):
-                ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
-                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type+'_\-_', f))
+                ftts = pdkit.FingerTappingTimeSeries().load(join(self.build_folder_path(directory), f))
+                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type, f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
@@ -114,7 +121,7 @@ class TestResultSet:
             data_frame = pd.DataFrame(features,columns=list(features.keys()),index=[0])
             data_frame.insert(0, 'id', session_id)
         else:
-            found = False
+            # found = False
             # iterate the dataframe, if it's the same session concat the data
             for index, row in data_frame.iterrows():
                 if row['id'] == session_id:
@@ -124,31 +131,41 @@ class TestResultSet:
                             pd.DataFrame(features, index=data_frame.index, columns=list(features.keys()))
                         ], axis=1
                     )
-                    found = True
+                    # found = True
             # if it isn't the same session save in new row, if session data is in same folder this shouldn't happen
-            if not found:
-                features['id'] = session_id
-                data_frame = data_frame.append(features, ignore_index=True)
+            # if not found:
+            #     features['id'] = session_id
+            #     data_frame = data_frame.append(features, ignore_index=True)
 
         return data_frame
 
     def process(self):
         '''
-            This method reads all the files (measurements) within a given path and extract the features. It will return a
-            data frame where the rows are the measurements and the columns correspond to the extracted features. The data
-            frame will have a column 'name' with the name of the measurement
+            This method reads all the directories that contain files (measurements) within a given relative path and extracts
+            the features. It will return a data frame where the rows are the measurements and the columns correspond to
+            the extracted features. The data frame will have a column 'name' with the name of the measurement.
 
             :return data_frame: the dataframe for the measurements placed in the folder
             :rtype data_frame: pandas.DataFrame
         '''
 
         features = pd.DataFrame()
-        features = self.get_tremor_measurements(features)
-        features = self.get_finger_tapping_measurements(features)
-        # features = self.get_gait_measurements(features)
+        for d in self.dir_list:
+            if self.folder_relative_path.endswith('/'):
+                files_list = self.get_files_list(self.folder_relative_path+d)
+            else:
+                files_list = self.get_files_list(join(self.folder_relative_path,d))
+            features_tremor = self.get_tremor_measurements(pd.DataFrame(), d, files_list)
+            features_tremor_and_finger_tapping = self.get_finger_tapping_measurements(features_tremor, d, files_list)
+            if features.empty:
+                features = features_tremor_and_finger_tapping
+            else:
+                if features.loc[features['id'] == self.get_session_id(files_list[0])].empty:
+                    features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
+            # features = self.get_gait_measurements(features, d, files_list)
         return features
 
-    def write_output(self, data_frame, filename=None, output_format='csv'):
+    def write_output(self, data_frame, filename, output_format='csv'):
         '''
             This method writes to a file the data frame received.
 
@@ -159,15 +176,15 @@ class TestResultSet:
             :param output_format: the format of the file to write ('csv', 'json' or 'sql')
             :type output_format: string
         '''
-        if filename is None:
-            filename = self.folder_name
+        try:
+            filename = join(self.folder_absolute_path, filename) + '.' + output_format
 
-        filename = join(self.folder_absolute_path, filename) + '.' + output_format
-
-        if output_format == 'json':
-            data_frame.to_json(path_or_buf=filename, index=False)
-        else:
-            if output_format == 'sql':
-                data_frame.to_sql(path_or_buf=filename, index=False)
+            if output_format == 'json':
+                data_frame.to_json(path_or_buf=filename, index=False)
             else:
-                data_frame.to_csv(path_or_buf=filename, index=False)
+                if output_format == 'sql':
+                    data_frame.to_sql(path_or_buf=filename, index=False)
+                else:
+                    data_frame.to_csv(path_or_buf=filename, index=False)
+        except:
+            logging.error("Unexpected error on writing output")

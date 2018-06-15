@@ -79,7 +79,7 @@ is a `data frame` where the measurements are rows and the columns are the featur
 
 >>> import pdkit
 >>> testResultSet = pdkit.TestResultSet(folderpath)
->>> dataframe = testResultSet.process(['tremor'])
+>>> dataframe = testResultSet.process()
 
 where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
 folder `./tests/data/S5`.
