@@ -85,25 +85,25 @@ class TestResultSet:
             return folder_relative_path.split('/')[-1]
 
     def get_tremor_measurements(self, data_frame):
-        abr_measurement_type = 'T_-_'
+        abr_measurement_type = 'T'
         tp = pdkit.TremorProcessor()
 
         for f in self.files_list:
             if f.startswith(abr_measurement_type):
                 tts = pdkit.TremorTimeSeries().load(join(self.folder_absolute_path, f))
-                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type, f))
+                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type+'_\-_', f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
     def get_finger_tapping_measurements(self, data_frame):
-        abr_measurement_type = 'FT_-_'
+        abr_measurement_type = 'FT'
         ftp = pdkit.FingerTappingProcessor()
 
         for f in self.files_list:
             if f.startswith(abr_measurement_type):
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.folder_absolute_path, f))
-                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type, f))
+                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type+'_\-_', f))
                 data_frame = self.save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
