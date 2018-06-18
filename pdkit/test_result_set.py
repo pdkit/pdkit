@@ -43,9 +43,9 @@ class TestResultSet:
     def __init__(self, folder_relative_path):
         try:
             self.folder_relative_path = folder_relative_path
-            self.folder_absolute_path = self.get_folder_absolute_path(folder_relative_path)
-            self.folder_name = self.get_folder_name(folder_relative_path)
-            self.dir_list = self.get_dirs_list()
+            self.folder_absolute_path = self.__get_folder_absolute_path(folder_relative_path)
+            self.folder_name = self.__get_folder_name(folder_relative_path)
+            self.dir_list = self.__get_dirs_list()
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("TestResultSet I/O error %s", ierr)
@@ -57,27 +57,27 @@ class TestResultSet:
             logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
         logging.debug("TestRestultSet init")
 
-    def get_files_list(self, folder_absolute_path):
+    def __get_files_list(self, folder_absolute_path):
         return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f))]
 
-    def get_dirs_list(self):
+    def __get_dirs_list(self):
         return [f for f in os.listdir(self.folder_absolute_path) if isdir(join(self.folder_absolute_path, f))]
 
-    def build_folder_path(self, folder_name):
+    def __build_folder_path(self, folder_name):
         return join(self.folder_absolute_path, folder_name)
 
     @staticmethod
-    def get_session_id(filename):
+    def __get_session_id(filename):
         m = re.search(r"_(\d+).csv", filename, re.IGNORECASE)
         return m.group(1)
 
     @staticmethod
-    def get_measurement_name(abr_measurement_type, filename):
+    def __get_measurement_name(abr_measurement_type, filename):
         m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE)
         return m.group(0)[3:]
 
     @staticmethod
-    def get_folder_absolute_path(folder_relative_path):
+    def __get_folder_absolute_path(folder_relative_path):
         pwd = os.getcwd()
         if folder_relative_path.startswith('.'):
             return pwd + folder_relative_path[1:]
@@ -85,38 +85,74 @@ class TestResultSet:
             return pwd + folder_relative_path
 
     @staticmethod
-    def get_folder_name(folder_relative_path):
+    def __get_folder_name(folder_relative_path):
         if folder_relative_path.endswith('/'):
             return folder_relative_path.split('/')[-2]
         else:
             return folder_relative_path.split('/')[-1]
 
-    def get_tremor_measurements(self, data_frame, directory, files_list):
+    def __get_tremor_measurements(self, data_frame, directory, files_list):
+        '''
+            Convenience method that gets the finger tapping measurements
+
+            :param data_frame: the dataframe where the features will be added
+            :type data_frame: pandas.DataFrame
+            :param directory: the directory name that contains the files
+            :type features: str
+            :param files_list: the list of files
+            :type files_list: str
+            :return data_frame: the dataframe
+            :rtype data_frame: pandas.DataFrame
+        '''
         abr_measurement_type = 'T'
         tp = pdkit.TremorProcessor()
 
         for f in files_list:
             if f.startswith(abr_measurement_type):
-                tts = pdkit.TremorTimeSeries().load(join(self.build_folder_path(directory), f))
-                features = tp.extract_features(tts, self.get_measurement_name(abr_measurement_type, f))
-                data_frame = self.save_features_to_dataframe(features, data_frame, f)
+                tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f))
+                features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
+                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
-    def get_finger_tapping_measurements(self, data_frame, directory, files_list):
+    def __get_finger_tapping_measurements(self, data_frame, directory, files_list):
+        '''
+            Convenience method that gets the finger tapping measurements
+
+            :param data_frame: the dataframe where the features will be added
+            :type data_frame: pandas.DataFrame
+            :param directory: the directory name that contains the files
+            :type features: str
+            :param files_list: the list of files
+            :type files_list: str
+            :return data_frame: the dataframe
+            :rtype data_frame: pandas.DataFrame
+        '''
         abr_measurement_type = 'FT'
         ftp = pdkit.FingerTappingProcessor()
 
         for f in files_list:
             if f.startswith(abr_measurement_type):
-                ftts = pdkit.FingerTappingTimeSeries().load(join(self.build_folder_path(directory), f))
-                features = ftp.extract_features(ftts, self.get_measurement_name(abr_measurement_type, f))
-                data_frame = self.save_features_to_dataframe(features, data_frame, f)
+                ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f))
+                features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f))
+                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
 
-    def save_features_to_dataframe(self, features, data_frame, f):
-        session_id = self.get_session_id(f)
+    def __save_features_to_dataframe(self, features, data_frame, file_name):
+        '''
+            Convenience method that saves/add features to an existing dataframe
+
+            :param features: the features to be added
+            :type features: list
+            :param data_frame: the dataframe where the features will be added
+            :type data_frame: pandas.DataFrame
+            :param file_name: a single file name
+            :type file_name: str
+            :return data_frame: the dataframe
+            :rtype data_frame: pandas.DataFrame
+        '''
+        session_id = self.__get_session_id(file_name)
         if data_frame.empty:
             data_frame = pd.DataFrame(features,columns=list(features.keys()),index=[0])
             data_frame.insert(0, 'id', session_id)
@@ -143,7 +179,7 @@ class TestResultSet:
         '''
             This method reads all the directories that contain files (measurements) within a given relative path and extracts
             the features. It will return a data frame where the rows are the measurements and the columns correspond to
-            the extracted features. The data frame will have a column 'name' with the name of the measurement.
+            the extracted features. The data frame will have a column 'id' with the name of the measurement.
 
             :return data_frame: the dataframe for the measurements placed in the folder
             :rtype data_frame: pandas.DataFrame
@@ -152,15 +188,15 @@ class TestResultSet:
         features = pd.DataFrame()
         for d in self.dir_list:
             if self.folder_relative_path.endswith('/'):
-                files_list = self.get_files_list(self.folder_relative_path+d)
+                files_list = self.__get_files_list(self.folder_relative_path+d)
             else:
-                files_list = self.get_files_list(join(self.folder_relative_path,d))
-            features_tremor = self.get_tremor_measurements(pd.DataFrame(), d, files_list)
-            features_tremor_and_finger_tapping = self.get_finger_tapping_measurements(features_tremor, d, files_list)
+                files_list = self.__get_files_list(join(self.folder_relative_path,d))
+            features_tremor = self.__get_tremor_measurements(pd.DataFrame(), d, files_list)
+            features_tremor_and_finger_tapping = self.__get_finger_tapping_measurements(features_tremor, d, files_list)
             if features.empty:
                 features = features_tremor_and_finger_tapping
             else:
-                if features.loc[features['id'] == self.get_session_id(files_list[0])].empty:
+                if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
                     features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
             # features = self.get_gait_measurements(features, d, files_list)
         return features
