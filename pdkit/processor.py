@@ -13,7 +13,7 @@ import pandas as pd
 from scipy import interpolate, signal, fft
 
 class Processor:
-    '''
+    """
        This is the main Processor class. Once the data is loaded it will be
        accessible at data_frame, where it looks like:
        data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
@@ -35,7 +35,7 @@ class Processor:
             on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
             vol. 15, pp. 70-73, 1967)
             P. Welch
-    '''
+    """
 
     def __init__(self, sampling_frequency=100.0, cutoff_frequency=2.0, filter_order=2,
                  window=256, lower_frequency=2.0, upper_frequency=10.0):
@@ -61,14 +61,14 @@ class Processor:
 
 
     def resample_signal(self, data_frame):
-        '''
+        """
             Convenience method for frequency conversion and resampling of data frame. 
             Object must have a DatetimeIndex. After re-sampling, this methods interpolate the time magnitude sum 
             acceleration values and the x,y,z values of the data frame acceleration
 
             :param data_frame: the data frame to resample
             :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
-        '''
+        """
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
         f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
@@ -80,7 +80,7 @@ class Processor:
 
 
     def filter_signal(self, data_frame):
-        '''
+        """
             This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
             frame using a butter Butterworth digital and analog filter 
             (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html). Then the method 
@@ -90,7 +90,7 @@ class Processor:
             :param data_frame: the data frame    
             :param str cutoff_frequency: The path to load data from
             :param str filter_order: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-        '''
+        """
         b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame.mag_sum_acc.values)
         data_frame['filtered_signal'] = filtered_signal
@@ -100,13 +100,13 @@ class Processor:
 
 
     def fft_signal(self, data_frame):
-        '''
+        """
             This method perform Fast Fourier Transform on the data frame using a hanning window
             (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html)
 
             :param data_frame: the data frame    
             :param str window: hanning window size
-        '''
+        """
         signal_length = len(data_frame.filtered_signal.values)
         ll = int ( signal_length / 2 - self.window / 2 )
         rr = int ( signal_length / 2 + self.window / 2 )

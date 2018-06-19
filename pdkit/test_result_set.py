@@ -17,7 +17,7 @@ import re
 
 
 class TestResultSet:
-    '''
+    """
             This is the Test Result Set class. Its main functionality is to read all the files (measurements) within a given
             path and extract the features. It will return a data frame where the rows are the measurements and the columns
             correspond to the extracted features.
@@ -39,7 +39,7 @@ class TestResultSet:
             >>> testResultSet.write_output(dataframe, name)
 
             To write the `data frame` to a output file (name)
-        '''
+    """
     def __init__(self, folder_relative_path):
         try:
             self.folder_relative_path = folder_relative_path
@@ -92,7 +92,7 @@ class TestResultSet:
             return folder_relative_path.split('/')[-1]
 
     def __get_tremor_measurements(self, data_frame, directory, files_list):
-        '''
+        """
             Convenience method that gets the finger tapping measurements
 
             :param data_frame: the dataframe where the features will be added
@@ -103,7 +103,7 @@ class TestResultSet:
             :type files_list: str
             :return data_frame: the dataframe
             :rtype data_frame: pandas.DataFrame
-        '''
+        """
         abr_measurement_type = 'T'
         tp = pdkit.TremorProcessor()
 
@@ -116,7 +116,7 @@ class TestResultSet:
         return data_frame
 
     def __get_finger_tapping_measurements(self, data_frame, directory, files_list):
-        '''
+        """
             Convenience method that gets the finger tapping measurements
 
             :param data_frame: the dataframe where the features will be added
@@ -127,7 +127,7 @@ class TestResultSet:
             :type files_list: str
             :return data_frame: the dataframe
             :rtype data_frame: pandas.DataFrame
-        '''
+        """
         abr_measurement_type = 'FT'
         ftp = pdkit.FingerTappingProcessor()
 
@@ -140,7 +140,7 @@ class TestResultSet:
         return data_frame
 
     def __save_features_to_dataframe(self, features, data_frame, file_name):
-        '''
+        """
             Convenience method that saves/add features to an existing dataframe
 
             :param features: the features to be added
@@ -151,7 +151,7 @@ class TestResultSet:
             :type file_name: str
             :return data_frame: the dataframe
             :rtype data_frame: pandas.DataFrame
-        '''
+        """
         session_id = self.__get_session_id(file_name)
         if data_frame.empty:
             data_frame = pd.DataFrame(features,columns=list(features.keys()),index=[0])
@@ -176,14 +176,14 @@ class TestResultSet:
         return data_frame
 
     def process(self):
-        '''
+        """
             This method reads all the directories that contain files (measurements) within a given relative path and extracts
             the features. It will return a data frame where the rows are the measurements and the columns correspond to
             the extracted features. The data frame will have a column 'id' with the name of the measurement.
 
             :return data_frame: the dataframe for the measurements placed in the folder
             :rtype data_frame: pandas.DataFrame
-        '''
+        """
 
         features = pd.DataFrame()
         for d in self.dir_list:
@@ -202,7 +202,7 @@ class TestResultSet:
         return features
 
     def write_output(self, data_frame, filename, output_format='csv'):
-        '''
+        """
             This method writes to a file the data frame received.
 
             :param data_frame: the dataframe to write
@@ -211,7 +211,7 @@ class TestResultSet:
             :type filename: string
             :param output_format: the format of the file to write ('csv', 'json' or 'sql')
             :type output_format: string
-        '''
+        """
         try:
             filename = join(self.folder_absolute_path, filename) + '.' + output_format
 
