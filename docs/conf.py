@@ -303,6 +303,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
+
 MOCK_MODULES = ['pygtk',
                 'gtk',
                 'gobject',
