@@ -73,8 +73,8 @@ class TestResultSet:
 
     @staticmethod
     def __get_measurement_name(abr_measurement_type, filename):
-        m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE)
-        return m.group(0)[3:]
+        m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE).group(0)[3:].split('_')
+        return ''.join([x[0] for x in m if len(x)>0])
 
     @staticmethod
     def __get_folder_absolute_path(folder_relative_path):
@@ -134,7 +134,7 @@ class TestResultSet:
         for f in files_list:
             if f.startswith(abr_measurement_type):
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f))
-                features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f))
+                features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f)+'-')
                 data_frame = self.__save_features_to_dataframe(features, data_frame, f)
 
         return data_frame
