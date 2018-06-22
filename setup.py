@@ -13,11 +13,13 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
-VERSION = "0.4.1"
+VERSION = "0.4.2"
+
 
 def readme():
     with open('README.rst') as f:
         return f.read()
+
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
