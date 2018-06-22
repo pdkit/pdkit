@@ -74,7 +74,7 @@ kinesia scores (the number of key taps)
 TEST RESULT SET
 ****************
 
-Pdkit can be used to extract all the features (e.g. tremor) for different measurements placed in a single folder. The result
+Pdkit can be used to extract all the features for different measurements (i.e. tremor, finger tapping, gait) placed in a single folder. The result
 is a `data frame` where the measurements are rows and the columns are the features extracted.
 
 >>> import pdkit
@@ -82,7 +82,7 @@ is a `data frame` where the measurements are rows and the columns are the featur
 >>> dataframe = testResultSet.process()
 
 where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
-folder `./tests/data/S5`.
+folder `./tests/data`.
 
 We can also write the `data frame` to a output file like:
 
