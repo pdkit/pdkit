@@ -18,7 +18,7 @@ from scipy.signal import butter, lfilter, correlate
 
 
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
-    '''
+    """
        This method loads data in the cloudupdrs format
        
        Usually the data will be saved in a csv file and it should look like this:
@@ -37,7 +37,7 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
 
       :param str filename: The path to load data from
       :param float convert_times: Convert times. The default is from from nanoseconds to seconds.
-    '''
+    """
     # data_m = pd.read_table(filename, sep=',', header=None)
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
@@ -51,7 +51,7 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
 
 
 def load_mpower_data(filename, convert_times=1000000000.0):
-    '''
+    """
         This method loads data in the `mpower <https://www.synapse.org/#!Synapse:syn4993293/wiki/247859>`_ format
         
         The format is like: 
@@ -72,7 +72,7 @@ def load_mpower_data(filename, convert_times=1000000000.0):
        :param str filename: The path to load data from
        :param float time_difference: Convert times. The default is from from nanoseconds to seconds.
        
-    '''
+    """
     raw_data = pd.read_json(filename)
     date_times = pd.to_datetime(raw_data.timestamp * convert_times - raw_data.timestamp[0] * convert_times)
     time_difference = (raw_data.timestamp - raw_data.timestamp[0])
@@ -86,7 +86,7 @@ def load_mpower_data(filename, convert_times=1000000000.0):
 
 
 def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
-    '''
+    """
            This method loads data in the cloudupdrs format for the finger tapping processor
 
            Usually the data will be saved in a csv file and it should look like this:
@@ -106,7 +106,7 @@ def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
 
           :param str filename: The path to load data from
           :param float convert_times: Convert times. The default is from from milliseconds to seconds.
-    '''
+    """
     data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False, skip_footer=1)
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
     time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
@@ -153,12 +153,12 @@ def load_finger_tapping_mpower_data(filename, button_left_rect, button_right_rec
 
 
 def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_right_rect=None):
-    '''
+    """
         This is a general load data method where the format of data to load can be passed as a parameter,
 
         :param str filename: The path to load data from
         :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-    '''
+    """
     if format_file == 'mpower':
         return load_mpower_data(filename)
     else:
@@ -173,12 +173,12 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
 
 def numerical_integration(signal, sampling_frequency):
-    '''
+    """
         Numerically integrate a signal with it's sampling frequency.
 
         :param array signal: A 1-dimensional array or list (the signal).
         :param float sampling_frequency: The sampling frequency for the signal.
-    '''
+    """
         
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
@@ -187,11 +187,11 @@ def numerical_integration(signal, sampling_frequency):
 
 
 def autocorrelation(signal):
-    ''' 
+    """ 
         The `correlation <https://en.wikipedia.org/wiki/Autocorrelation#Estimation>`_ of a signal with a delayed copy of itself.
 
         :param array signal: A 1-dimensional array or list (the signal).
-    '''
+    """
 
     signal = np.array(signal)
     n = len(signal)
@@ -205,7 +205,7 @@ def autocorrelation(signal):
 
 
 def peakdet(signal, delta, x = None):
-    '''
+    """
         Find the local maxima and minima ("peaks") in a 1-dimensional signal.
         Converted from `MATLAB script <http://billauer.co.il/peakdet.html>`_ 
 
@@ -214,7 +214,7 @@ def peakdet(signal, delta, x = None):
         :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
     
         :return np.array(maxtab), np.array(mintab)
-    '''
+    """
     
     maxtab = []
     mintab = []

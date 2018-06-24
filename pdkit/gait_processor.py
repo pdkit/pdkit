@@ -33,7 +33,7 @@ from pdkit.utils import (load_data,
 
 
 class GaitProcessor(Processor):
-    '''
+    """
        This is the main Gait Processor class. Once the data is loaded it will be
        accessible at data_frame, where it looks like:
        data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
@@ -63,7 +63,7 @@ class GaitProcessor(Processor):
 
        [3] M. Bachlin et al., "Wearable Assistant for Parkinson’s Disease Patients With the Freezing of Gait Symptom,"
            in IEEE Transactions on Information Technology in Biomedicine, vol. 14, no. 2, pp. 436-446, March 2010.
-    '''
+    """
 
     def __init__(self,
                  sampling_frequency=100.0,
@@ -107,7 +107,7 @@ class GaitProcessor(Processor):
 
 
     def freeze_of_gait(self, data_frame):
-        ''' 
+        """ 
             This method assess freeze of gait following [3].
 
             :param DataFrame data_frame: the data frame.
@@ -115,7 +115,7 @@ class GaitProcessor(Processor):
             :return list freeze_times: What times does freeze of gait occur.
             :return list freeze_indexes: What are the index in the dataframe when freeze of gait occurs.
             :return list locomotion_freezes: When does locomotion freeze happen,.
-        '''
+        """
         
         # the sampling frequency was recommended by the author of the pilot study
         data = self.resample_signal(data_frame) 
@@ -164,13 +164,13 @@ class GaitProcessor(Processor):
 
 
     def frequency_of_peaks(self, data_frame):
-        ''' 
+        """ 
             This method assess the frequency of the peaks on the x-axis.
 
             :param DataFrame data_frame: the data frame.
 
             :return float frequency_of_peaks: The frequency of peaks on the x-axis.
-        '''
+        """
 
         peaks_data = data_frame[self.start_end_offset[0]: -self.start_end_offset[1]].x.values
         maxtab, mintab = peakdet(peaks_data, self.delta)
@@ -209,7 +209,7 @@ class GaitProcessor(Processor):
 
 
     def walk_regularity_symmetry(self, data_frame):
-        ''' 
+        """ 
             This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
@@ -217,7 +217,7 @@ class GaitProcessor(Processor):
             :return list step_regularity: Regularity of steps on [x, y, z] coordinates.
             :return list stride_regularity: Regularity of stride on [x, y, z] coordinates.
             :return list walk_symmetry: Symmetry of walk on [x, y, z] coordinates.
-        '''
+        """
         
         def _symmetry(v):
             maxtab, _ = peakdet(v, self.delta)
@@ -239,7 +239,7 @@ class GaitProcessor(Processor):
 
 
     def walk_direction_preheel(self, data_frame):
-        '''
+        """
             Estimate local walk (not cardinal) direction with pre-heel strike phase.
 
             Inspired by Nirupam Roy's B.E. thesis: "WalkCompass:
@@ -248,7 +248,7 @@ class GaitProcessor(Processor):
             :param DataFrame data_frame: the data frame.
 
             :return array direction: Unit vector of local walk (not cardinal) direction
-        '''
+        """
 
 
         # Sum of absolute values across accelerometer axes:
@@ -286,14 +286,14 @@ class GaitProcessor(Processor):
 
 
     def heel_strikes(self, data_frame_axis):
-        '''
+        """
             Estimate heel strike times between sign changes in accelerometer data.
 
             :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
             
             :return array strikes: Heel strike timings
             :return list strike_indices: Heel strike timing indices.
-        '''
+        """
         # Demean data:
         data = data_frame_axis.values
         data -= data.mean()
@@ -336,7 +336,7 @@ class GaitProcessor(Processor):
 
 
     def gait_regularity_symmetry(self, data_frame_axis, unbias=1, normalize=2):
-        '''
+        """
             Compute step and stride regularity and symmetry from accelerometer data.
 
             :param array data_frame_axis: Accelerometer data along one axis (preferably forward direction)
@@ -346,7 +346,7 @@ class GaitProcessor(Processor):
             :return float step_regularity: Step regularity measure along axis.
             :return float stride_regularity: Stride regularity measure along axis.
             :return symmetry: Symmetry measure along axis.
-        '''
+        """
 
         coefficients, _ = autocorrelate(data_frame_axis, unbias=1, normalize=2)
 
@@ -360,7 +360,7 @@ class GaitProcessor(Processor):
         return 
 
     def gait(self, data_frame, axis='x'):
-        '''
+        """
             Extract gait features from estimated heel strikes and accelerometer data.
 
             :param DataFrame data_frame: The data frame.
@@ -382,7 +382,7 @@ class GaitProcessor(Processor):
             :return float step_regularity: Measure of step regularity along axis.
             :return float stride_regularity: Measure of stride regularity along axis.
             :return float symmetry: Measure of gait symmetry along axis.
-        '''
+        """
 
         self.duration = data_frame.td[-1]
         data = data_frame[axis]

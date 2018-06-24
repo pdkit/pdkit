@@ -10,6 +10,7 @@ Contents:
    gait
    tapping
    utils
+   testResultSet
 
 Indices and tables
 ==================
