@@ -10,29 +10,29 @@ PDKIT
 TREMOR PROCESSOR
 ****************
 
-Example how to use pdkit to calculate Tremor amplitude and frequency:
+Example how to use pdkit to calculate tremor amplitude and frequency:
 
     >>> import pdkit
     >>> tp = pdkit.TremorProcessor()
     >>> ts = pdkit.TremorTimeSeries().load(filename)
-    >>> amplitude, frequency = tp.process(ts)
+    >>> amplitude, frequency = tp.amplitude(ts)
 
-where, filename is the data path to load, by default in the cloudUPDRS format.
+where, `filename` is the data path to load, by default in the cloudUPDRS format.
 
-PDKit can also read data in the MPower format, just like:
+Pdkit can also read data in the MPower format, just like:
 
     >>> ts = pdkit.TremorTimeSeries().load(filename, 'mpower')
 
-where, filename is the data path to load in mpower format.
+where, `filename` is the data path to load in MPower format.
 
 To calculate Welch, as a robust alternative to using Fast Fourier Transform, use like:
 
-    >>> amplitude, frequency = tp.process(ts, 'welch')
+    >>> amplitude, frequency = tp.amplitude(ts, 'welch')
 
-This  class also provides a method to extract all the features available in `Tremor Processor
-<http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
+This  class also provides a method named `extract_features <http://pdkit.readthedocs.io/en/latest/tremor.html#tremor_processor.TremorProcessor.extract_features>`_
+to extract all the features available in `Tremor Processor <http://pdkit.readthedocs.io/en/latest/tremor.html>`_.
 
-    >>> tp.extract_features(tp)
+    >>> tp.extract_features(ts)
 
 BRADYKINESIA
 ************
@@ -55,7 +55,7 @@ Example how to use pdkit to calculate various Gait features:
     >>> speed_of_gait = gp.speed_of_gait(ts)
     >>> step_regularity, stride_regularity, walk_symmetry = gp.walk_regularity_symmetry(ts)
 
-where, filename is the data path to load, by default in the cloudUPDRS format.
+where, `filename` is the data path to load, by default in the CloudUPDRS format.
 
 FINGER TAPPING
 **************
@@ -63,10 +63,27 @@ FINGER TAPPING
 Example how to use pdkit to calculate the mean alternate distance of the finger tapping tests:
 
     >>> import pdkit
-    >>> ts = pdkit.FingerTappingTimeSeries().load(filename, 'ft_cloudupdrs')
+    >>> ts = pdkit.FingerTappingTimeSeries().load(filename)
     >>> ftp = pdkit.FingerTappingProcessor()
     >>> ftp.mean_alnt_target_distance(ts)
 
 kinesia scores (the number of key taps)
 
     >>> ftp.kinesia_scores(ts)
+
+TEST RESULT SET
+****************
+
+Pdkit can be used to extract all the features for different measurements (i.e. tremor, finger tapping, gait) placed in a single folder. The result
+is a `data frame` where the measurements are rows and the columns are the features extracted.
+
+>>> import pdkit
+>>> testResultSet = pdkit.TestResultSet(folderpath)
+>>> dataframe = testResultSet.process()
+
+where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
+folder `./tests/data`.
+
+We can also write the `data frame` to a output file like:
+
+>>> testResultSet.write_output(dataframe, name)

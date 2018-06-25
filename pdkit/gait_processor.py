@@ -33,7 +33,7 @@ from pdkit.utils import (load_data,
 
 
 class GaitProcessor(Processor):
-    '''
+    """
        This is the main Gait Processor class. Once the data is loaded it will be
        accessible at data_frame, where it looks like:
        data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
@@ -66,7 +66,7 @@ class GaitProcessor(Processor):
             on time averaging over short, modified periodograms (IEEE Trans. Audio Electroacoust. 
             vol. 15, pp. 70-73, 1967)
             P. Welch
-    '''
+    """
 
     def __init__(self,
                  sampling_frequency=100.0,
@@ -235,7 +235,7 @@ class GaitProcessor(Processor):
 
 
     def walk_regularity_symmetry(self, data_frame):
-        ''' 
+        '''
             This method extracts the step and stride regularity and also walk symmetry.
 
             :param DataFrame data_frame: the data frame.
@@ -468,7 +468,7 @@ class GaitProcessor(Processor):
             avg_number_of_strides, avg_stride_duration, sd_stride_durations, \
             step_regularity, stride_regularity, symmetry
 
-    def coarse_gait_features(self):
+    def coarse_gait_features(self, data_frame, axis='x'):
 
         # Foot symmetry
         walking = data[strikes_ids[0]: strikes_ids[-1]]
@@ -592,24 +592,3 @@ class GaitProcessor(Processor):
                 total_steps,\
                 # total_bouts,\
                 # mean_bout_length
-
-
-
-if __name__ == '__main__':
-    ts = GaitTimeSeries()
-    ts = ts.load_data('../tests/data/cloudupdrs_gait.csv')
-
-    gp = GaitProcessor()
-
-# fix readthedocs!!!!! !!!
-
-# put this list in pivotal
-# list of implented vs lackcing gait features from paper (ieee-xplore)
-# george will send wavelet for step length without distance :)
-# identify the mid-section in walking and characterize:
-    # count number of steps it takes to fully rotate body
-    # rotational acceleration
-    # use quaternions for this
-
-# add units of measurement for all outputs
-# add references to functions
