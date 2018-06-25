@@ -14,7 +14,9 @@ import pandas as pd
 import numpy as np
 
 from scipy.fftpack import rfft, fftfreq
-from scipy.signal import butter, lfilter, correlate
+from scipy.signal import butter, lfilter, correlate, freqz
+
+import matplotlib.pylab as plt
 
 
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
@@ -49,13 +51,13 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
     return data_frame
 
-def load_accapp_data(filename, convert_times=1000000000.0):
+def load_accapp_data(filename, convert_times=1000.0):
     df = pd.read_csv(filename, sep='\t', header=None)
     df.drop(columns=[0, 5], inplace=True)
     df.columns = ['td', 'x', 'y', 'z']
     df.td = (df.td - df.td[0])
-    df.index = pd.to_datetime(df.td * 10000000)
-    df.td = df.td / 100.
+    df.index = pd.to_datetime(df.td * convert_times * 1000)
+    df.td = df.td / convert_times
     del df.index.name
     df['mag_sum_acc'] = np.sqrt(df.x ** 2 + df.y ** 2 + df.z ** 2)
     return df
@@ -314,7 +316,7 @@ def compute_interpeak(data, sample_rate):
     return interpeak
 
 
-def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
+def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4, plot=False):
     """
     `Low-pass filter <http://stackoverflow.com/questions/25191620/
     creating-lowpass-filter-in-scipy-understanding-methods-and-units>`_ data by the [order]th order zero lag Butterworth filter
@@ -346,6 +348,18 @@ def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
     nyquist = 0.5 * sample_rate
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    
+    if plot:
+        w, h = freqz(b, a, worN=8000)
+        plt.subplot(2, 1, 1)
+        plt.plot(0.5*sample_rate*w/np.pi, np.abs(h), 'b')
+        plt.plot(cutoff, 0.5*np.sqrt(2), 'ko')
+        plt.axvline(cutoff, color='k')
+        plt.xlim(0, 0.5*sample_rate)
+        plt.title("Lowpass Filter Frequency Response")
+        plt.xlabel('Frequency [Hz]')
+        plt.grid()
+        plt.show()
 
     y = lfilter(b, a, data)
 
