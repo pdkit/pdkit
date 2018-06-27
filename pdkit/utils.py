@@ -51,6 +51,37 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
     return data_frame
 
+def get_sampling_rate_from_timestamp(d):
+    # group on minutes as pandas gives us the same second number
+    # for seconds belonging to different minutes
+    minutes = d.groupby(d.index.minute)
+
+    # get the first minute (0) since we normalised the time above
+    sampling_rate = d.iloc[minutes.indices[0]].index.second.value_counts().mean()
+    print('Sampling rate is {} samples / second'.format(sampling_rate))
+    
+    return sampling_rate
+
+def load_gait_gyro_data(filename, convert_times=1000000000.0):
+    d = pd.read_csv(filename)
+    
+    time_diff = d.time - d.time[0]
+    date_time = pd.to_datetime(time_diff)
+    time_diff /= convert_times
+    
+    mag_acc_sum = np.sqrt(d.x ** 2 + d.y ** 2 + d.z ** 2)
+
+    d['mag_sum_acc'] = mag_acc_sum
+    d['td'] = time_diff
+    d.index = date_time
+    
+    del d.index.name
+    d.drop(columns=['time'], inplace=True)
+    
+    sampling_rate = get_sampling_rate_from_timestamp(d)
+    
+    return d
+
 def load_accapp_data(filename, convert_times=1000.0):
     df = pd.read_csv(filename, sep='\t', header=None)
     df.drop(columns=[0, 5], inplace=True)
@@ -176,6 +207,9 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
     elif format_file == 'accapp':
         return load_accapp_data(filename)
+
+    elif format_file == 'gait_gyro':
+        return load_gait_gyro_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
