@@ -12,6 +12,8 @@ import pandas as pd
 
 from scipy import interpolate, signal, fft
 
+from .utils import get_sampling_rate_from_timestamp, butter_lowpass_filter
+
 class Processor:
     """
        This is the main Processor class. Once the data is loaded it will be
@@ -72,12 +74,42 @@ class Processor:
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
         f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
+        
         new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / self.sampling_frequency)
         df_resampled.mag_sum_acc = f(new_timestamp)
 
+        sample_rate = get_sampling_rate_from_timestamp(df_resampled)
+        
         logging.debug("resample signal")
         return df_resampled.interpolate(method='linear')
 
+    def cut_data_frame(self, data_frame, start=0, stop=-1):
+        df = data_frame.iloc[start: stop]
+        df.td = df.td - df.td[0]
+        df.index = pd.to_datetime(df.index.values - df.index.values[0])
+        
+        return df
+    
+    def filter_data_frame(self, data_frame):
+        """
+            This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
+            frame using a butter Butterworth digital and analog filter 
+            (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.butter.html). Then the method 
+            filter the data frame along one-dimension using a digital filter. 
+            (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html)
+
+            :param data_frame: the data frame    
+            :param str cutoff_frequency: The path to load data from
+            :param str filter_order: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+        """        
+        b_f = lambda x: butter_lowpass_filter(x.values, self.sampling_frequency, cutoff=self.cutoff_frequency, order=self.filter_order)
+        filtered_data_frame = data_frame.apply(b_f, 0)
+        
+        # we don't need to filter the time difference
+        filtered_data_frame.td = data_frame.td
+        
+        logging.debug("filtered whole dataframe!")
+        return filtered_data_frame
 
     def filter_signal(self, data_frame):
         """
@@ -104,7 +136,7 @@ class Processor:
             This method perform Fast Fourier Transform on the data frame using a hanning window
             (https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.signal.hann.html)
 
-            :param data_frame: the data frame    
+            :param data_frame: the data frame
             :param str window: hanning window size
         """
         signal_length = len(data_frame.filtered_signal.values)
