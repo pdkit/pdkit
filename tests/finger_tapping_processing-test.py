@@ -38,18 +38,38 @@ class FingerTappingProcessingTest(unittest.TestCase):
 
     def test_finger_tapping_frequency(self):
         ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
-        frequency = self.ftp.frequency(ts)
-        self.assertEqual(float("{0:.14f}".format(frequency)), float("{0:.14f}".format(3.4455385342949314)))
+        freq, duration = self.ftp.frequency(ts)
+        self.assertEqual(float("{0:.14f}".format(freq)), float("{0:.14f}".format(3.4455385342949314)))
 
     def test_finger_tapping_mean_moving_time(self):
         ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
-        mmt = self.ftp.mean_moving_time(ts)
+        mmt, duration = self.ftp.mean_moving_time(ts)
         self.assertEqual(float("{0:.14f}".format(mmt)), float("{0:.14f}".format(136.75369458128074)))
 
     def test_finger_tapping_mean_alnt_target_distance(self):
         ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
-        matd = self.ftp.mean_alnt_target_distance(ts)
+        matd, duration = self.ftp.mean_alnt_target_distance(ts)
         self.assertEqual(float("{0:.14f}".format(matd)), float("{0:.14f}".format(480.04403524710443)))
+
+    def test_finger_tapping_incoordination_score(self):
+        ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
+        inc_s, duration = self.ftp.incoordination_score(ts)
+        self.assertEqual(float("{0:.14f}".format(inc_s)), float("{0:.14f}".format(0.7649147030988328)))
+
+    def test_finger_tapping_kinesia_scores(self):
+        ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
+        ks, duration = self.ftp.kinesia_scores(ts)
+        self.assertEqual( ks , 204)
+
+    def test_finger_tapping_akinesia_times(self):
+        ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
+        at, duration = self.ftp.akinesia_times(ts)
+        self.assertEqual(float("{0:.14f}".format(at)), float("{0:.14f}".format(0.15414705882352947)))
+
+    def test_finger_tapping_dysmetria_score(self):
+        ts = pdkit.FingerTappingTimeSeries().load(self.filename_cloudupdrs, 'ft_cloudupdrs')
+        ds, duration = self.ftp.dysmetria_score(ts)
+        self.assertEqual(float("{0:.14f}".format(ds)), float("{0:.14f}".format(58.2339485875795)))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(FingerTappingProcessingTest)
