@@ -24,8 +24,8 @@ class TestResultSetCloudUPDRSDataFrameValidator(pv.DataFrameValidator):
 
 class TestResultSetTest(unittest.TestCase):
     def setUp(self):
-        self.trs = pdkit.TestResultSet(self.folderpath)
         self.folderpath = './tests/data'
+        self.trs = pdkit.TestResultSet(self.folderpath)
 
     def tearDown(self):
         self.trs = None
