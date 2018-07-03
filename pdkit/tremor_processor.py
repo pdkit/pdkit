@@ -614,7 +614,7 @@ class TremorProcessor:
         except:
             logging.error("Unexpected error on TremorProcessor process: %s", sys.exc_info()[0])
 
-    def extract_features(self, data_frame, pre=None):
+    def extract_features(self, data_frame, pre=''):
         """
             This method extracts all the features available to the Tremor Processor class.
 

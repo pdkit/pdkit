@@ -135,7 +135,10 @@ class TestResultSet:
             if f.startswith(abr_measurement_type):
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f))
                 features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f)+'-')
-                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print(f)
 
         return data_frame
 

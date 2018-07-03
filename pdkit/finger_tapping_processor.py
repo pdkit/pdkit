@@ -175,7 +175,13 @@ class FingerTappingProcessor:
 
         raise_timestamps = data_frame.td[data_frame.action_type == 1]
         down_timestamps = data_frame.td[data_frame.action_type == 0]
-        at = np.mean(down_timestamps.values - raise_timestamps.values)
+        if len(raise_timestamps) == len(down_timestamps):
+            at = np.mean(down_timestamps.values - raise_timestamps.values)
+        else:
+            if len(raise_timestamps) > len(down_timestamps):
+                at = np.mean(down_timestamps.values - raise_timestamps.values[:-(len(raise_timestamps)-len(down_timestamps))])
+            else:
+                at = np.mean(down_timestamps.values[:-(len(raise_timestamps)-len(down_timestamps))] - raise_timestamps.values)
         duration = math.ceil(data_frame.td[-1])
         return np.abs(at), duration
 
@@ -194,7 +200,7 @@ class FingerTappingProcessor:
         duration = math.ceil(data_frame.td[-1])
         return ds, duration
 
-    def extract_features(self, data_frame, pre=None):
+    def extract_features(self, data_frame, pre=''):
         """
             This method extracts all the features available to the Finger Tapping Processor class.
 
