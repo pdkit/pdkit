@@ -181,7 +181,7 @@ class FingerTappingProcessor:
             if len(raise_timestamps) > len(down_timestamps):
                 at = np.mean(down_timestamps.values - raise_timestamps.values[:-(len(raise_timestamps)-len(down_timestamps))])
             else:
-                at = np.mean(down_timestamps.values[:-(len(raise_timestamps)-len(down_timestamps))] - raise_timestamps.values)
+                at = np.mean(down_timestamps.values[:-(len(down_timestamps)-len(raise_timestamps))] - raise_timestamps.values)
         duration = math.ceil(data_frame.td[-1])
         return np.abs(at), duration
 
