@@ -111,7 +111,10 @@ class TestResultSet:
             if f.startswith(abr_measurement_type):
                 tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f))
                 features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
-                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print('file error: '+f)
 
         return data_frame
 
@@ -138,7 +141,7 @@ class TestResultSet:
                 if features is not None:
                     data_frame = self.__save_features_to_dataframe(features, data_frame, f)
                 else:
-                    print(f)
+                    print('file error: '+f)
 
         return data_frame
 
