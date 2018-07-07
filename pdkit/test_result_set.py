@@ -61,7 +61,7 @@ class TestResultSet:
         return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f))]
 
     def __get_dirs_list(self):
-        return [f for f in os.listdir(self.folder_absolute_path) if isdir(join(self.folder_absolute_path, f))]
+        return [f for f in os.listdir(self.folder_absolute_path) if (isdir(join(self.folder_absolute_path, f)) and not f.startswith('_'))]
 
     def __build_folder_path(self, folder_name):
         return join(self.folder_absolute_path, folder_name)
