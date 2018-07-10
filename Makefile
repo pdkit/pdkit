@@ -22,6 +22,7 @@ test:
 	python tests/gait_processing-test.py
 	python tests/bradykinesia_processing-test.py
 	python tests/finger_tapping_processing-test.py
+	python tests/test_result_set-test.py
 
 package:
 	python setup.py sdist
