@@ -58,9 +58,28 @@ def get_sampling_rate_from_timestamp(d):
 
     # get the first minute (0) since we normalised the time above
     sampling_rate = d.iloc[minutes.indices[0]].index.second.value_counts().mean()
-    print('Sampling rate is {} samples / second'.format(sampling_rate))
+    print('Sampling rate is {} Hz'.format(sampling_rate))
     
     return sampling_rate
+
+def load_freeze_data(filename):
+    data = pd.read_csv(filename, delimiter=' ', header=None,)
+    data.columns = ['td', 'ankle_f', 'ankle_v', 'ankle_l', 'leg_f', 'leg_v', 'leg_l', 'x', 'y', 'z', 'anno']
+    data.td = data.td - data.td[0]
+    
+    # the dataset specified it uses ms
+    date_time = pd.to_datetime(data.td, unit='ms')
+    
+    mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
+
+    data['mag_sum_acc'] = mag_acc_sum
+    data.index = date_time
+    
+    del data.index.name
+    
+    sampling_rate = get_sampling_rate_from_timestamp(data)
+    
+    return data
 
 def load_gait_gyro_data(filename, convert_times=1000000000.0):
     d = pd.read_csv(filename)
@@ -210,6 +229,9 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
     elif format_file == 'gait_gyro':
         return load_gait_gyro_data(filename)
+    
+    elif format_file == 'freeze':
+        return load_freeze_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
