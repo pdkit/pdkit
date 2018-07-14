@@ -84,6 +84,7 @@ class Processor:
         return df_resampled.interpolate(method='linear')
 
     def cut_data_frame(self, data_frame, start=0, stop=-1):
+        
         df = data_frame.iloc[start: stop]
         df.td = df.td - df.td[0]
         df.index = pd.to_datetime(df.index.values - df.index.values[0])
