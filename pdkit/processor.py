@@ -73,12 +73,10 @@ class Processor:
         """
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
-        f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
+        # f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
         
-        new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / self.sampling_frequency)
-        df_resampled.mag_sum_acc = f(new_timestamp)
-
-        sample_rate = get_sampling_rate_from_timestamp(df_resampled)
+        # new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / self.sampling_frequency)
+        # df_resampled.mag_sum_acc = f(new_timestamp)
         
         logging.debug("resample signal")
         return df_resampled.interpolate(method='linear')
@@ -91,7 +89,7 @@ class Processor:
         
         return df
     
-    def filter_data_frame(self, data_frame):
+    def filter_data_frame(self, data_frame, centre=False, keep_cols=['anno']):
         """
             This method filters a data frame signal as suggested in [1]. First step is to high pass filter the data
             frame using a butter Butterworth digital and analog filter 
@@ -110,6 +108,21 @@ class Processor:
         filtered_data_frame.td = data_frame.td
         
         logging.debug("filtered whole dataframe!")
+        
+        # I need to fix this as I am losing some important information
+        # one idea would be to look at where the sign changes (first and second peak)
+        # and keep that information aswell.
+        if centre:
+            # de-mean
+            filtered_data_frame -= filtered_data_frame.mean()
+            
+            for col in filtered_data_frame:
+                first_zero_crossing = np.argwhere(filtered_data_frame[col] > 0)[0][0]
+                filtered_data_frame[col][:first_zero_crossing] = 0
+        
+        if {*keep_cols}.issubset(filtered_data_frame.columns):
+            filtered_data_frame[keep_cols] = data_frame[keep_cols]
+        
         return filtered_data_frame
 
     def filter_signal(self, data_frame):

@@ -592,3 +592,31 @@ class GaitProcessor(Processor):
                 total_steps,\
                 # total_bouts,\
                 # mean_bout_length
+    
+    def separate_into_sections(self, data_frame, labels_col='anno',labels_to_keep=[1,2], min_labels_in_sequence=100):
+        
+        sections = [[]]
+        
+        mask = data_frame[labels_col].apply(lambda x: x in labels_to_keep)
+
+        for i,m in enumerate(mask):
+            if m:
+                sections[-1].append(i)
+                
+            if not m and len(sections[-1]) > min_labels_in_sequence:
+                sections.append([])
+        
+        sections.pop()
+        
+        sections = [self.rebuild_indexes(data_frame.iloc[s]) for s in sections]
+        
+        return sections
+    
+    def rebuild_indexes(self, data_frame):
+        
+        df = data_frame.copy()
+        
+        df.index = pd.to_datetime((df.index -df.index[0]).values)
+        df.td = (df.td - df.td[0]).values
+            
+        return df

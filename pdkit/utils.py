@@ -19,6 +19,10 @@ from scipy.signal import butter, lfilter, correlate, freqz
 import matplotlib.pylab as plt
 
 
+import scipy.signal as sig
+from scipy.cluster.vq import kmeans, vq, kmeans2
+
+
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     """
        This method loads data in the cloudupdrs format
@@ -58,9 +62,28 @@ def get_sampling_rate_from_timestamp(d):
 
     # get the first minute (0) since we normalised the time above
     sampling_rate = d.iloc[minutes.indices[0]].index.second.value_counts().mean()
-    print('Sampling rate is {} samples / second'.format(sampling_rate))
+    print('Sampling rate is {} Hz'.format(sampling_rate))
     
     return sampling_rate
+
+def load_freeze_data(filename):
+    data = pd.read_csv(filename, delimiter=' ', header=None,)
+    data.columns = ['td', 'ankle_f', 'ankle_v', 'ankle_l', 'leg_f', 'leg_v', 'leg_l', 'x', 'y', 'z', 'anno']
+    data.td = data.td - data.td[0]
+    
+    # the dataset specified it uses ms
+    date_time = pd.to_datetime(data.td, unit='ms')
+    
+    mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
+
+    data['mag_sum_acc'] = mag_acc_sum
+    data.index = date_time
+    
+    del data.index.name
+    
+    sampling_rate = get_sampling_rate_from_timestamp(data)
+    
+    return data
 
 def load_gait_gyro_data(filename, convert_times=1000000000.0):
     d = pd.read_csv(filename)
@@ -210,6 +233,9 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
     elif format_file == 'gait_gyro':
         return load_gait_gyro_data(filename)
+    
+    elif format_file == 'freeze':
+        return load_freeze_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
@@ -505,3 +531,148 @@ def autocorrelate(data, unbias=2, normalize=2):
             raise IOError("normalize should be set to 1, 2, or None")
 
     return coefficients, N
+
+
+def cluster_walk_turn(data, window=[1, 1, 1]):
+    """ This will use k-means clustering to separate walking from turning. It will do clustering on the
+        peaks prominences as it is quite evident that for walking these are considerably larger than for
+        turning.
+        
+        :param data array: One-dimensional array.
+        :param window array: This is a smoothing functionality so we can fix misclassifications.
+                             It will run a sliding window of form [border, smoothing, border] on the
+                             signal and if the border elements are the same it will change the 
+                             smooth elements to match the border. An example would be for a window
+                             of [2, 1, 2] we have the following elements [1, 1, 0, 1, 1], this will
+                             transform it into [1, 1, 1, 1, 1]. So if the border elements match it
+                             will transform the middle (smoothing) into the same as the border.
+                             
+        :return clusters array: One big array which match every peak to a class (0 and 1).
+        :return peaks array: The peaks of our data.
+        :return prominences array: The prominences of the peaks.
+    """
+    peaks, _ = sig.find_peaks(data)
+    prominences = sig.peak_prominences(data, peaks)[0]
+    
+    # we use 2 clusters because we care about walking and turning only
+    codebook, _ = kmeans(prominences, [prominences.max(), prominences.min()])
+    clusters, _ = vq(prominences, codebook)
+    
+    # NOTE: need to think more about this...
+    if window:
+        clusters = smoothing_window(clusters, window=window)
+        
+    return clusters, peaks, prominences
+
+def smoothing_window(data, window=[1, 1, 1]):
+    """ This is a smoothing functionality so we can fix misclassifications.
+        It will run a sliding window of form [border, smoothing, border] on the
+        signal and if the border elements are the same it will change the 
+        smooth elements to match the border. An example would be for a window
+        of [2, 1, 2] we have the following elements [1, 1, 0, 1, 1], this will
+        transform it into [1, 1, 1, 1, 1]. So if the border elements match it
+        will transform the middle (smoothing) into the same as the border.
+        
+        :param data array: One-dimensional array.
+        :param window array: Used to define the [border, smoothing, border]
+                             regions.
+                             
+        :return data array: The smoothed version of the original data.
+    """
+    
+    for i in range(len(data) - sum(window)):
+        
+        start_window_from = i
+        start_window_to = i+window[0]
+
+        end_window_from = start_window_to + window[1]
+        end_window_to = end_window_from + window[2]
+
+        if np.all(data[start_window_from: start_window_to] == data[end_window_from: end_window_to]):
+            data[start_window_from: end_window_to] = data[start_window_from]
+            
+    return data
+
+
+def plot_walk_turn_clusters(data, window=[1, 1, 1]):
+    c, pk, p = cluster_walk_turn(data, window=window)
+    
+    contour_heights = data[pk] - p
+    
+    colors = [['red', 'green'][i] for i in c]
+    plt.plot(data)
+    plt.scatter(pk, data[pk], color=colors)
+    plt.vlines(x=pk, ymin=contour_heights, ymax=data[pk], color=colors)
+    
+    
+def separate_walks_turns(data, window=[1, 1, 1]):
+    """ Will separate peaks into the clusters by following the trend in the clusters array.
+        This is usedful because scipy's k-mean clustering will give us a continous clusters
+        array.
+        
+        :param clusters array: A continous array representing different classes.
+        :param peaks array: The peaks that we want to separate into the classes from the custers.
+        
+        :return walks arrays: An array of arrays that will have all the peaks corresponding to every
+                              individual walk.
+        :return turns arraays: Array of array which has all the indices of the peaks that correspond
+                               to turning.
+    
+    """
+    clusters, peaks, promi = cluster_walk_turn(data, window=window)
+    
+    group_one = []
+    group_two = []
+    
+    start = 0
+
+    for i in range(1, len(clusters)):
+        
+        if clusters[i-1] != clusters[i]:
+            assert np.all(clusters[start: i] == clusters[start]), 'Some values are mixed up, please check!'
+            
+            add = group_one if clusters[start] == 0 else group_two
+            add.append(peaks[start: i])
+            start = i
+        
+        # hacky fix for the last part of the signal ...
+        # I need to change this ...
+        if i == len(clusters)-1:
+            if not peaks[start] in add[-1]:
+                add = group_one if clusters[start] == 0 else group_two
+                add.append(peaks[start: ])
+                
+    maxes_one = [np.max(data[c]) for c in group_one]
+    maxes_two = [np.max(data[c]) for c in group_two]
+    
+    walks, turns = group_two, group_one
+    
+    if np.max(maxes_one) > np.max(maxes_two):
+        walks, turns = group_one, group_two
+    
+    # let's drop any turns at the end of the signal
+#     if len(turns[-1]) > len(walks[-1]):
+#         turns.pop()
+    
+    return walks, turns
+
+
+def plot_walks_turns(df, window=[1, 1, 1]):
+    
+    clusters, peaks, promis = cluster_walk_turn(df, window=window)
+    walks, turns = separate_walks_turns(df, window=window)
+    
+    top_of_graph = np.concatenate([df[w] for w in walks]).max()
+    contour_heights = df[peaks] - promis
+    
+    plt.plot(df)
+    for w in walks:
+        
+        plt.plot(w, df[w], 'o')
+        plt.text(np.mean(w, dtype=np.int), top_of_graph, len(w), fontsize=22)
+        #plt.vlines(x=w, ymin=contour_heights[w], ymax=df[w])
+
+    for t in turns:
+        plt.plot(t, df[t], 's')
+#         plt.text(np.mean(t, dtype=np.int), top_of_graph, len(t), fontsize=22)
+        #plt.vlines(x=t, ymin=contour_heights[t], ymax=df[t])
