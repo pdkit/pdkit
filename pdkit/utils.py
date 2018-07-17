@@ -15,6 +15,10 @@ import numpy as np
 
 from scipy.fftpack import rfft, fftfreq
 from scipy.signal import butter, lfilter, correlate
+import logging
+
+from numpy import array
+from scipy.spatial.distance import euclidean
 
 
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
@@ -443,3 +447,129 @@ def autocorrelate(data, unbias=2, normalize=2):
             raise IOError("normalize should be set to 1, 2, or None")
 
     return coefficients, N
+
+
+def centroid_sort(centroids):
+    """
+    Sort centroids. This is required so that the same cluster centroid is
+    always the 0th one. It should also be the most negative. Order defined by
+    the Euclidean distance between the centroid and an arbitrary "small" point
+    [-100, -100] (in each dimension) to account for possible negatives. Cluster
+    0 is the closest to that point, etc.
+    0.  Set up
+    >>> from numpy.testing import assert_array_equal
+    1.  Single centroids just return themselves.
+    >>> centroid_sort(array([[1.1, 2.2]]))
+    array([[ 1.1,  2.2]])
+    >>> centroid_sort(array([[1.1, 2.2, 3.3]]))
+    array([[ 1.1,  2.2,  3.3]])
+    2.  Positive 2d centroids are ordered.
+    >>> centroids = array([
+    ...     [5.34443858, 0.63266844],  # 3
+    ...     [2.69156877, 0.76448578],  # 1
+    ...     [4.74784197, 1.0815235 ],  # 2
+    ...     [1.02330015, 0.16788118],  # 0
+    ... ])
+    >>> expected_sorted_centroids = array([
+    ...     [1.02330015, 0.16788118],  # 0
+    ...     [2.69156877, 0.76448578],  # 1
+    ...     [4.74784197, 1.0815235 ],  # 2
+    ...     [5.34443858, 0.63266844],  # 3
+    ... ])
+    >>> result = centroid_sort(centroids)
+    >>> assert_array_equal(result, expected_sorted_centroids)
+    3.  3d centroids spanning the origin are ordered.
+    >>> centroids = array([
+    ...     [ 3,   3,  4  ],  # 3
+    ...     [ 1.5, 2,  3  ],  # 2
+    ...     [-1,  -1, -1 ],   # 0
+    ...     [ 0,   1,  0.5],  # 1
+    ... ])
+    >>> expected_sorted_centroids = array([
+    ...     [-1,  -1, -1 ],   # 0
+    ...     [ 0,   1,  0.5],  # 1
+    ...     [ 1.5, 2,  3  ],  # 2
+    ...     [ 3,   3,  4  ],  # 3
+    ... ])
+    >>> result = centroid_sort(centroids)
+    >>> assert_array_equal(result, expected_sorted_centroids)
+    """
+    dimensions = len(centroids[0])
+    negative_base_point = array(dimensions*[-100])
+
+    decorated = [
+        (euclidean(centroid, negative_base_point), centroid)
+        for centroid in centroids
+    ]
+    decorated.sort()
+
+    return array([centroid for dist, centroid in decorated])
+
+
+def non_zero_index(arr):
+    """
+    Returns:
+        int: Index of first non-zero entry in an array.
+    Raises:
+        ValueError: If no-non-zero rows can be found.
+    0.  Empty array raises.
+    >>> arr = array([])
+    >>> non_zero_index(arr)
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-zero values
+    1.  Array with zero values raises.
+    >>> arr = array([
+    ...     [0, 0],
+    ...     [0, 0],
+    ...     [0, 0, 0],
+    ... ])
+    >>> non_zero_index(arr)
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-zero values
+    2.  Array with a non-zero value will have that index returned.
+    >>> arr = array([
+    ...     [0, 0],
+    ...     [0, 0, 0],
+    ...     [1, 0, 0],  # Still has zeros
+    ...     [1, 1, 0],
+    ...     [0, 1, 1],
+    ...     [-1, 0, 0],
+    ...     [-1, 2, 3],  # First non-zero array
+    ...     [1, 2, 3],
+    ... ])
+    >>> non_zero_index(arr)
+    6
+    """
+    for index, row in enumerate(arr):
+        if non_zero_row(row):
+            return index
+    raise ValueError('No non-zero values')
+
+
+def non_zero_row(arr):
+    """
+    Returns:
+        bool: If row is completely free of zeros
+    0.  Empty row returns False.
+    >>> arr = array([])
+    >>> non_zero_row(arr)
+    False
+    1.  Row with a zero returns False.
+    >>> arr = array([1, 4, 3, 0, 5, -1, -2])
+    >>> non_zero_row(arr)
+    False
+    2.  Row with no zeros returns True.
+    >>> arr = array([-1, -0.1, 0.001, 2])
+    >>> non_zero_row(arr)
+    True
+    """
+    if len(arr) == 0:
+        return False
+
+    for item in arr:
+        if item == 0:
+            return False
+
+    return True
