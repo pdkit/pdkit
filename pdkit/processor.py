@@ -79,12 +79,18 @@ class Processor:
         # df_resampled.mag_sum_acc = f(new_timestamp)
         
         logging.debug("resample signal")
-        return df_resampled.interpolate(method='linear')
+        df_resampled = df_resampled.interpolate(method='linear')
+        get_sampling_rate_from_timestamp(df_resampled)
+        
+        # df_resampled['td'] = df_resampled.index - df_resampled.index[0]
+        
+        return df_resampled
+        
 
     def cut_data_frame(self, data_frame, start=0, stop=-1):
         
         df = data_frame.iloc[start: stop]
-        df.td = df.td - df.td[0]
+        # df.td = df.td - df.td[0]
         df.index = pd.to_datetime(df.index.values - df.index.values[0])
         
         return df
@@ -105,7 +111,7 @@ class Processor:
         filtered_data_frame = data_frame.apply(b_f, 0)
         
         # we don't need to filter the time difference
-        filtered_data_frame.td = data_frame.td
+        # filtered_data_frame.td = data_frame.td
         
         logging.debug("filtered whole dataframe!")
         
