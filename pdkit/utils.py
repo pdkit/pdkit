@@ -85,25 +85,49 @@ def load_freeze_data(filename):
     
     return data
 
-def load_gait_gyro_data(filename, convert_times=1000000000.0):
-    d = pd.read_csv(filename)
+def load_huga_data(filepath):
+    data = pd.read_csv(filepath, delimiter='\t', comment='#')
     
-    time_diff = d.time - d.time[0]
-    date_time = pd.to_datetime(time_diff)
-    time_diff /= convert_times
-    
-    mag_acc_sum = np.sqrt(d.x ** 2 + d.y ** 2 + d.z ** 2)
+    # this dataset does not have timestamps so I had to infer the sampling rate from the description
+    # we used 1 because sample each second
+    # 58.82 because that's 679073 samples divided by 11544 seconds
+    # and we used 1000 because milliseconds to seconds
 
-    d['mag_sum_acc'] = mag_acc_sum
-    d['td'] = time_diff
-    d.index = date_time
+    freq = int((1 / 58.82) * 1000)
     
-    del d.index.name
-    d.drop(columns=['time'], inplace=True)
+    # this will make that nice date index that we know and love ...
+    data.index = pd.date_range(start='1970-01-01', periods=data.shape[0], freq='{}ms'.format(freq))
     
-    sampling_rate = get_sampling_rate_from_timestamp(d)
+    # this hardcoded as we don't need all that data...
+    keep = ['acc_lt_x', 'acc_lt_y', 'acc_lt_z']#, 'act']
     
-    return d
+    drop = [c for c in data.columns if c not in keep]
+    data = data.drop(columns=drop)
+    
+    # just keep the last letter (x, y and z)
+    data = data.rename(lambda x: x[-1], axis=1)
+    
+    mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
+
+    data['mag_sum_acc'] = mag_acc_sum
+    
+    data['td'] = data.index - data.index[0]
+    
+    sampling_rate = get_sampling_rate_from_timestamp(data)
+    
+    return data
+
+def load_physics_data(filename):
+    dd = pd.read_csv(filename)
+    dd['mag_sum_acc'] = np.sqrt(dd.x ** 2 + dd.y ** 2 + dd.z ** 2)
+    dd.index = pd.to_datetime(dd.time, unit='s')
+    
+    del dd.index.name
+    dd = dd.drop(columns=['time'])
+    
+    sampling_rate = get_sampling_rate_from_timestamp(dd)
+    
+    return dd
 
 def load_accapp_data(filename, convert_times=1000.0):
     df = pd.read_csv(filename, sep='\t', header=None)
@@ -231,11 +255,14 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
     elif format_file == 'accapp':
         return load_accapp_data(filename)
 
-    elif format_file == 'gait_gyro':
-        return load_gait_gyro_data(filename)
+    elif format_file == 'physics':
+        return load_physics_data(filename)
     
     elif format_file == 'freeze':
         return load_freeze_data(filename)
+    
+    elif format_file == 'huga':
+        return load_huga_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
@@ -533,36 +560,18 @@ def autocorrelate(data, unbias=2, normalize=2):
     return coefficients, N
 
 
-def cluster_walk_turn(data, window=[1, 1, 1]):
-    """ This will use k-means clustering to separate walking from turning. It will do clustering on the
-        peaks prominences as it is quite evident that for walking these are considerably larger than for
-        turning.
+def get_signal_peaks_and_prominences(data):
+    """ Get the signal peaks and peak prominences.
         
         :param data array: One-dimensional array.
-        :param window array: This is a smoothing functionality so we can fix misclassifications.
-                             It will run a sliding window of form [border, smoothing, border] on the
-                             signal and if the border elements are the same it will change the 
-                             smooth elements to match the border. An example would be for a window
-                             of [2, 1, 2] we have the following elements [1, 1, 0, 1, 1], this will
-                             transform it into [1, 1, 1, 1, 1]. So if the border elements match it
-                             will transform the middle (smoothing) into the same as the border.
-                             
-        :return clusters array: One big array which match every peak to a class (0 and 1).
-        :return peaks array: The peaks of our data.
+        
+        :return peaks array: The peaks of our signal.
         :return prominences array: The prominences of the peaks.
     """
     peaks, _ = sig.find_peaks(data)
     prominences = sig.peak_prominences(data, peaks)[0]
-    
-    # we use 2 clusters because we care about walking and turning only
-    codebook, _ = kmeans(prominences, [prominences.max(), prominences.min()])
-    clusters, _ = vq(prominences, codebook)
-    
-    # NOTE: need to think more about this...
-    if window:
-        clusters = smoothing_window(clusters, window=window)
         
-    return clusters, peaks, prominences
+    return peaks, prominences
 
 def smoothing_window(data, window=[1, 1, 1]):
     """ This is a smoothing functionality so we can fix misclassifications.
@@ -594,7 +603,82 @@ def smoothing_window(data, window=[1, 1, 1]):
     return data
 
 
-def plot_walk_turn_clusters(data, window=[1, 1, 1]):
+def BellmanKSegment(x, k):
+    # Divide a univariate time-series, x, into k contiguous segments
+    # Cost is the sum of the squared residuals from the mean of each segment
+    # Returns array containg the index for the endpoint of each segment in ascending order
+    
+    n = x.size
+    cost = np.matrix(np.ones(shape=(k,n)) * np.inf)
+    startLoc = np.zeros(shape=(k,n), dtype=int)
+
+    #Calculate residuals for all possible segments O(n^2)
+    res = np.zeros(shape=(n,n)) # Each segment begins at index i and ends at index j inclusive.
+    
+    for i in range(n-1):
+        mu = x[i]
+        r = 0.0
+        for j in range(i+1,n):
+
+            r = r + ((j-i)/(j-i+1))*(x[j] - mu)*(x[j] - mu) #incrementally update squared residual
+            mu = (x[j] + (j-i)*mu)/(j-i+1) #incrementally update mean
+            res[i,j] = r #equivalent to res[i,j] = np.var(x[i:(j+1)])*(1+j-i) 
+           
+
+    #Determine optimal segmentation O(kn^2)
+    segment = 0
+    for j in range(n):
+        cost[segment,j] = res[0,j]
+        startLoc[segment, j] = 0
+
+    for segment in range(1,k):
+         for i in range(segment,n-1): 
+            for j in range(i+1,n):
+                tmpcost = res[i,j] + cost[segment-1,i-1]
+                if cost[segment,j] > tmpcost: #break ties with smallest j                   
+                    cost[segment,j]= tmpcost
+                    startLoc[segment, j] = i
+   
+
+    #Backtrack to determine endpoints of each segment for the optimal partition
+    endPoint = np.zeros(shape=(k,1))
+    v = n
+    for segment in range(k-1,-1,-1):
+        endPoint[segment] = v-1         
+        v = startLoc[segment,v-1]
+       
+
+    return ExpandSegmentIndicies(endPoint)
+
+def ExpandSegmentIndicies(endPoint):
+    startPoint = -1
+    lbls = np.array([])
+    for segment in range(endPoint.size):
+        lbls = np.append( arr=lbls ,values=np.repeat(segment, np.int(endPoint[segment]-startPoint)) )
+        startPoint = endPoint[segment]
+    return lbls
+
+
+def plot_segmentation(data, peaks, segment_indexes):
+    """ Will plot the data and segmentation based on the peaks and segment indexes.
+    
+        :param 1d-array data: The orginal axis of the data that was segmented into sections.
+        :param 1d-array peaks: Peaks of the data.
+        :param 1d-array segment_indexes: These are the different classes, corresponding to each peak.
+        
+        Will not return anything, instead it will plot the data and peaks with different colors for each class.
+    
+    """
+    
+    plt.plot(data);
+    
+    for segment in np.unique(segment_indexes):
+        plt.plot(peaks[np.where(segment_indexes == segment)[0]], data[peaks][np.where(segment_indexes == segment)[0]], 'o')
+        
+    plt.show()
+
+    
+def plot_walk_turn_segments(data, window=[1, 1, 1]):
     c, pk, p = cluster_walk_turn(data, window=window)
     
     contour_heights = data[pk] - p
@@ -604,7 +688,7 @@ def plot_walk_turn_clusters(data, window=[1, 1, 1]):
     plt.scatter(pk, data[pk], color=colors)
     plt.vlines(x=pk, ymin=contour_heights, ymax=data[pk], color=colors)
     
-    
+
 def separate_walks_turns(data, window=[1, 1, 1]):
     """ Will separate peaks into the clusters by following the trend in the clusters array.
         This is usedful because scipy's k-mean clustering will give us a continous clusters
