@@ -14,7 +14,12 @@ import pandas as pd
 import numpy as np
 
 from scipy.fftpack import rfft, fftfreq
-from scipy.signal import butter, lfilter, correlate
+from scipy.signal import butter, lfilter, correlate, freqz
+
+import matplotlib.pylab as plt
+
+import scipy.signal as sig
+from scipy.cluster.vq import kmeans, vq, kmeans2
 
 
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
@@ -49,6 +54,90 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
     return data_frame
 
+def get_sampling_rate_from_timestamp(d):
+    # group on minutes as pandas gives us the same second number
+    # for seconds belonging to different minutes
+    minutes = d.groupby(d.index.minute)
+
+    # get the first minute (0) since we normalised the time above
+    sampling_rate = d.iloc[minutes.indices[0]].index.second.value_counts().mean()
+    print('Sampling rate is {} Hz'.format(sampling_rate))
+    
+    return sampling_rate
+
+def load_freeze_data(filename):
+    data = pd.read_csv(filename, delimiter=' ', header=None,)
+    data.columns = ['td', 'ankle_f', 'ankle_v', 'ankle_l', 'leg_f', 'leg_v', 'leg_l', 'x', 'y', 'z', 'anno']
+    data.td = data.td - data.td[0]
+    
+    # the dataset specified it uses ms
+    date_time = pd.to_datetime(data.td, unit='ms')
+    
+    mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
+
+    data['mag_sum_acc'] = mag_acc_sum
+    data.index = date_time
+    
+    del data.index.name
+    
+    sampling_rate = get_sampling_rate_from_timestamp(data)
+    
+    return data
+
+def load_huga_data(filepath):
+    data = pd.read_csv(filepath, delimiter='\t', comment='#')
+    
+    # this dataset does not have timestamps so I had to infer the sampling rate from the description
+    # we used 1 because sample each second
+    # 58.82 because that's 679073 samples divided by 11544 seconds
+    # and we used 1000 because milliseconds to seconds
+
+    freq = int((1 / 58.82) * 1000)
+    
+    # this will make that nice date index that we know and love ...
+    data.index = pd.date_range(start='1970-01-01', periods=data.shape[0], freq='{}ms'.format(freq))
+    
+    # this hardcoded as we don't need all that data...
+    keep = ['acc_lt_x', 'acc_lt_y', 'acc_lt_z']#, 'act']
+    
+    drop = [c for c in data.columns if c not in keep]
+    data = data.drop(columns=drop)
+    
+    # just keep the last letter (x, y and z)
+    data = data.rename(lambda x: x[-1], axis=1)
+    
+    mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
+
+    data['mag_sum_acc'] = mag_acc_sum
+    
+    data['td'] = data.index - data.index[0]
+    
+    sampling_rate = get_sampling_rate_from_timestamp(data)
+    
+    return data
+
+def load_physics_data(filename):
+    dd = pd.read_csv(filename)
+    dd['mag_sum_acc'] = np.sqrt(dd.x ** 2 + dd.y ** 2 + dd.z ** 2)
+    dd.index = pd.to_datetime(dd.time, unit='s')
+    
+    del dd.index.name
+    dd = dd.drop(columns=['time'])
+    
+    sampling_rate = get_sampling_rate_from_timestamp(dd)
+    
+    return dd
+
+def load_accapp_data(filename, convert_times=1000.0):
+    df = pd.read_csv(filename, sep='\t', header=None)
+    df.drop(columns=[0, 5], inplace=True)
+    df.columns = ['td', 'x', 'y', 'z']
+    df.td = (df.td - df.td[0])
+    df.index = pd.to_datetime(df.td * convert_times * 1000)
+    df.td = df.td / convert_times
+    del df.index.name
+    df['mag_sum_acc'] = np.sqrt(df.x ** 2 + df.y ** 2 + df.z ** 2)
+    return df
 
 def load_mpower_data(filename, convert_times=1000000000.0):
     """
@@ -161,6 +250,19 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
     """
     if format_file == 'mpower':
         return load_mpower_data(filename)
+
+    elif format_file == 'accapp':
+        return load_accapp_data(filename)
+
+    elif format_file == 'physics':
+        return load_physics_data(filename)
+    
+    elif format_file == 'freeze':
+        return load_freeze_data(filename)
+    
+    elif format_file == 'huga':
+        return load_huga_data(filename)
+
     else:
         if format_file == 'ft_cloudupdrs':
             return load_finger_tapping_cloudupdrs_data(filename)
@@ -300,7 +402,7 @@ def compute_interpeak(data, sample_rate):
     return interpeak
 
 
-def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
+def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4, plot=False):
     """
     `Low-pass filter <http://stackoverflow.com/questions/25191620/
     creating-lowpass-filter-in-scipy-understanding-methods-and-units>`_ data by the [order]th order zero lag Butterworth filter
@@ -332,6 +434,18 @@ def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4):
     nyquist = 0.5 * sample_rate
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    
+    if plot:
+        w, h = freqz(b, a, worN=8000)
+        plt.subplot(2, 1, 1)
+        plt.plot(0.5*sample_rate*w/np.pi, np.abs(h), 'b')
+        plt.plot(cutoff, 0.5*np.sqrt(2), 'ko')
+        plt.axvline(cutoff, color='k')
+        plt.xlim(0, 0.5*sample_rate)
+        plt.title("Lowpass Filter Frequency Response")
+        plt.xlabel('Frequency [Hz]')
+        plt.grid()
+        plt.show()
 
     y = lfilter(b, a, data)
 
@@ -443,3 +557,211 @@ def autocorrelate(data, unbias=2, normalize=2):
             raise IOError("normalize should be set to 1, 2, or None")
 
     return coefficients, N
+
+
+def get_signal_peaks_and_prominences(data):
+    """ Get the signal peaks and peak prominences.
+        
+        :param data array: One-dimensional array.
+        
+        :return peaks array: The peaks of our signal.
+        :return prominences array: The prominences of the peaks.
+    """
+    peaks, _ = sig.find_peaks(data)
+    prominences = sig.peak_prominences(data, peaks)[0]
+        
+    return peaks, prominences
+
+def smoothing_window(data, window=[1, 1, 1]):
+    """ This is a smoothing functionality so we can fix misclassifications.
+        It will run a sliding window of form [border, smoothing, border] on the
+        signal and if the border elements are the same it will change the 
+        smooth elements to match the border. An example would be for a window
+        of [2, 1, 2] we have the following elements [1, 1, 0, 1, 1], this will
+        transform it into [1, 1, 1, 1, 1]. So if the border elements match it
+        will transform the middle (smoothing) into the same as the border.
+        
+        :param data array: One-dimensional array.
+        :param window array: Used to define the [border, smoothing, border]
+                             regions.
+                             
+        :return data array: The smoothed version of the original data.
+    """
+    
+    for i in range(len(data) - sum(window)):
+        
+        start_window_from = i
+        start_window_to = i+window[0]
+
+        end_window_from = start_window_to + window[1]
+        end_window_to = end_window_from + window[2]
+
+        if np.all(data[start_window_from: start_window_to] == data[end_window_from: end_window_to]):
+            data[start_window_from: end_window_to] = data[start_window_from]
+            
+    return data
+
+
+def BellmanKSegment(x, k):
+    # Divide a univariate time-series, x, into k contiguous segments
+    # Cost is the sum of the squared residuals from the mean of each segment
+    # Returns array containg the index for the endpoint of each segment in ascending order
+    
+    n = x.size
+    cost = np.matrix(np.ones(shape=(k,n)) * np.inf)
+    startLoc = np.zeros(shape=(k,n), dtype=int)
+
+    #Calculate residuals for all possible segments O(n^2)
+    res = np.zeros(shape=(n,n)) # Each segment begins at index i and ends at index j inclusive.
+    
+    for i in range(n-1):
+        mu = x[i]
+        r = 0.0
+        for j in range(i+1,n):
+
+            r = r + ((j-i)/(j-i+1))*(x[j] - mu)*(x[j] - mu) #incrementally update squared residual
+            mu = (x[j] + (j-i)*mu)/(j-i+1) #incrementally update mean
+            res[i,j] = r #equivalent to res[i,j] = np.var(x[i:(j+1)])*(1+j-i) 
+           
+
+    #Determine optimal segmentation O(kn^2)
+    segment = 0
+    for j in range(n):
+        cost[segment,j] = res[0,j]
+        startLoc[segment, j] = 0
+
+    for segment in range(1,k):
+         for i in range(segment,n-1): 
+            for j in range(i+1,n):
+                tmpcost = res[i,j] + cost[segment-1,i-1]
+                if cost[segment,j] > tmpcost: #break ties with smallest j                   
+                    cost[segment,j]= tmpcost
+                    startLoc[segment, j] = i
+   
+
+    #Backtrack to determine endpoints of each segment for the optimal partition
+    endPoint = np.zeros(shape=(k,1))
+    v = n
+    for segment in range(k-1,-1,-1):
+        endPoint[segment] = v-1         
+        v = startLoc[segment,v-1]
+       
+
+    return ExpandSegmentIndicies(endPoint)
+
+def ExpandSegmentIndicies(endPoint):
+    startPoint = -1
+    lbls = np.array([])
+    for segment in range(endPoint.size):
+        lbls = np.append( arr=lbls ,values=np.repeat(segment, np.int(endPoint[segment]-startPoint)) )
+        startPoint = endPoint[segment]
+    return lbls
+
+
+def plot_segmentation(data, peaks, segment_indexes):
+    """ Will plot the data and segmentation based on the peaks and segment indexes.
+    
+        :param 1d-array data: The orginal axis of the data that was segmented into sections.
+        :param 1d-array peaks: Peaks of the data.
+        :param 1d-array segment_indexes: These are the different classes, corresponding to each peak.
+        
+        Will not return anything, instead it will plot the data and peaks with different colors for each class.
+    
+    """
+    
+    plt.plot(data);
+    
+    for segment in np.unique(segment_indexes):
+        plt.plot(peaks[np.where(segment_indexes == segment)[0]], data[peaks][np.where(segment_indexes == segment)[0]], 'o')
+        
+    plt.show()
+
+
+def DisplayBellmanK(data, ix):
+    plt.plot(data);
+    for segment in np.unique(ix):
+        plt.plot(np.where(ix == segment)[0],data[np.where(ix == segment)[0]],'o')
+    plt.show()
+    
+def plot_walk_turn_segments(data, window=[1, 1, 1]):
+    c, pk, p = cluster_walk_turn(data, window=window)
+    
+    contour_heights = data[pk] - p
+    
+    colors = [['red', 'green'][i] for i in c]
+    plt.plot(data)
+    plt.scatter(pk, data[pk], color=colors)
+    plt.vlines(x=pk, ymin=contour_heights, ymax=data[pk], color=colors)
+    
+
+def separate_walks_turns(data, window=[1, 1, 1]):
+    """ Will separate peaks into the clusters by following the trend in the clusters array.
+        This is usedful because scipy's k-mean clustering will give us a continous clusters
+        array.
+        
+        :param clusters array: A continous array representing different classes.
+        :param peaks array: The peaks that we want to separate into the classes from the custers.
+        
+        :return walks arrays: An array of arrays that will have all the peaks corresponding to every
+                              individual walk.
+        :return turns arraays: Array of array which has all the indices of the peaks that correspond
+                               to turning.
+    
+    """
+    clusters, peaks, promi = cluster_walk_turn(data, window=window)
+    
+    group_one = []
+    group_two = []
+    
+    start = 0
+
+    for i in range(1, len(clusters)):
+        
+        if clusters[i-1] != clusters[i]:
+            assert np.all(clusters[start: i] == clusters[start]), 'Some values are mixed up, please check!'
+            
+            add = group_one if clusters[start] == 0 else group_two
+            add.append(peaks[start: i])
+            start = i
+        
+        # hacky fix for the last part of the signal ...
+        # I need to change this ...
+        if i == len(clusters)-1:
+            if not peaks[start] in add[-1]:
+                add = group_one if clusters[start] == 0 else group_two
+                add.append(peaks[start: ])
+                
+    maxes_one = [np.max(data[c]) for c in group_one]
+    maxes_two = [np.max(data[c]) for c in group_two]
+    
+    walks, turns = group_two, group_one
+    
+    if np.max(maxes_one) > np.max(maxes_two):
+        walks, turns = group_one, group_two
+    
+    # let's drop any turns at the end of the signal
+#     if len(turns[-1]) > len(walks[-1]):
+#         turns.pop()
+    
+    return walks, turns
+
+
+def plot_walks_turns(df, window=[1, 1, 1]):
+    
+    clusters, peaks, promis = cluster_walk_turn(df, window=window)
+    walks, turns = separate_walks_turns(df, window=window)
+    
+    top_of_graph = np.concatenate([df[w] for w in walks]).max()
+    contour_heights = df[peaks] - promis
+    
+    plt.plot(df)
+    for w in walks:
+        
+        plt.plot(w, df[w], 'o')
+        plt.text(np.mean(w, dtype=np.int), top_of_graph, len(w), fontsize=22)
+        #plt.vlines(x=w, ymin=contour_heights[w], ymax=df[w])
+
+    for t in turns:
+        plt.plot(t, df[t], 's')
+#         plt.text(np.mean(t, dtype=np.int), top_of_graph, len(t), fontsize=22)
+        #plt.vlines(x=t, ymin=contour_heights[t], ymax=df[t])
