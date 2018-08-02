@@ -17,7 +17,6 @@ from scipy.fftpack import rfft, fftfreq
 from scipy.signal import butter, lfilter, correlate, freqz
 
 import matplotlib.pylab as plt
-from numba import autojit, jit
 
 import scipy.signal as sig
 from scipy.cluster.vq import kmeans, vq, kmeans2
@@ -602,7 +601,7 @@ def smoothing_window(data, window=[1, 1, 1]):
             
     return data
 
-@autojit
+
 def BellmanKSegment(x, k):
     # Divide a univariate time-series, x, into k contiguous segments
     # Cost is the sum of the squared residuals from the mean of each segment

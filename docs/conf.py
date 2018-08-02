@@ -324,6 +324,8 @@ MOCK_MODULES = ['pygtk',
                 'scipy.fft',
                 'scipy.fftpack',
                 'scipy.integrate',
+                'scipy.cluster',
+                'scipy.cluster.vq',
                 'matplotlib.pylab',
                 'tsfresh.feature_extraction',]
 
