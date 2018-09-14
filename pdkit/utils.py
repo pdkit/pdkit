@@ -583,7 +583,6 @@ def autocorrelate(data, unbias=2, normalize=2):
     return coefficients, N
 
 
-<<<<<<< HEAD
 def get_signal_peaks_and_prominences(data):
     """ Get the signal peaks and peak prominences.
         
@@ -790,7 +789,7 @@ def plot_walks_turns(df, window=[1, 1, 1]):
         plt.plot(t, df[t], 's')
 #         plt.text(np.mean(t, dtype=np.int), top_of_graph, len(t), fontsize=22)
         #plt.vlines(x=t, ymin=contour_heights[t], ymax=df[t])
-=======
+
 def centroid_sort(centroids):
     """
         Sort centroids. This is required so that the same cluster centroid is
@@ -928,4 +927,3 @@ def non_zero_row(arr):
             return False
 
     return True
->>>>>>> knn
