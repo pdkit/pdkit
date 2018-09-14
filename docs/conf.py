@@ -314,6 +314,7 @@ MOCK_MODULES = ['pygtk',
                 'scipy',
                 'pywt',
                 'matplotlib',
+                'tsfresh',
                 'numpy.linalg',
                 'numpy.testing',
                 'numpy.lib',
@@ -323,7 +324,9 @@ MOCK_MODULES = ['pygtk',
                 'scipy.fft',
                 'scipy.fftpack',
                 'scipy.integrate',
-                'tsfresh',
+                'scipy.cluster',
+                'scipy.cluster.vq',
+                'matplotlib.pylab',
                 'tsfresh.feature_extraction',]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

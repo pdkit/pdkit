@@ -8,6 +8,7 @@
 
 import logging
 from pdkit.utils import load_data
+from pdkit.utils import get_sampling_rate_from_timestamp
 
 class GaitTimeSeries:
     """
@@ -15,8 +16,8 @@ class GaitTimeSeries:
     """
 
     def __init__(self):
-        logging.debug("TremorTimeSeries init")
-
+        logging.debug("GaitTimeSeries init")
+   
     @staticmethod
     def load_data(filename, format_file='cloudupdrs'):
         """
@@ -29,4 +30,8 @@ class GaitTimeSeries:
         """
         
         logging.debug("{} data --> Loaded".format(format_file))
-        return load_data(filename, format_file)
+        
+        data_frame = load_data(filename, format_file)
+        data_frame.sampling_rate = get_sampling_rate_from_timestamp(data_frame)
+        
+        return data_frame
