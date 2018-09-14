@@ -206,7 +206,7 @@ class TestResultSet:
                 if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
                     features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
             # features = self.get_gait_measurements(features, d, files_list)
-        return features
+        return features.fillna(0)
 
     def write_output(self, data_frame, filename, output_format='csv'):
         """
