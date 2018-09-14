@@ -6,3 +6,5 @@ from .tremor_time_series import TremorTimeSeries
 from .gait_time_series import GaitTimeSeries
 from .finger_tapping_time_series import FingerTappingTimeSeries
 from .test_result_set import TestResultSet
+from .updrs import Updrs
+from .classification import Classification
