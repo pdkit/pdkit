@@ -77,13 +77,37 @@ TEST RESULT SET
 Pdkit can be used to extract all the features for different measurements (i.e. tremor, finger tapping, gait) placed in a single folder. The result
 is a `data frame` where the measurements are rows and the columns are the features extracted.
 
->>> import pdkit
->>> testResultSet = pdkit.TestResultSet(folderpath)
->>> dataframe = testResultSet.process()
+    >>> import pdkit
+    >>> testResultSet = pdkit.TestResultSet(folderpath)
+    >>> dataframe = testResultSet.process()
 
 where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
 folder `./tests/data`.
 
 We can also write the `data frame` to a output file like:
 
->>> testResultSet.write_output(dataframe, name)
+    >>> testResultSet.write_output(dataframe, name)
+
+UPDRS
+****************
+
+Pdkit can calculate the UPDRS score for a given testResultSet.
+
+    >>> import pdkit
+    >>> updrs = pdkit.Updrs(data_frame)
+
+The UPDRS scores can be written in a file named 'scores.csv'. You can pass the name of a filename.
+
+    >>> updrs.write_scores()
+
+To score a new measurement against the trained knn clusters.
+
+    >>> updrs.score(measurement)
+
+To read the testResultSet data from a file. See TestResultSet class for more details.
+
+    >>> updrs = pdkit.Updrs(data_frame_file_path=file_path_to_testResultSet_file)
+
+Will train again all the centroids for the testResultSet data.
+
+    >>> updrs.train()

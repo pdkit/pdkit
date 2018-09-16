@@ -11,6 +11,7 @@ Contents:
    tapping
    utils
    testResultSet
+   updrs
 
 Indices and tables
 ==================

@@ -14,31 +14,32 @@ from os import listdir
 from os.path import isfile, join, isdir
 import pandas as pd
 import re
+import tqdm
 
 
 class TestResultSet:
     """
-            This is the Test Result Set class. Its main functionality is to read all the files (measurements) within a given
-            path and extract the features. It will return a data frame where the rows are the measurements and the columns
-            correspond to the extracted features.
+        This is the Test Result Set class. Its main functionality is to read all the files (measurements) within a given
+        path and extract the features. It will return a data frame where the rows are the measurements and the columns
+        correspond to the extracted features.
 
-            :param folder_relative_path: (required) the relative folder path
-            :type folder_relative_path: str
+        :param folder_relative_path: (required) the relative folder path
+        :type folder_relative_path: str
 
-            :Example:
+        :Example:
 
-            >>> import pdkit
-            >>> testResultSet = pdkit.TestResultSet(folderpath)
-            >>> dataframe = testResultSet.process()
+        >>> import pdkit
+        >>> testResultSet = pdkit.TestResultSet(folderpath)
+        >>> dataframe = testResultSet.process()
 
-            where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements
-            in the following folder `./tests/data/S5`.
+        where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements
+        in the following folder `./tests/data/S5`.
 
-            :Example:
+        :Example:
 
-            >>> testResultSet.write_output(dataframe, name)
+        >>> testResultSet.write_output(dataframe, name)
 
-            To write the `data frame` to a output file (name)
+        To write the `data frame` to a output file (name)
     """
     def __init__(self, folder_relative_path):
         try:
@@ -61,7 +62,7 @@ class TestResultSet:
         return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f))]
 
     def __get_dirs_list(self):
-        return [f for f in os.listdir(self.folder_absolute_path) if isdir(join(self.folder_absolute_path, f))]
+        return [f for f in os.listdir(self.folder_absolute_path) if (isdir(join(self.folder_absolute_path, f)) and not f.startswith('_'))]
 
     def __build_folder_path(self, folder_name):
         return join(self.folder_absolute_path, folder_name)
@@ -111,7 +112,10 @@ class TestResultSet:
             if f.startswith(abr_measurement_type):
                 tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f))
                 features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
-                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print('file error: '+f)
 
         return data_frame
 
@@ -135,7 +139,10 @@ class TestResultSet:
             if f.startswith(abr_measurement_type):
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f))
                 features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f)+'-')
-                data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print('file error: '+f)
 
         return data_frame
 
@@ -186,7 +193,7 @@ class TestResultSet:
         """
 
         features = pd.DataFrame()
-        for d in self.dir_list:
+        for d in tqdm(self.dir_list):
             if self.folder_relative_path.endswith('/'):
                 files_list = self.__get_files_list(self.folder_relative_path+d)
             else:
@@ -199,7 +206,7 @@ class TestResultSet:
                 if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
                     features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
             # features = self.get_gait_measurements(features, d, files_list)
-        return features
+        return features.fillna(0)
 
     def write_output(self, data_frame, filename, output_format='csv'):
         """
