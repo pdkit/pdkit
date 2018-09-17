@@ -21,7 +21,7 @@ from pdkit.processor import Processor
 from pdkit.gait_time_series import GaitTimeSeries
 
 from scipy.integrate import cumtrapz
-import matplotlib.pyplot as plt
+import matplotlib.pylab as plt
 import matplotlib.patches as mpatches
 
 from pdkit.utils import (load_data,
