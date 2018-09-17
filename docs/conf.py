@@ -327,6 +327,7 @@ MOCK_MODULES = ['pygtk',
                 'scipy.cluster',
                 'scipy.cluster.vq',
                 'matplotlib.pylab',
+                'matplotlib.patches',
                 'tsfresh.feature_extraction',]
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
