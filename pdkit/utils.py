@@ -65,6 +65,12 @@ def get_sampling_rate_from_timestamp(d):
     
     return sampling_rate
 
+def load_segmented_data(filename):
+    data = pd.read_csv(filename, index_col=0)
+    data.index = data.index.astype(np.datetime64)
+    
+    return data
+
 def load_freeze_data(filename):
     data = pd.read_csv(filename, delimiter=' ', header=None,)
     data.columns = ['td', 'ankle_f', 'ankle_v', 'ankle_l', 'leg_f', 'leg_v', 'leg_l', 'x', 'y', 'z', 'anno']
@@ -87,7 +93,7 @@ def load_freeze_data(filename):
 def load_huga_data(filepath):
     data = pd.read_csv(filepath, delimiter='\t', comment='#')
     
-    # this dataset does not have timestamps so I had to infer the sampling rate from the description
+    # this dataset does not have timestamps so we had to infer the sampling rate from the description
     # we used 1 because sample each second
     # 58.82 because that's 679073 samples divided by 11544 seconds
     # and we used 1000 because milliseconds to seconds
@@ -250,6 +256,9 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
     """
     if format_file == 'mpower':
         return load_mpower_data(filename)
+    
+    elif format_file == 'segmented':
+        return load_segmented_data(filename)
 
     elif format_file == 'accapp':
         return load_accapp_data(filename)
@@ -602,18 +611,17 @@ def smoothing_window(data, window=[1, 1, 1]):
     return data
 
 
-def BellmanKSegment(x, k):
+def BellmanKSegment(x,k):
     # Divide a univariate time-series, x, into k contiguous segments
     # Cost is the sum of the squared residuals from the mean of each segment
     # Returns array containg the index for the endpoint of each segment in ascending order
     
     n = x.size
-    cost = np.matrix(np.ones(shape=(k,n)) * np.inf)
+    cost = np.matrix(np.ones(shape=(k,n))*np.inf)
     startLoc = np.zeros(shape=(k,n), dtype=int)
 
     #Calculate residuals for all possible segments O(n^2)
     res = np.zeros(shape=(n,n)) # Each segment begins at index i and ends at index j inclusive.
-    
     for i in range(n-1):
         mu = x[i]
         r = 0.0
@@ -631,7 +639,7 @@ def BellmanKSegment(x, k):
         startLoc[segment, j] = 0
 
     for segment in range(1,k):
-         for i in range(segment,n-1): 
+        for i in range(segment,n-1):   
             for j in range(i+1,n):
                 tmpcost = res[i,j] + cost[segment-1,i-1]
                 if cost[segment,j] > tmpcost: #break ties with smallest j                   
@@ -644,8 +652,7 @@ def BellmanKSegment(x, k):
     v = n
     for segment in range(k-1,-1,-1):
         endPoint[segment] = v-1         
-        v = startLoc[segment,v-1]
-       
+        v = startLoc[segment,v-1]       
 
     return ExpandSegmentIndicies(endPoint)
 

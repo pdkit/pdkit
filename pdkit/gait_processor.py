@@ -11,6 +11,7 @@ import traceback
 
 import numpy as np
 import pandas as pd
+import json
 
 from scipy import interpolate, signal, fft
 from scipy.fftpack import rfft
@@ -20,7 +21,8 @@ from pdkit.processor import Processor
 from pdkit.gait_time_series import GaitTimeSeries
 
 from scipy.integrate import cumtrapz
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 from pdkit.utils import (load_data,
                         numerical_integration, 
@@ -114,6 +116,85 @@ class GaitProcessor(Processor):
         self.step_period = step_period
         self.stride_period = stride_period
         self.pendulum_length = pendulum_length
+        
+    def add_manual_segmentation_to_data_frame(self, data_frame, segmentation_dictionary):
+        """ Utility method to store manual segmentation of gait time series.
+            
+            :param dict dictionary: A dictionary of the form {'signal_type': [(from, to), (from, to)], ..., 'signal_type': [(from, to), (from, to)]}
+        """
+        
+        # add some checks to see if dictionary is in the right format!
+        
+        data_frame['segmentation'] = 'unknown'
+        
+        for i, (k, v) in enumerate(segmentation_dictionary.items()):
+            for start, end in v:                
+                if type(start) != np.datetime64:
+                    if start < 0: start = 0
+                    if end > data_frame.size: end = data_frame.size
+                    
+                    start = data_frame.index.values[start]
+                    end = data_frame.index.values[end]
+                    
+                data_frame.loc[start: end, 'segmentation'] = k
+        
+        return data_frame
+            
+    def plot_segmentation_dictionary(self, data_frame, segmentation_dictionary, axis='mag_sum_acc', figsize=(10, 5)):
+        data = data_frame[axis]
+        
+        fig, ax = plt.subplots()
+        fig.set_size_inches(figsize[0], figsize[1])
+
+        colors = 'bgrcmykw'
+
+        data.plot(ax=ax)
+
+        for i, (k, v) in enumerate(segmentation_dictionary.items()):
+            for start, end in v:
+                if type(start) != np.datetime64:
+                    start = data.index.values[start]
+                    end = data.index.values[end]
+
+                plt.axvspan(start, end, color=colors[i], alpha=0.5)
+
+        legend = [mpatches.Patch(color=colors[i], label="{}".format(k)) for i, k in enumerate(segmentation_dictionary.keys())]
+
+        plt.legend(handles=legend)
+
+        plt.show()
+        
+    def plot_segmentation_data_frame(self, segmented_data_frame, axis='mag_sum_acc', figsize=(10, 5)):
+        colors = 'bgrcmykw'
+        
+        keys = np.unique(segmented_data_frame['segmentation'])
+        
+        fig, ax = plt.subplots()
+        fig.set_size_inches(figsize[0], figsize[1])
+        
+        segmented_data_frame[axis].plot(ax=ax)
+
+        for i, k in enumerate(keys):
+            patch = segmented_data_frame['segmentation'].loc[segmented_data_frame['segmentation'] == k].index
+            for p in patch:
+                ax.axvline(p, color=colors[i], alpha=0.1)
+
+        legend = [mpatches.Patch(color=colors[i], label="{}".format(k)) for i, k in enumerate(keys)]
+
+        plt.legend(handles=legend)
+
+        plt.show()
+        
+    def save_segmentation_as_json(self, file_path):
+        with open('{}'.format(file_path), 'w') as fp:
+            json.dump(self.segmentation, fp)
+            
+    def load_segmentation_from_json(self, file_name):
+        with open('{}'.format(file_name), 'r') as fp:
+            
+            # do some checks ...
+            
+            self.segmentation = json.load(fp)
 
     def freeze_of_gait(self, data_frame_axis):
         """ This method assess freeze of gait following [3].
