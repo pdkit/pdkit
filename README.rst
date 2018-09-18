@@ -94,11 +94,11 @@ UPDRS
 Pdkit can calculate the UPDRS score for a given testResultSet.
 
     >>> import pdkit
-    >>> updrs = pdkit.Updrs(data_frame)
+    >>> updrs = pdkit.UPDRS(data_frame)
 
-The UPDRS scores can be written in a file named 'scores.csv'. You can pass the name of a filename.
+The UPDRS scores can be written to a file. You can pass the name of a `filename` and the `output_format`
 
-    >>> updrs.write_scores()
+    >>> updrs.write_model(filename='scores', output_format='csv')
 
 To score a new measurement against the trained knn clusters.
 
@@ -106,8 +106,4 @@ To score a new measurement against the trained knn clusters.
 
 To read the testResultSet data from a file. See TestResultSet class for more details.
 
-    >>> updrs = pdkit.Updrs(data_frame_file_path=file_path_to_testResultSet_file)
-
-Will train again all the centroids for the testResultSet data.
-
-    >>> updrs.train()
+    >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)

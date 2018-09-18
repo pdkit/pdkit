@@ -18,10 +18,11 @@ from os.path import join
 import sys
 
 
-class Updrs:
+class UPDRS:
     def __init__(self, data_frame=None, data_frame_file_path=None):
         """
-            The data frame is the testResultSet
+            This class calculates the `UPDRS score (III)<https://en.wikipedia.org/wiki/Unified_Parkinson%27s_disease_rating_scale>`_ for a given testResultSet.
+            UPDRS performs `k-means<https://docs.scipy.org/doc/scipy-0.7.x/reference/cluster.vq.html#scipy.cluster.vq.kmeans>`_ on a set of observation vectors forming k clusters.
 
             :param data_frame: testResultSet
             :type data_frame: pandas.DataFrame
@@ -31,22 +32,19 @@ class Updrs:
             :Example:
 
             >>> import pdkit
-            >>> updrs = pdkit.Updrs(data_frame)
-            >>> updrs.write_scores()
+            >>> updrs = pdkit.UPDRS(data_frame)
 
-            The UPDRS scores will be written in a file named 'scores.csv'. You can pass the name of a filename.
+            The UPDRS scores can be written to a file. You can pass the name of a `filename` and the `output_format`
 
-            >>> updrs.score(measurement)
+            >>> updrs.write_model(filename='scores', output_format='csv')
 
             To score a new measurement against the trained knn clusters.
 
-            >>> updrs = pdkit.Updrs(data_frame_file_path=file_path_to_testResultSet_file)
+            >>> updrs.score(measurement)
 
             To read the testResultSet data from a file. See TestResultSet class for more details.
 
-            >>> updrs.train()
-
-            Will train again all the centroids for the testResultSet data.
+            >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)
         """
         try:
             if data_frame_file_path is not None:
@@ -74,7 +72,7 @@ class Updrs:
                 "RTA-LL",
                 "RTA-RL"
             ]
-            self.train()
+            self.__train()
 
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
@@ -86,7 +84,7 @@ class Updrs:
         except:
             logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
 
-    def train(self, n_clusters=4):
+    def __train(self, n_clusters=4):
         """
             Calculate cluster's centroids and standard deviations.
             If there are at least the number of threshold rows then:
@@ -227,7 +225,7 @@ class Updrs:
 
         return int(distances.index(min(distances)))
 
-    def write_scores(self, filename='scores', filepath='', output_format='csv'):
+    def write_model(self, filename='scores', filepath='', output_format='csv'):
         """
             This method calculates the scores and writes them to a file the data frame received. If the output format
             is other than 'csv' it will print the scores.
