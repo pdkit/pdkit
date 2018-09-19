@@ -4,8 +4,6 @@ Tremor Processor
 .. automodule:: tremor_processor
    :members:
 
-
-
 Tremor Time Series
 ============================
 

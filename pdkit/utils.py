@@ -19,7 +19,6 @@ from scipy.signal import butter, lfilter, correlate, freqz
 import matplotlib.pylab as plt
 
 import scipy.signal as sig
-from scipy.cluster.vq import kmeans, vq, kmeans2
 from numpy import array
 from scipy.spatial.distance import euclidean
 
@@ -58,6 +57,7 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
     return data_frame
 
+
 def get_sampling_rate_from_timestamp(d):
     # group on minutes as pandas gives us the same second number
     # for seconds belonging to different minutes
@@ -69,11 +69,13 @@ def get_sampling_rate_from_timestamp(d):
     
     return sampling_rate
 
+
 def load_segmented_data(filename):
     data = pd.read_csv(filename, index_col=0)
     data.index = data.index.astype(np.datetime64)
     
     return data
+
 
 def load_freeze_data(filename):
     data = pd.read_csv(filename, delimiter=' ', header=None,)
@@ -93,6 +95,7 @@ def load_freeze_data(filename):
     sampling_rate = get_sampling_rate_from_timestamp(data)
     
     return data
+
 
 def load_huga_data(filepath):
     data = pd.read_csv(filepath, delimiter='\t', comment='#')
@@ -126,6 +129,7 @@ def load_huga_data(filepath):
     
     return data
 
+
 def load_physics_data(filename):
     dd = pd.read_csv(filename)
     dd['mag_sum_acc'] = np.sqrt(dd.x ** 2 + dd.y ** 2 + dd.z ** 2)
@@ -138,6 +142,7 @@ def load_physics_data(filename):
     
     return dd
 
+
 def load_accapp_data(filename, convert_times=1000.0):
     df = pd.read_csv(filename, sep='\t', header=None)
     df.drop(columns=[0, 5], inplace=True)
@@ -148,6 +153,7 @@ def load_accapp_data(filename, convert_times=1000.0):
     del df.index.name
     df['mag_sum_acc'] = np.sqrt(df.x ** 2 + df.y ** 2 + df.z ** 2)
     return df
+
 
 def load_mpower_data(filename, convert_times=1000000000.0):
     """
@@ -339,17 +345,17 @@ def autocorrelation(signal):
 
 def peakdet(signal, delta, x=None):
     """
-        Find the local maxima and minima ("peaks") in a 1-dimensional signal.
-        Converted from `MATLAB script <http://billauer.co.il/peakdet.html>`_ 
-
+        Find the local maxima and minima ("peaks") in a 1-dimensional signal. Converted from `MATLAB script \
+        <http://billauer.co.il/peakdet.html>`_
         :param signal: A 1-dimensional array or list (the signal).
         :type signal: array
-        :param delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
+        :param delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was \
+        preceded (to the left) by a value lower by delta.
         :type delta: float
         :param x: indices in local maxima and minima are replaced with the corresponding values in x.
         :type x: array
         :return maxtab, mintab
-        :rtype delta: np.array
+        :rtype maxtab, mintab: np.array
 
     """
     
@@ -799,49 +805,57 @@ def plot_walks_turns(df, window=[1, 1, 1]):
 
 def centroid_sort(centroids):
     """
-        Sort centroids. This is required so that the same cluster centroid is
-        always the 0th one. It should also be the most negative. Order defined by
-        the Euclidean distance between the centroid and an arbitrary "small" point
-        [-100, -100] (in each dimension) to account for possible negatives. Cluster
-        0 is the closest to that point, etc.
+        Sort centroids. This is required so that the same cluster centroid is always the 0th one. It should also be the \
+        most negative. Order defined by the Euclidean distance between the centroid and an arbitrary "small" point \
+        [-100, -100] (in each dimension) to account for possible negatives. Cluster 0 is the closest to that point, etc.
 
         0.  Set up
-        >>> from numpy.testing import assert_array_equal
+
+            >>> from numpy.testing import assert_array_equal
+
         1.  Single centroids just return themselves.
-        >>> centroid_sort(array([[1.1, 2.2]]))
-        array([[ 1.1,  2.2]])
-        >>> centroid_sort(array([[1.1, 2.2, 3.3]]))
-        array([[ 1.1,  2.2,  3.3]])
+
+            >>> centroid_sort(array([[1.1, 2.2]]))
+
+            array([[ 1.1,  2.2]])
+
+            >>> centroid_sort(array([[1.1, 2.2, 3.3]]))
+
+            array([[ 1.1,  2.2,  3.3]])
+
         2.  Positive 2d centroids are ordered.
-        >>> centroids = array([
-        ...     [5.34443858, 0.63266844],  # 3
-        ...     [2.69156877, 0.76448578],  # 1
-        ...     [4.74784197, 1.0815235 ],  # 2
-        ...     [1.02330015, 0.16788118],  # 0
-        ... ])
-        >>> expected_sorted_centroids = array([
-        ...     [1.02330015, 0.16788118],  # 0
-        ...     [2.69156877, 0.76448578],  # 1
-        ...     [4.74784197, 1.0815235 ],  # 2
-        ...     [5.34443858, 0.63266844],  # 3
-        ... ])
-        >>> result = centroid_sort(centroids)
-        >>> assert_array_equal(result, expected_sorted_centroids)
+
+            >>> centroids = array([
+            ...     [5.34443858, 0.63266844],  # 3
+            ...     [2.69156877, 0.76448578],  # 1
+            ...     [4.74784197, 1.0815235 ],  # 2
+            ...     [1.02330015, 0.16788118],  # 0
+            ... ])
+            >>> expected_sorted_centroids = array([
+            ...     [1.02330015, 0.16788118],  # 0
+            ...     [2.69156877, 0.76448578],  # 1
+            ...     [4.74784197, 1.0815235 ],  # 2
+            ...     [5.34443858, 0.63266844],  # 3
+            ... ])
+            >>> result = centroid_sort(centroids)
+            >>> assert_array_equal(result, expected_sorted_centroids)
+
         3.  3d centroids spanning the origin are ordered.
-        >>> centroids = array([
-        ...     [ 3,   3,  4  ],  # 3
-        ...     [ 1.5, 2,  3  ],  # 2
-        ...     [-1,  -1, -1 ],   # 0
-        ...     [ 0,   1,  0.5],  # 1
-        ... ])
-        >>> expected_sorted_centroids = array([
-        ...     [-1,  -1, -1 ],   # 0
-        ...     [ 0,   1,  0.5],  # 1
-        ...     [ 1.5, 2,  3  ],  # 2
-        ...     [ 3,   3,  4  ],  # 3
-        ... ])
-        >>> result = centroid_sort(centroids)
-        >>> assert_array_equal(result, expected_sorted_centroids)
+
+            >>> centroids = array([
+            ...     [ 3,   3,  4  ],  # 3
+            ...     [ 1.5, 2,  3  ],  # 2
+            ...     [-1,  -1, -1 ],   # 0
+            ...     [ 0,   1,  0.5],  # 1
+            ... ])
+            >>> expected_sorted_centroids = array([
+            ...     [-1,  -1, -1 ],   # 0
+            ...     [ 0,   1,  0.5],  # 1
+            ...     [ 1.5, 2,  3  ],  # 2
+            ...     [ 3,   3,  4  ],  # 3
+            ... ])
+            >>> result = centroid_sort(centroids)
+            >>> assert_array_equal(result, expected_sorted_centroids)
 
         :param centroids: array centroids
         :type centroids: numpy array
@@ -849,6 +863,7 @@ def centroid_sort(centroids):
         :rtype centroids: numpy array
 
     """
+
     dimensions = len(centroids[0])
     negative_base_point = array(dimensions*[-100])
 
@@ -864,36 +879,37 @@ def centroid_sort(centroids):
 def non_zero_index(arr):
     """
         Raises:
-            ValueError: If no-non-zero rows can be found.
+        ValueError: If no-non-zero rows can be found.
+
         0.  Empty array raises.
-        >>> arr = array([])
-        >>> non_zero_index(arr)
-        Traceback (most recent call last):
-        ...
-        ValueError: No non-zero values
+
+            >>> arr = array([])
+            >>> non_zero_index(arr)
+
         1.  Array with zero values raises.
-        >>> arr = array([
-        ...     [0, 0],
-        ...     [0, 0],
-        ...     [0, 0, 0],
-        ... ])
-        >>> non_zero_index(arr)
-        Traceback (most recent call last):
-        ...
-        ValueError: No non-zero values
+
+            >>> arr = array([
+            ...     [0, 0],
+            ...     [0, 0],
+            ...     [0, 0, 0],
+            ... ])
+            >>> non_zero_index(arr)
+
         2.  Array with a non-zero value will have that index returned.
-        >>> arr = array([
-        ...     [0, 0],
-        ...     [0, 0, 0],
-        ...     [1, 0, 0],  # Still has zeros
-        ...     [1, 1, 0],
-        ...     [0, 1, 1],
-        ...     [-1, 0, 0],
-        ...     [-1, 2, 3],  # First non-zero array
-        ...     [1, 2, 3],
-        ... ])
-        >>> non_zero_index(arr)
-        6
+
+            >>> arr = array([
+            ...     [0, 0],
+            ...     [0, 0, 0],
+            ...     [1, 0, 0],  # Still has zeros
+            ...     [1, 1, 0],
+            ...     [0, 1, 1],
+            ...     [-1, 0, 0],
+            ...     [-1, 2, 3],  # First non-zero array
+            ...     [1, 2, 3],
+            ... ])
+            >>> non_zero_index(arr)
+
+            6
 
         :param arr: array
         :type arr: numpy array
@@ -909,23 +925,31 @@ def non_zero_index(arr):
 def non_zero_row(arr):
     """
         0.  Empty row returns False.
-        >>> arr = array([])
-        >>> non_zero_row(arr)
-        False
+
+            >>> arr = array([])
+            >>> non_zero_row(arr)
+
+            False
+
         1.  Row with a zero returns False.
-        >>> arr = array([1, 4, 3, 0, 5, -1, -2])
-        >>> non_zero_row(arr)
-        False
+
+            >>> arr = array([1, 4, 3, 0, 5, -1, -2])
+            >>> non_zero_row(arr)
+
+            False
         2.  Row with no zeros returns True.
-        >>> arr = array([-1, -0.1, 0.001, 2])
-        >>> non_zero_row(arr)
-        True
+
+            >>> arr = array([-1, -0.1, 0.001, 2])
+            >>> non_zero_row(arr)
+
+            True
 
         :param arr: array
         :type arr: numpy array
         :return empty: If row is completely free of zeros
         :rtype empty: bool
     """
+
     if len(arr) == 0:
         return False
 

@@ -19,33 +19,36 @@ import sys
 
 
 class UPDRS:
+    """
+        This class calculates the `UPDRS score Part 3 <https://en.wikipedia.org/wiki/\
+        Unified_Parkinson%27s_disease_rating_scale>`_ for a given testResultSet. UPDRS performs \
+        `k-means <https://docs.scipy.org/doc/scipy-0.7.x/reference/cluster.vq.html#scipy.cluster.vq.kmeans>`_ \
+        on a set of observation vectors forming k clusters.
+
+        :Example:
+
+        >>> import pdkit
+        >>> updrs = pdkit.UPDRS(data_frame)
+
+        The UPDRS scores can be written to a file. You can pass the name of a `filename` and the `output_format`
+
+        >>> updrs.write_model(filename='scores', output_format='csv')
+
+        To score a new measurement against the trained knn clusters.
+
+        >>> updrs.score(measurement)
+
+        To read the testResultSet data from a file. See TestResultSet class for more details.
+
+        >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)
+
+        :param data_frame: testResultSet
+        :type data_frame: pandas.DataFrame
+        :param data_frame_file_path: the path to read the data frame from
+        :type data_frame_file_path: pandas.DataFrame
+    """
+
     def __init__(self, data_frame=None, data_frame_file_path=None):
-        """
-            This class calculates the `UPDRS score (III)<https://en.wikipedia.org/wiki/Unified_Parkinson%27s_disease_rating_scale>`_ for a given testResultSet.
-            UPDRS performs `k-means<https://docs.scipy.org/doc/scipy-0.7.x/reference/cluster.vq.html#scipy.cluster.vq.kmeans>`_ on a set of observation vectors forming k clusters.
-
-            :param data_frame: testResultSet
-            :type data_frame: pandas.DataFrame
-            :param data_frame_file_path: the path to read the data frame from
-            :type data_frame_file_path: pandas.DataFrame
-
-            :Example:
-
-            >>> import pdkit
-            >>> updrs = pdkit.UPDRS(data_frame)
-
-            The UPDRS scores can be written to a file. You can pass the name of a `filename` and the `output_format`
-
-            >>> updrs.write_model(filename='scores', output_format='csv')
-
-            To score a new measurement against the trained knn clusters.
-
-            >>> updrs.score(measurement)
-
-            To read the testResultSet data from a file. See TestResultSet class for more details.
-
-            >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)
-        """
         try:
             if data_frame_file_path is not None:
                 data_frame = pd.read_csv(data_frame_file_path).fillna(0)
@@ -87,17 +90,21 @@ class UPDRS:
     def __train(self, n_clusters=4):
         """
             Calculate cluster's centroids and standard deviations.
+
             If there are at least the number of threshold rows then:
+
             * Observations will be normalised.
+
             * Standard deviations will be returned.
+
             * Clusters will be returned.
+
             * Centroids are ordered based on their distance from an arbitrary -100, -100 point.
 
             If there are not enough Observations, then centroids and standard deviations will be set to the empty list.
 
-            General strategy: Use numpy.array for calculations. Keep everything in float. Convert arrays back to lists
+            General strategy: Use numpy.array for calculations. Keep everything in float. Convert arrays back to lists \
             at the end.
-
 
             :param n_clusters: the number of clusters
             :type n_clusters: int
@@ -138,7 +145,8 @@ class UPDRS:
             if obs == observation:
                 return cen, sd
 
-    def __get_features_for_observation(self, data_frame=None, observation='LA-LL', skip_id=None, last_column_is_id=False):
+    def __get_features_for_observation(self, data_frame=None, observation='LA-LL',
+                                       skip_id=None, last_column_is_id=False):
         """
             Extract the features for a given observation from a data frame
 
@@ -178,29 +186,28 @@ class UPDRS:
         except:
             logging.error(" observation not found in data frame")
 
-    @staticmethod
     def get_single_score(point, centroids=None, sd=None):
         """
-            Get a single score is a wrapper around the result of classifying a Point against a group of centroids.
+            Get a single score is a wrapper around the result of classifying a Point against a group of centroids. \
             Attributes:
-                observation_score (dict): Original received point and normalised point.
-                    E.g.
-                    {
-                        "original": [0.40369016, 0.65217912],
-                        "normalised": [1.65915104, 3.03896181],
-                    }
-                nearest_cluster (int): Index of the nearest cluster. If distances
-                    match, then lowest numbered cluster wins.
-                distances (list (float)): List of distances from the Point to each
-                    cluster centroid. E.g.
-                    [2.38086238, 0.12382605, 2.0362993, 1.43195021]
-                centroids (list (list (float))): A list of the current centroidswhen queried. E.g.
-                    [
-                        [0.23944831, 1.12769265],
-                        [1.75621978, 3.11584191],
-                        [2.65884563, 1.26494783],
-                        [0.39421099, 2.36783733],
-                    ]
+
+            observation_score (dict): Original received point and normalised point.
+
+            :Example:
+
+            >>> { "original": [0.40369016, 0.65217912], "normalised": [1.65915104, 3.03896181]}
+
+            nearest_cluster (int): Index of the nearest cluster. If distances match, then lowest numbered cluster \
+            wins.
+
+            distances (list (float)): List of distances from the Point to each cluster centroid. E.g:
+
+            >>> [2.38086238, 0.12382605, 2.0362993, 1.43195021]
+
+            centroids (list (list (float))): A list of the current centroidswhen queried. E.g:
+
+            >>> [ [0.23944831, 1.12769265], [1.75621978, 3.11584191], [2.65884563, 1.26494783], \
+            [0.39421099, 2.36783733] ]
 
             :param point: the point to classify
             :type point: pandas.DataFrame
@@ -274,7 +281,8 @@ class UPDRS:
         scores = np.array([])
         for obs in self.observations:
             c, sd = self.__get_centroids_sd(obs)
-            p, ids = self.__get_features_for_observation(data_frame = measurement, observation=obs, last_column_is_id=True)
+            p, ids = self.__get_features_for_observation(data_frame = measurement, observation=obs,
+                                                         last_column_is_id=True)
 
             scores = np.append(scores, [self.get_single_score(p, centroids=c, sd=sd)], axis=0)
 
