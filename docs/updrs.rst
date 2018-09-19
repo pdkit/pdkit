@@ -1,4 +1,4 @@
-Updrs
+UPDRS
 ============================
 
 .. automodule:: updrs

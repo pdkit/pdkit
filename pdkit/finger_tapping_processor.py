@@ -10,25 +10,27 @@ import sys
 import logging
 
 import numpy as np
-import pandas as pd
 import math
 
 
 class FingerTappingProcessor:
     """
-            This is the main Finger Tapping Processor class. Once the data is loaded it will be accessible at data_frame (pandas.DataFrame), where it looks like: data_frame.x, data_frame.y: components of tapping position. data_frame.x_target, data_frame.y_target their target.
+        This is the main Finger Tapping Processor class. Once the data is loaded it will be accessible at \
+        data_frame (pandas.DataFrame), where it looks like: data_frame.x, data_frame.y: components of tapping \
+        position. data_frame.x_target, data_frame.y_target their target.
 
-            These values are recommended by the author of the pilot study :cite:`Kassavetis2015`. Check reference for more details.
+        These values are recommended by the author of the pilot study :cite:`Kassavetis2015_2`. Check reference \
+        for more details.
 
-            window = 6 #seconds
+        window = 6 #seconds
 
-            :Example:
+        :Example:
 
-            >>> import pdkit
-            >>> ftp = pdkit.FingerTappingProcessor()
-            >>> ts = pdkit.FingerTappingTimeSeries().load(path_to_data, 'ft_cloudupdrs')
-            >>> frequency = ftp.frequency(ts)
-        """
+        >>> import pdkit
+        >>> ftp = pdkit.FingerTappingProcessor()
+        >>> ts = pdkit.FingerTappingTimeSeries().load(path_to_data, 'ft_cloudupdrs')
+        >>> frequency = ftp.frequency(ts)
+    """
     def __init__(self, window=6):
         try:
             self.window = window # secs
@@ -72,7 +74,8 @@ class FingerTappingProcessor:
         """
         f = []
         for i in range(0, (data_frame.td[-1].astype('int') - self.window)):
-            f.append(sum(data_frame.action_type[(data_frame.td >= i) & (data_frame.td < (i + self.window))] == 1) / float(self.window))
+            f.append(sum(data_frame.action_type[(data_frame.td >= i) & (data_frame.td < (i + self.window))] == 1) /
+                     float(self.window))
 
         diff_mov_freq = (np.array(f[1:-1]) - np.array(f[0:-2])) / np.array(f[0:-2])
 
@@ -137,7 +140,8 @@ class FingerTappingProcessor:
             :rtype matd: float
 
         """
-        dist = np.sqrt((data_frame.x[1:-1].values-data_frame.x[0:-2].values)**2+(data_frame.y[1:-1].values-data_frame.y[0:-2].values)**2)
+        dist = np.sqrt((data_frame.x[1:-1].values-data_frame.x[0:-2].values)**2+
+                       (data_frame.y[1:-1].values-data_frame.y[0:-2].values)**2)
         matd = np.mean(dist[np.arange(1,len(dist),2)])
         duration = math.ceil(data_frame.td[-1])
         return matd, duration
@@ -179,9 +183,11 @@ class FingerTappingProcessor:
             at = np.mean(down_timestamps.values - raise_timestamps.values)
         else:
             if len(raise_timestamps) > len(down_timestamps):
-                at = np.mean(down_timestamps.values - raise_timestamps.values[:-(len(raise_timestamps)-len(down_timestamps))])
+                at = np.mean(down_timestamps.values - raise_timestamps.values[:-(len(raise_timestamps)
+                                                                                 - len(down_timestamps))])
             else:
-                at = np.mean(down_timestamps.values[:-(len(down_timestamps)-len(raise_timestamps))] - raise_timestamps.values)
+                at = np.mean(down_timestamps.values[:-(len(down_timestamps)-len(raise_timestamps))]
+                             - raise_timestamps.values)
         duration = math.ceil(data_frame.td[-1])
         return np.abs(at), duration
 
