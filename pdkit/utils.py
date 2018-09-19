@@ -69,7 +69,7 @@ def get_sampling_rate_from_timestamp(d):
     
     return sampling_rate
 
-
+  
 def load_segmented_data(filename):
     data = pd.read_csv(filename, index_col=0)
     data.index = data.index.astype(np.datetime64)
