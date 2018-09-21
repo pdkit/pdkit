@@ -107,8 +107,7 @@ class TremorProcessor:
             :return data_frame: adds a column named 'filtered_signal' to the data frame
             :rtype data_frame: pandas.DataFrame
         """
-        b, a = signal.butter(self.filter_order, 2 * self.cutoff_frequency / self.sampling_frequency, 'high',
-                             analog=False)
+        b, a = signal.butter(self.filter_order, 2*self.cutoff_frequency/self.sampling_frequency,'high', analog=False)
         filtered_signal = signal.lfilter(b, a, data_frame[ts].values)
         data_frame['filtered_signal'] = filtered_signal
 

@@ -58,22 +58,22 @@ class UPDRS:
 
             self.clusters = np.array([])
             self.observations = [
-                "OT-LH",
                 "OT-RH",
-                "TT-LH",
+                "OT-LH",
                 "TT-RH",
-                "KTOH-LH",
-                "KTOH-RH",
-                "LA-LL",
-                "LA-RL",
-                "PTOTH-LH",
-                "PTOTH-RH",
-                "PS-LH",
+                "TT-LH",
                 "PS-RH",
-                "RTA-LH",
+                "PS-LH",
+                "LA-RL",
+                "LA-LL",
+                "PTOTH-RH",
+                "PTOTH-LH",
+                "KTOH-RH",
+                "KTOH-LH",
                 "RTA-RH",
+                "RTA-LH",
+                "RTA-RL",
                 "RTA-LL",
-                "RTA-RL"
             ]
             self.__train()
 
@@ -85,7 +85,7 @@ class UPDRS:
             logging.error("UPDRS ValueError ->%s", verr.message)
 
         except:
-            logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
+            logging.error("Unexpected error on UPDRS init: %s", sys.exc_info()[0])
 
     def __train(self, n_clusters=4):
         """
@@ -155,7 +155,7 @@ class UPDRS:
             :param observation: observation name
             :type observation: string
             :param skip_id: skip any test with a given id (optional)
-            :type skip_id: string
+            :type skip_id: int
             :param last_column_is_id: skip the last column of the data frame (useful when id is last column - optional)
             :type last_column_is_id: bool
             :return features: the features
