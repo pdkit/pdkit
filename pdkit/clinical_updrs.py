@@ -7,90 +7,117 @@
 # Author(s): J.S. Pons
 
 import logging
-import pdkit
-# from _pdkit import pdkit as pdk
-from scipy.cluster.vq import kmeans, whiten
+from scipy.cluster.vq import whiten
 import numpy as np
 import pandas as pd
-from numpy import array
-from scipy.spatial.distance import euclidean
-from os.path import join
 import sys
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report,accuracy_score,f1_score,precision_recall_fscore_support
-
+#from sklearn.model_selection import train_test_split
+#from sklearn.metrics import classification_report,accuracy_score,f1_score,precision_recall_fscore_support
+#from scipy.stats import itemfreq
 
 
 class Clinical_UPDRS:
     """
-            Supervised Learning for UPDRS using the evaluation of the clinical staff.
+        Supervised Learning for UPDRS using the evaluation of the clinical staff. It calculates classifiers \
+        implementing the `k-nearest neighbors vote <http://scikit-learn.org/stable/modules/\
+        generated/sklearn.neighbors.KNeighborsClassifier.html>`_
 
-            :param data_frame: testResultSet
-            :type data_frame: pandas.DataFrame
-            :param data_frame_file_path: the path to read the data frame from
-            :type data_frame_file_path: pandas.DataFrame
-        """
+        :param data_frame: testResultSet
+        :type data_frame: pandas.DataFrame
+        :param data_frame_file_path: the path to read the data frame from
+        :type data_frame_file_path: pandas.DataFrame
+    """
 
     def __init__(self, labels_file_path, data_frame=None, data_frame_file_path=None):
-        # try:
-            # read the labelled data
-        self.labels = pd.read_csv(labels_file_path).sort_values(by=['id'])
-        self.knns = np.array([])
+        try:
+            self.labels = pd.read_csv(labels_file_path).sort_values(by=['id'])
+            self.knns = np.array([])
 
-        if data_frame_file_path is not None:
-            data_frame = pd.read_csv(data_frame_file_path).fillna(0)
-            self.data_frame = data_frame.sort_values(by=['id'])
-        else:
-            self.data_frame = data_frame.sort_values(by=['id'])
-
-        self.clusters = np.array([])
-        self.observations = [
-            "OT-RH",
-            "OT-LH",
-            "TT-RH",
-            "TT-LH",
-            "PS-RH",
-            "PS-LH",
-            "LA-RL",
-            "LA-LL",
-            "PTOTH-RH",
-            "PTOTH-LH",
-            "KTOH-RH",
-            "KTOH-LH",
-            "RTA-RH",
-            "RTA-LH",
-            "RTA-RL",
-            "RTA-LL",
-        ]
-        self.__train()
-
-        # except IOError as e:
-        #     ierr = "({}): {}".format(e.errno, e.strerror)
-        #     logging.error("Clinical UPDRS I/O error %s", ierr)
-        #
-        # except ValueError as verr:
-        #     logging.error("Clinical UPDRS ValueError ->%s", verr.message)
-        #
-        # except:
-        #     logging.error("Unexpected error on Clinical UPDRS init: %s", sys.exc_info()[0])
-
-    def __train(self):
-        for obs in self.observations:
-            # obs = "KTOH-RH"
-            features, ids = self.__get_features_for_observation(observation=obs, skip_id=3497, last_column_is_id=True)
-            normalised_data = whiten(features)
-
-            x = pd.DataFrame(normalised_data)
-            y = self.labels[obs].values
-
-            knn = KNeighborsClassifier(n_neighbors=3)
-            knn.fit(x, y)
-
-            if not self.knns:
-                self.knns = [[obs, knn]]
+            if data_frame_file_path is not None:
+                data_frame = pd.read_csv(data_frame_file_path)
+                data_frame = data_frame.fillna(data_frame.mean())
+                self.data_frame = data_frame.sort_values(by=['id'])
             else:
-                self.knns.append([obs, knn])
+                self.data_frame = data_frame.sort_values(by=['id'])
+
+            self.observations = [
+                "OT-RH",
+                "OT-LH",
+                "TT-RH",
+                "TT-LH",
+                "PS-RH",
+                "PS-LH",
+                "LA-RL",
+                "LA-LL",
+                "PTOTH-RH",
+                "PTOTH-LH",
+                "KTOH-RH",
+                "KTOH-LH",
+                "RTA-RH",
+                "RTA-LH",
+                "RTA-RL",
+                "RTA-LL",
+            ]
+            self.__train()
+
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("Clinical UPDRS I/O error %s", ierr)
+
+        except ValueError as verr:
+            logging.error("Clinical UPDRS ValueError ->%s", verr.message)
+
+        except:
+            logging.error("Unexpected error on Clinical UPDRS init: %s", sys.exc_info()[0])
+
+    def __train(self, n_neighbors=3):
+        """
+            Train the classifier implementing the `k-nearest neighbors vote <http://scikit-learn.org/stable/modules/\
+            generated/sklearn.neighbors.KNeighborsClassifier.html>`_
+
+            :param n_clusters: the number of clusters
+            :type n_clusters: int
+        """
+
+        # m = self.labels.drop(['id','MDS_UPDRSIII'], axis=1).values
+        # print(itemfreq(m))
+        #
+        # for i, row in enumerate(self.labels.drop(['id','MDS_UPDRSIII'], axis=1).values):
+        #     print(np.bincount(row))
+
+        try:
+            for obs in self.observations:
+                features, ids = self.__get_features_for_observation(observation=obs, skip_id=3497,
+                                                                    last_column_is_id=True)
+                normalised_data = whiten(features)
+
+                x = pd.DataFrame(normalised_data)
+                y = self.labels[obs].values
+                # x_train, x_test, y_train, y_test = train_test_split(x, y, random_state=42)
+
+                knn = KNeighborsClassifier(n_neighbors=n_neighbors, weights='distance')
+                # knn.fit(x_train, y_train)
+                knn.fit(x, y)
+
+                # print('Accuracy of K-NN classifier: {:.2f}'.format(knn.score(x, y)))
+                # print('Accuracy of K-NN classifier on training set: {:.2f}'.format(knn.score(x_train, y_train)))
+                # print('Accuracy of K-NN classifier on test set: {:.2f}'.format(knn.score(x_test, y_test)))
+                # print('------')
+
+                if not self.knns:
+                    self.knns = [[obs, knn]]
+                else:
+                    self.knns.append([obs, knn])
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("Error training Clinical UPDRS I/O error %s", ierr)
+
+        except ValueError as verr:
+            logging.error("Error training Clinical UPDRS ValueError ->%s", verr.message)
+
+        except:
+            logging.error("Unexpected error on training Clinical UPDRS init: %s", sys.exc_info()[0])
 
     def __get_features_for_observation(self, data_frame=None, observation='LA-LL',
                                        skip_id=None, last_column_is_id=False):
@@ -139,17 +166,27 @@ class Clinical_UPDRS:
                 return knn
 
     def predict(self, measurement, output_format='array'):
-        scores = np.array([])
+        """
+            Method to predict the class labels for the provided data
+
+            :param measurement: the point to classify
+            :type measurement: pandas.DataFrame
+            :param output_format: the format to return the scores ('array' or 'str')
+            :type output_format: string
+            :return prediction: the prediction for a given test/point
+            :rtype prediction: np.array
+        """
+        prediction = np.array([])
         for obs in self.observations:
             knn = self.__get_knn_by_observation(obs)
             p, ids = self.__get_features_for_observation(data_frame=measurement, observation=obs,
                                                          skip_id=3497, last_column_is_id=True)
 
             score = knn.predict(pd.DataFrame(p).T)
-            scores = np.append(scores, score, axis=0)
+            scores = np.append(prediction, score, axis=0)
 
         if output_format == 'array':
-            return scores.astype(int)
+            return prediction.astype(int)
         else:
-            return np.array_str(scores.astype(int))
+            return np.array_str(prediction.astype(int))
 
