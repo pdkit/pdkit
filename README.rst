@@ -107,3 +107,22 @@ To score a new measurement against the trained knn clusters.
 To read the testResultSet data from a file. See TestResultSet class for more details.
 
     >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)
+
+Clinical UPDRS
+****************
+
+Pdkit uses the clinical data to calculates classifiers implementing the k-nearest neighbors vote.
+
+
+    >>> import pdkit
+    >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame)
+
+where the `labels_file_path` is the path to the clinical data file, `data_frame` is the result of the `testResultSet`.
+
+To score a new measurement against the trained knn clusters.
+
+    >>> clinical_UPDRS.predict(measurement)
+
+To read the testResultSet data from a file. See TestResultSet class for more details.
+
+    >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame_file_path=file_path_to_testResultSet_file)

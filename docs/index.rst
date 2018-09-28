@@ -12,6 +12,7 @@ Contents:
    utils
    testResultSet
    updrs
+   clinicalUPDRS
 
 Indices and tables
 ==================

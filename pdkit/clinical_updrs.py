@@ -23,6 +23,24 @@ class Clinical_UPDRS:
         implementing the `k-nearest neighbors vote <http://scikit-learn.org/stable/modules/\
         generated/sklearn.neighbors.KNeighborsClassifier.html>`_
 
+        :Example:
+
+        >>> import pdkit
+        >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame)
+
+        where the `labels_file_path` is the path to the clinical data file, `data_frame` is the result of the \
+        `testResultSet`.
+
+        To score a new measurement against the trained knn clusters.
+
+        >>> clinical_UPDRS.predict(measurement)
+
+        To read the testResultSet data from a file. See TestResultSet class for more details.
+
+        >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame_file_path=file_path_to_testResultSet_file)
+
+        :param labels_file_path: the path to the clinical data
+        :type labels_file_path: string
         :param data_frame: testResultSet
         :type data_frame: pandas.DataFrame
         :param data_frame_file_path: the path to read the data frame from
