@@ -51,29 +51,30 @@ class UPDRS:
     def __init__(self, data_frame=None, data_frame_file_path=None):
         try:
             if data_frame_file_path is not None:
-                data_frame = pd.read_csv(data_frame_file_path).fillna(0)
+                data_frame = pd.read_csv(data_frame_file_path)
+                data_frame = data_frame.fillna(data_frame.mean())
                 self.data_frame = data_frame.sort_values(by=['id'])
             else:
                 self.data_frame = data_frame.sort_values(by=['id'])
 
             self.clusters = np.array([])
             self.observations = [
-                "OT-LH",
                 "OT-RH",
-                "TT-LH",
+                "OT-LH",
                 "TT-RH",
-                "KTOH-LH",
-                "KTOH-RH",
-                "LA-LL",
-                "LA-RL",
-                "PTOTH-LH",
-                "PTOTH-RH",
-                "PS-LH",
+                "TT-LH",
                 "PS-RH",
-                "RTA-LH",
+                "PS-LH",
+                "LA-RL",
+                "LA-LL",
+                "PTOTH-RH",
+                "PTOTH-LH",
+                "KTOH-RH",
+                "KTOH-LH",
                 "RTA-RH",
+                "RTA-LH",
+                "RTA-RL",
                 "RTA-LL",
-                "RTA-RL"
             ]
             self.__train()
 
@@ -85,13 +86,12 @@ class UPDRS:
             logging.error("UPDRS ValueError ->%s", verr.message)
 
         except:
-            logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
+            logging.error("Unexpected error on UPDRS init: %s", sys.exc_info()[0])
 
     def __train(self, n_clusters=4):
         """
-            Calculate cluster's centroids and standard deviations.
-
-            If there are at least the number of threshold rows then:
+            Calculate cluster's centroids and standard deviations. If there are at least the number of threshold rows \
+            then:
 
             * Observations will be normalised.
 
@@ -110,25 +110,34 @@ class UPDRS:
             :type n_clusters: int
         """
 
-        for obs in self.observations:
-            # obs = "LA-LL"
-            features, ids = self.__get_features_for_observation(observation=obs, last_column_is_id=True)
-            # the last column is the observation id
-            normalised_data = whiten(features)
+        try:
+            for obs in self.observations:
+                features, ids = self.__get_features_for_observation(observation=obs, last_column_is_id=True)
+                # the last column is the observation id
+                normalised_data = whiten(features)
 
-            # skip any rows that contain just zero values... they create nans
-            first_safe_row = pdkit.utils.non_zero_index(normalised_data)
-            observation_ids = features.tolist()
-            sd = features[first_safe_row] / normalised_data[first_safe_row]
+                # skip any rows that contain just zero values... they create nans
+                first_safe_row = pdkit.utils.non_zero_index(normalised_data)
+                observation_ids = features.tolist()
+                sd = features[first_safe_row] / normalised_data[first_safe_row]
 
-            # Calculate centroids and sort result
-            centroids_array, _ = kmeans(normalised_data, n_clusters)
-            sorted_centroids = pdkit.utils.centroid_sort(centroids_array)
+                # Calculate centroids and sort result
+                centroids_array, _ = kmeans(normalised_data, n_clusters)
+                sorted_centroids = pdkit.utils.centroid_sort(centroids_array)
 
-            if not self.clusters:
-                self.clusters = [[obs, sd.tolist(), sorted_centroids.tolist()]]
-            else:
-                self.clusters.append([obs, sd.tolist(),sorted_centroids.tolist()])
+                if not self.clusters:
+                    self.clusters = [[obs, sd.tolist(), sorted_centroids.tolist()]]
+                else:
+                    self.clusters.append([obs, sd.tolist(),sorted_centroids.tolist()])
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("Error training UPDRS I/O error %s", ierr)
+
+        except ValueError as verr:
+            logging.error("Error training UPDRS ValueError ->%s", verr.message)
+
+        except:
+            logging.error("Unexpected error on training UPDRS init: %s", sys.exc_info()[0])
 
     def __get_centroids_by_observation(self, observation):
         for (obs, sd, cen) in self.clusters:
@@ -155,7 +164,7 @@ class UPDRS:
             :param observation: observation name
             :type observation: string
             :param skip_id: skip any test with a given id (optional)
-            :type skip_id: string
+            :type skip_id: int
             :param last_column_is_id: skip the last column of the data frame (useful when id is last column - optional)
             :type last_column_is_id: bool
             :return features: the features

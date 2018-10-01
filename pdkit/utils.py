@@ -8,7 +8,7 @@
 
 import sys
 import re
-import math
+import logging
 
 import pandas as pd
 import numpy as np
@@ -47,15 +47,23 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
       :type convert_times: float
     """
     # data_m = pd.read_table(filename, sep=',', header=None)
-    data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
-    date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
-    time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
-    magnitude_sum_acceleration = \
-        np.sqrt(data_m[:, 1] ** 2 + data_m[:, 2] ** 2 + data_m[:, 3] ** 2)
-    data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'z': data_m[:, 3],
-            'mag_sum_acc': magnitude_sum_acceleration}
-    data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
-    return data_frame
+    try:
+        data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
+        date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
+        time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
+        magnitude_sum_acceleration = \
+            np.sqrt(data_m[:, 1] ** 2 + data_m[:, 2] ** 2 + data_m[:, 3] ** 2)
+        data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'z': data_m[:, 3],
+                'mag_sum_acc': magnitude_sum_acceleration}
+        data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
+        return data_frame
+    except IOError as e:
+        ierr = "({}): {}".format(e.errno, e.strerror)
+        logging.error("load data, file not found, I/O error %s", ierr)
+    except ValueError as verr:
+        logging.error("load data ValueError ->%s", verr.message)
+    except:
+        logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
 
 
 def get_sampling_rate_from_timestamp(d):
