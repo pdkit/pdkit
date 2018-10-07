@@ -260,7 +260,7 @@ class GaitProcessor(Processor):
         """ 
             Estimate local walk (not cardinal) direction with pre-heel strike phase.
 
-            Inspired by Nirupam Roy's B.E. thesis: "WalkCompass: Finding Walking Direction Leveraging Smartphone's Inertial Sensors," :cite:`roy2013walkcompass`
+            Inspired by Nirupam Roy's B.E. thesis: "WalkCompass: Finding Walking Direction Leveraging Smartphone's Inertial Sensors"
 
             :param data_frame: The data frame. It should have x, y, and z columns.
             :type data_frame: pandas.DataFrame
