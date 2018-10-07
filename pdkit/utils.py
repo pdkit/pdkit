@@ -66,6 +66,15 @@ def get_sampling_rate_from_timestamp(d):
     return sampling_rate
 
 def load_segmented_data(filename):
+    """
+        Helper function to load segmented gait time series data.
+
+        :param filename: The full path of the file that contais our data. This should be a comma separated value (csv file).
+        :type filename: str
+
+        :return: The gait time series segmented data, with a x, y, z, mag_acc_sum and segmented columns.
+        :rtype: pandas.DataFrame
+    """
     data = pd.read_csv(filename, index_col=0)
     data.index = data.index.astype(np.datetime64)
     
@@ -251,8 +260,10 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
     """
         This is a general load data method where the format of data to load can be passed as a parameter,
 
-        :param str filename: The path to load data from
-        :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+        :param filename: The full path of the data file to load.
+        :type filename: str
+        :param format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+        :type format_file: str
     """
     if format_file == 'mpower':
         return load_mpower_data(filename)
@@ -287,21 +298,28 @@ def numerical_integration(signal, sampling_frequency):
     """
         Numerically integrate a signal with it's sampling frequency.
 
-        :param array signal: A 1-dimensional array or list (the signal).
-        :param float sampling_frequency: The sampling frequency for the signal.
+        :param signal: A 1-dimensional array or list (the signal).
+        :type signal: array
+        :param sampling_frequency: The sampling frequency for the signal.
+        :type sampling_frequency: float
+        :return: The integrated signal.
+        :rtype: numpy.ndarray
     """
         
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
     
-    return integrate
+    return np.array(integrate)
 
 
 def autocorrelation(signal):
     """ 
         The `correlation <https://en.wikipedia.org/wiki/Autocorrelation#Estimation>`_ of a signal with a delayed copy of itself.
 
-        :param array signal: A 1-dimensional array or list (the signal).
+        :param signal: A 1-dimensional array or list (the signal).
+        :type signal: array
+        :return: The autocorrelated signal.
+        :rtype: numpy.ndarray
     """
 
     signal = np.array(signal)
@@ -312,19 +330,25 @@ def autocorrelation(signal):
     r = np.correlate(signal, signal, mode = 'full')[-n:]
     result = r / (variance * (np.arange(n, 0, -1)))
     
-    return result
+    return np.array(result)
 
 
-def peakdet(signal, delta, x = None):
+def peakdet(signal, delta, x =None):
     """
         Find the local maxima and minima ("peaks") in a 1-dimensional signal.
         Converted from `MATLAB script <http://billauer.co.il/peakdet.html>`_ 
 
         :param array signal: A 1-dimensional array or list (the signal).
-        :param float delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
-        :param array x: indices in local maxima and minima are replaced with the corresponding values in x.
-    
+        :type signal: array
+        :param delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
+        :type delta: float
+        :param x: Indices in local maxima and minima are replaced with the corresponding values in x (None default).
+        :type x: array
         :return np.array(maxtab), np.array(mintab)
+        :return maxtab: The highest peaks.
+        :rtype maxtab: numpy.ndarray
+        :return mintab: The lowest peaks.
+        :rtype mintab: numpy.ndarray
     """
     
     maxtab = []
@@ -376,25 +400,14 @@ def peakdet(signal, delta, x = None):
 
 def compute_interpeak(data, sample_rate):
     """
-    Compute number of samples between signal peaks using the real part of FFT.
+        Compute number of samples between signal peaks using the real part of FFT.
 
-    :param data: list or numpy array
-    :type data: time series
-    :param sample_rate: sample rate of accelerometer reading (Hz)
-    :type sample_rate: float
-        
-    :return interpeak: number of samples between peaks 
-    :rtype interpeak: integer
-        
-        
-    :Examples:
-    
-    >>> import numpy as np
-    >>> from mhealthx.signals import compute_interpeak
-    >>> data = np.random.random(10000)
-    >>> sample_rate = 100
-    >>> interpeak = compute_interpeak(data, sample_rate)
-    
+        :param data: 1-dimensional time series data.
+        :type data: array
+        :param sample_rate: Sample rate of accelerometer reading (Hz)
+        :type sample_rate: float
+        :return interpeak: Number of samples between peaks 
+        :rtype interpeak: int
     """
 
     # Real part of FFT:
@@ -689,86 +702,3 @@ def DisplayBellmanK(data, ix):
     for segment in np.unique(ix):
         plt.plot(np.where(ix == segment)[0],data[np.where(ix == segment)[0]],'o')
     plt.show()
-    
-def plot_walk_turn_segments(data, window=[1, 1, 1]):
-    c, pk, p = cluster_walk_turn(data, window=window)
-    
-    contour_heights = data[pk] - p
-    
-    colors = [['red', 'green'][i] for i in c]
-    plt.plot(data)
-    plt.scatter(pk, data[pk], color=colors)
-    plt.vlines(x=pk, ymin=contour_heights, ymax=data[pk], color=colors)
-    
-
-def separate_walks_turns(data, window=[1, 1, 1]):
-    """ Will separate peaks into the clusters by following the trend in the clusters array.
-        This is usedful because scipy's k-mean clustering will give us a continous clusters
-        array.
-        
-        :param clusters array: A continous array representing different classes.
-        :param peaks array: The peaks that we want to separate into the classes from the custers.
-        
-        :return walks arrays: An array of arrays that will have all the peaks corresponding to every
-                              individual walk.
-        :return turns arraays: Array of array which has all the indices of the peaks that correspond
-                               to turning.
-    
-    """
-    clusters, peaks, promi = cluster_walk_turn(data, window=window)
-    
-    group_one = []
-    group_two = []
-    
-    start = 0
-
-    for i in range(1, len(clusters)):
-        
-        if clusters[i-1] != clusters[i]:
-            assert np.all(clusters[start: i] == clusters[start]), 'Some values are mixed up, please check!'
-            
-            add = group_one if clusters[start] == 0 else group_two
-            add.append(peaks[start: i])
-            start = i
-        
-        # hacky fix for the last part of the signal ...
-        # I need to change this ...
-        if i == len(clusters)-1:
-            if not peaks[start] in add[-1]:
-                add = group_one if clusters[start] == 0 else group_two
-                add.append(peaks[start: ])
-                
-    maxes_one = [np.max(data[c]) for c in group_one]
-    maxes_two = [np.max(data[c]) for c in group_two]
-    
-    walks, turns = group_two, group_one
-    
-    if np.max(maxes_one) > np.max(maxes_two):
-        walks, turns = group_one, group_two
-    
-    # let's drop any turns at the end of the signal
-#     if len(turns[-1]) > len(walks[-1]):
-#         turns.pop()
-    
-    return walks, turns
-
-
-def plot_walks_turns(df, window=[1, 1, 1]):
-    
-    clusters, peaks, promis = cluster_walk_turn(df, window=window)
-    walks, turns = separate_walks_turns(df, window=window)
-    
-    top_of_graph = np.concatenate([df[w] for w in walks]).max()
-    contour_heights = df[peaks] - promis
-    
-    plt.plot(df)
-    for w in walks:
-        
-        plt.plot(w, df[w], 'o')
-        plt.text(np.mean(w, dtype=np.int), top_of_graph, len(w), fontsize=22)
-        #plt.vlines(x=w, ymin=contour_heights[w], ymax=df[w])
-
-    for t in turns:
-        plt.plot(t, df[t], 's')
-#         plt.text(np.mean(t, dtype=np.int), top_of_graph, len(t), fontsize=22)
-        #plt.vlines(x=t, ymin=contour_heights[t], ymax=df[t])
