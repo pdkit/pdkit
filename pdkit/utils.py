@@ -333,7 +333,7 @@ def autocorrelation(signal):
     return np.array(result)
 
 
-def peakdet(signal, delta, x =None):
+def peakdet(signal, delta, x=None):
     """
         Find the local maxima and minima (peaks) in a 1-dimensional signal.
         Converted from MATLAB script <http://billauer.co.il/peakdet.html>
@@ -344,7 +344,6 @@ def peakdet(signal, delta, x =None):
         :type delta: float
         :param x: Indices in local maxima and minima are replaced with the corresponding values in x (None default).
         :type x: array
-        :return np.array(maxtab), np.array(mintab)
         :return maxtab: The highest peaks.
         :rtype maxtab: numpy.ndarray
         :return mintab: The lowest peaks.
