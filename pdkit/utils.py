@@ -335,8 +335,8 @@ def autocorrelation(signal):
 
 def peakdet(signal, delta, x =None):
     """
-        Find the local maxima and minima ("peaks") in a 1-dimensional signal.
-        Converted from `MATLAB script <http://billauer.co.il/peakdet.html>`_ 
+        Find the local maxima and minima (peaks) in a 1-dimensional signal.
+        Converted from MATLAB script <http://billauer.co.il/peakdet.html>
 
         :param array signal: A 1-dimensional array or list (the signal).
         :type signal: array
