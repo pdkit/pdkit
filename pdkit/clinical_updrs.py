@@ -194,17 +194,17 @@ class Clinical_UPDRS:
             :return prediction: the prediction for a given test/point
             :rtype prediction: np.array
         """
-        prediction = np.array([])
+        scores = np.array([])
         for obs in self.observations:
             knn = self.__get_knn_by_observation(obs)
             p, ids = self.__get_features_for_observation(data_frame=measurement, observation=obs,
                                                          skip_id=3497, last_column_is_id=True)
 
             score = knn.predict(pd.DataFrame(p).T)
-            scores = np.append(prediction, score, axis=0)
+            scores = np.append(scores, score, axis=0)
 
         if output_format == 'array':
-            return prediction.astype(int)
+            return scores.astype(int)
         else:
-            return np.array_str(prediction.astype(int))
+            return np.array_str(scores.astype(int))
 

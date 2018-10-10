@@ -14,8 +14,7 @@ from os import listdir
 from os.path import isfile, join, isdir
 import pandas as pd
 import re
-import tqdm
-
+from tqdm import tqdm
 
 class TestResultSet:
     """
@@ -30,7 +29,7 @@ class TestResultSet:
 
         >>> import pdkit
         >>> testResultSet = pdkit.TestResultSet(folderpath)
-        >>> dataframe = testResultSet.process()
+        >>> dataframe = testResultSet.process
 
         where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements
         in the following folder `./tests/data/S5`.
@@ -47,6 +46,7 @@ class TestResultSet:
             self.folder_absolute_path = self.__get_folder_absolute_path(folder_relative_path)
             self.folder_name = self.__get_folder_name(folder_relative_path)
             self.dir_list = self.__get_dirs_list()
+            self.features = pd.DataFrame()
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("TestResultSet I/O error %s", ierr)
@@ -185,11 +185,9 @@ class TestResultSet:
     def process(self):
         """
             This method reads all the directories that contain files (measurements) within a given relative path and extracts
-            the features. It will return a data frame where the rows are the measurements and the columns correspond to
+            the features. the resulting dataframe with all the features processed is saved in testResultSet.features
+            Where features Dataframe the rows are the measurements and the columns correspond to
             the extracted features. The data frame will have a column 'id' with the name of the measurement.
-
-            :return data_frame: the dataframe for the measurements placed in the folder
-            :rtype data_frame: pandas.DataFrame
         """
 
         features = pd.DataFrame()
@@ -205,15 +203,13 @@ class TestResultSet:
             else:
                 if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
                     features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
-            # features = self.get_gait_measurements(features, d, files_list)
-        return features.fillna(0)
 
-    def write_output(self, data_frame, filename, output_format='csv'):
+        self.features = features.fillna(0)
+
+    def write_output(self, filename, output_format='csv'):
         """
-            This method writes to a file the data frame received.
+            This method writes to a file the features data frame.
 
-            :param data_frame: the dataframe to write
-            :type data_frame: pandas.DataFrame
             :param filename: the name to give to the file
             :type filename: string
             :param output_format: the format of the file to write ('csv', 'json' or 'sql')
@@ -223,11 +219,11 @@ class TestResultSet:
             filename = join(self.folder_absolute_path, filename) + '.' + output_format
 
             if output_format == 'json':
-                data_frame.to_json(path_or_buf=filename, index=False)
+                self.features.to_json(path_or_buf=filename, index=False)
             else:
                 if output_format == 'sql':
-                    data_frame.to_sql(path_or_buf=filename, index=False)
+                    self.features.to_sql(path_or_buf=filename, index=False)
                 else:
-                    data_frame.to_csv(path_or_buf=filename, index=False)
+                    self.features.to_csv(path_or_buf=filename, index=False)
         except:
             logging.error("Unexpected error on writing output")
