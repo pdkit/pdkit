@@ -195,7 +195,7 @@ class UPDRS:
         except:
             logging.error(" observation not found in data frame")
 
-    def get_single_score(point, centroids=None, sd=None):
+    def get_single_score(self, point, centroids=None, sd=None):
         """
             Get a single score is a wrapper around the result of classifying a Point against a group of centroids. \
             Attributes:
