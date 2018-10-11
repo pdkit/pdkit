@@ -45,7 +45,7 @@ class UPDRS:
         :param data_frame: testResultSet
         :type data_frame: pandas.DataFrame
         :param data_frame_file_path: the path to read the data frame from
-        :type data_frame_file_path: pandas.DataFrame
+        :type data_frame_file_path: string
     """
 
     def __init__(self, data_frame=None, data_frame_file_path=None):
