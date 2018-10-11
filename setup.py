@@ -13,7 +13,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
-VERSION = "0.4.7"
+VERSION = "0.4.8"
 
 
 def readme():
