@@ -326,8 +326,14 @@ MOCK_MODULES = ['pygtk',
                 'scipy.integrate',
                 'scipy.cluster',
                 'scipy.cluster.vq',
+                'scipy.spatial',
+                'scipy.spatial.distance',
                 'matplotlib.pylab',
                 'matplotlib.patches',
-                'tsfresh.feature_extraction',]
+                'tsfresh.feature_extraction',
+                'sklearn',
+                'sklearn.neighbors',
+                'sklearn.model_selection',
+                'sklearn.metrics']
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)

@@ -7,6 +7,7 @@
 # Author(s): J.S. Pons
 
 import logging
+import sys
 from pdkit.utils import load_data
 import pandas_validator as pv
 
@@ -33,7 +34,8 @@ class TremorTimeSeries:
 
             :param str filename: The path to load data from
             :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
-            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration data_frame.index is the datetime-like index
+            :return dataframe: data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration \
+            data_frame.index is the datetime-like index
         """
         try:
             ts = load_data(filename, format_file)
@@ -44,7 +46,12 @@ class TremorTimeSeries:
             else:
                 logging.error('Error loading data, wrong format.')
                 return None
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("load data, file not found, I/O error %s", ierr)
+        except ValueError as verr:
+            logging.error("load data ValueError ->%s", verr.message)
         except:
-            logging.error('Error loading data, wrong format.')
+            logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
 
 

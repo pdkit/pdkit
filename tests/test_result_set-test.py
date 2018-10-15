@@ -31,7 +31,8 @@ class TestResultSetTest(unittest.TestCase):
         self.trs = None
 
     def test_result_set_test_cloudupdrs_data(self):
-        df = self.trs.process()
+        self.trs.process()
+        df = self.trs.features
         validator = TestResultSetCloudUPDRSDataFrameValidator()
         self.assertEqual(True, validator.is_valid(df))
 

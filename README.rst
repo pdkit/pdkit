@@ -74,16 +74,55 @@ kinesia scores (the number of key taps)
 TEST RESULT SET
 ****************
 
-Pdkit can be used to extract all the features for different measurements (i.e. tremor, finger tapping, gait) placed in a single folder. The result
+Pdkit can be used to extract all the features for different measurements (i.e. tremor, finger tapping) placed in a single folder. The result
 is a `data frame` where the measurements are rows and the columns are the features extracted.
 
->>> import pdkit
->>> testResultSet = pdkit.TestResultSet(folderpath)
->>> dataframe = testResultSet.process()
+    >>> import pdkit
+    >>> testResultSet = pdkit.TestResultSet(folderpath)
+    >>> testResultSet.process()
 
 where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements in the following
-folder `./tests/data`.
+folder `./tests/data`. The resulting dataframe with all the features processed is saved in testResultSet.features
 
 We can also write the `data frame` to a output file like:
 
->>> testResultSet.write_output(dataframe, name)
+    >>> testResultSet.write_output(dataframe, name)
+
+UPDRS
+****************
+
+Pdkit can calculate the UPDRS score for a given testResultSet.
+
+    >>> import pdkit
+    >>> updrs = pdkit.UPDRS(data_frame)
+
+The UPDRS scores can be written to a file. You can pass the name of a `filename` and the `output_format`
+
+    >>> updrs.write_model(filename='scores', output_format='csv')
+
+To score a new measurement against the trained knn clusters.
+
+    >>> updrs.score(measurement)
+
+To read the testResultSet data from a file. See TestResultSet class for more details.
+
+    >>> updrs = pdkit.UPDRS(data_frame_file_path=file_path_to_testResultSet_file)
+
+Clinical UPDRS
+****************
+
+Pdkit uses the clinical data to calculates classifiers implementing the k-nearest neighbors vote.
+
+
+    >>> import pdkit
+    >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame)
+
+where the `labels_file_path` is the path to the clinical data file, `data_frame` is the result of the `testResultSet`.
+
+To score a new measurement against the trained knn clusters.
+
+    >>> clinical_UPDRS.predict(measurement)
+
+To read the testResultSet data from a file. See TestResultSet class for more details.
+
+    >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame_file_path=file_path_to_testResultSet_file)

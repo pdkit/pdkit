@@ -4,8 +4,6 @@ Finger Tapping Processor
 .. automodule:: finger_tapping_processor
    :members:
 
-
-
 Finger Tapping Time Series
 ============================
 
@@ -13,5 +11,5 @@ Finger Tapping Time Series
    :members:
 
 .. rubric:: References
-.. bibliography:: references.bib
+.. bibliography:: references_tapping.bib
    :cited:
