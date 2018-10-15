@@ -79,6 +79,15 @@ def get_sampling_rate_from_timestamp(d):
 
   
 def load_segmented_data(filename):
+    """
+        Helper function to load segmented gait time series data.
+
+        :param filename: The full path of the file that contais our data. This should be a comma separated value (csv file).
+        :type filename: str
+
+        :return: The gait time series segmented data, with a x, y, z, mag_acc_sum and segmented columns.
+        :rtype: pandas.DataFrame
+    """
     data = pd.read_csv(filename, index_col=0)
     data.index = data.index.astype(np.datetime64)
     
@@ -323,12 +332,14 @@ def numerical_integration(signal, sampling_frequency):
         :type signal: array
         :param sampling_frequency: The sampling frequency for the signal.
         :type sampling_frequency: float
+        :return: The integrated signal.
+        :rtype: numpy.ndarray
     """
         
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
     
-    return integrate
+    return np.array(integrate)
 
 
 def autocorrelation(signal):
@@ -337,7 +348,8 @@ def autocorrelation(signal):
 
         :param signal: A 1-dimensional array or list (the signal).
         :type signal: array
-
+        :return: The autocorrelated signal.
+        :rtype: numpy.ndarray
     """
 
     signal = np.array(signal)
@@ -348,23 +360,24 @@ def autocorrelation(signal):
     r = np.correlate(signal, signal, mode = 'full')[-n:]
     result = r / (variance * (np.arange(n, 0, -1)))
     
-    return result
+    return np.array(result)
 
 
 def peakdet(signal, delta, x=None):
     """
-        Find the local maxima and minima ("peaks") in a 1-dimensional signal. Converted from `MATLAB script \
-        <http://billauer.co.il/peakdet.html>`_
-        :param signal: A 1-dimensional array or list (the signal).
-        :type signal: array
-        :param delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was \
-        preceded (to the left) by a value lower by delta.
-        :type delta: float
-        :param x: indices in local maxima and minima are replaced with the corresponding values in x.
-        :type x: array
-        :return maxtab, mintab
-        :rtype maxtab, mintab: np.array
+        Find the local maxima and minima (peaks) in a 1-dimensional signal.
+        Converted from MATLAB script <http://billauer.co.il/peakdet.html>
 
+        :param array signal: A 1-dimensional array or list (the signal).
+        :type signal: array
+        :param delta: The peak threashold. A point is considered a maximum peak if it has the maximal value, and was preceded (to the left) by a value lower by delta.
+        :type delta: float
+        :param x: Indices in local maxima and minima are replaced with the corresponding values in x (None default).
+        :type x: array
+        :return maxtab: The highest peaks.
+        :rtype maxtab: numpy.ndarray
+        :return mintab: The lowest peaks.
+        :rtype mintab: numpy.ndarray
     """
     
     maxtab = []
@@ -418,13 +431,12 @@ def compute_interpeak(data, sample_rate):
     """
         Compute number of samples between signal peaks using the real part of FFT.
 
-        :param data: list or numpy array
-        :type data: time series
-        :param sample_rate: sample rate of accelerometer reading (Hz)
+        :param data: 1-dimensional time series data.
+        :type data: array
+        :param sample_rate: Sample rate of accelerometer reading (Hz)
         :type sample_rate: float
-        :return interpeak: number of samples between peaks
-        :rtype interpeak: integer
-
+        :return interpeak: Number of samples between peaks 
+        :rtype interpeak: int
 
         :Examples:
 
@@ -433,7 +445,6 @@ def compute_interpeak(data, sample_rate):
         >>> data = np.random.random(10000)
         >>> sample_rate = 100
         >>> interpeak = compute_interpeak(data, sample_rate)
-    
     """
 
     # Real part of FFT:
