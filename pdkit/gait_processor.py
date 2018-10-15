@@ -42,7 +42,7 @@ class GaitProcessor(Processor):
         data_frame.x, data_frame.y, data_frame.z: x, y, z components of the acceleration
         data_frame.index is the datetime-like index
        
-        These values are recommended by the author of the pilot study :cite:`Kassavetis2015` and :cite:`BachlinPRMHGT10`
+        These values are recommended by the author of the pilot study :cite:`g-Kassavetis2015, g-BachlinPRMHGT10`
        
         :param sampling_frequency: (optional) the sampling frequency in Hz (100.0 default)
         :type sampling_frequency: float
@@ -110,7 +110,7 @@ class GaitProcessor(Processor):
         
     def freeze_of_gait(self, x):
         """ 
-            This method assess freeze of gait following :cite:`BachlinPRMHGT10`.
+            This method assess freeze of gait following :cite:`g-BachlinPRMHGT10`.
 
             :param x: The time series to assess freeze of gait on. This could be x, y, z or mag_sum_acc.
             :type x: pandas.Series
@@ -192,7 +192,7 @@ class GaitProcessor(Processor):
 
     def speed_of_gait(self, x, wavelet_type='db3', wavelet_level=6):
         """ 
-            This method assess the speed of gait following :cite:`MartinSB11`.
+            This method assess the speed of gait following :cite:`g-MartinSB11`.
 
             It extracts the gait speed from the energies of the approximation coefficients of wavelet functions.
             Prefferably you should use the magnitude of x, y and z (mag_acc_sum) here, as the time series.
