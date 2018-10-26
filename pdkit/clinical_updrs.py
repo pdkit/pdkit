@@ -81,7 +81,7 @@ class Clinical_UPDRS:
 
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
-            logging.error("Clinical UPDRS I/O error %s", ierr)
+            logging.error("Clinical UPDRS, load data, file not found, I/O error %s", ierr)
 
         except ValueError as verr:
             logging.error("Clinical UPDRS ValueError ->%s", verr.message)
@@ -129,7 +129,7 @@ class Clinical_UPDRS:
                     self.knns.append([obs, knn])
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
-            logging.error("Error training Clinical UPDRS I/O error %s", ierr)
+            logging.error("Error training Clinical UPDRS, file not found, I/O error %s", ierr)
 
         except ValueError as verr:
             logging.error("Error training Clinical UPDRS ValueError ->%s", verr.message)
