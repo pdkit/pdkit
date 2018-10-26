@@ -7,6 +7,7 @@
 # Author(s): J.S. Pons
 
 import logging
+import sys
 from pdkit.utils import load_data
 import pandas_validator as pv
 
@@ -46,7 +47,12 @@ class FingerTappingTimeSeries:
             else:
                 logging.error('Validator error loading data, wrong format.')
                 return None
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("load data, file not found, I/O error %s", ierr)
+        except ValueError as verr:
+            logging.error("load data ValueError ->%s", verr.message)
         except:
-            logging.error('Validator error loading data, wrong format.')
+            logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
 
 

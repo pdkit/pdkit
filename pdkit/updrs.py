@@ -80,7 +80,7 @@ class UPDRS:
 
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
-            logging.error("UPDRS I/O error %s", ierr)
+            logging.error("UPDRS load data, file not found, I/O error %s", ierr)
 
         except ValueError as verr:
             logging.error("UPDRS ValueError ->%s", verr.message)
@@ -131,7 +131,7 @@ class UPDRS:
                     self.clusters.append([obs, sd.tolist(),sorted_centroids.tolist()])
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
-            logging.error("Error training UPDRS I/O error %s", ierr)
+            logging.error("Error training UPDRS, file not found, I/O error %s", ierr)
 
         except ValueError as verr:
             logging.error("Error training UPDRS ValueError ->%s", verr.message)

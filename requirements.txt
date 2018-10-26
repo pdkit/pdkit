@@ -25,7 +25,7 @@ packaging==17.1
 pandas==0.23.4
 pandas-validator==0.5.0
 patsy==0.5.0
-pdkit==0.4.6
+pdkit==0.4.11
 pkginfo==1.4.1
 psutil==5.4.3
 pybtex==0.21
