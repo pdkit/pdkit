@@ -80,7 +80,7 @@ class UPDRS:
 
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
-            logging.error("UPDRS I/O error %s", ierr)
+            logging.error("UPDRS load data, file not found, I/O error %s", ierr)
 
         except ValueError as verr:
             logging.error("UPDRS ValueError ->%s", verr.message)
