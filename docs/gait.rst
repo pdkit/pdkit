@@ -1,11 +1,17 @@
 Gait Processor
 ============================
-
 .. automodule:: gait_processor
-   :members:
+    :members:
+
 
 Gait Time Series
 ============================
-
 .. automodule:: gait_time_series
-   :members:
+    :members:
+
+
+.. rubric:: References
+.. bibliography:: references.bib
+    :labelprefix: G-
+    :keyprefix: g-
+    :cited:
