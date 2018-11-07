@@ -126,9 +126,13 @@ class Processor:
                 first_zero_crossing = np.argwhere(filtered_data_frame[col] > 0)[0][0]
                 filtered_data_frame[col][:first_zero_crossing] = 0
         
-        if {*keep_cols}.issubset(filtered_data_frame.columns):
-            filtered_data_frame[keep_cols] = data_frame[keep_cols]
-        
+        # No python3 support :(
+        # if {*keep_cols}.issubset(filtered_data_frame.columns):
+        for c in keep_cols:
+            if c not in filtered_data_frame.columns:
+                return
+
+        filtered_data_frame[keep_cols] = data_frame[keep_cols]
         return filtered_data_frame
 
     def filter_signal(self, data_frame):
