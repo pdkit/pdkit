@@ -95,3 +95,6 @@ ENV/
 
 # vscode
 .vscode/
+
+# local notebooks
+local-notebooks/

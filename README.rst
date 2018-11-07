@@ -7,6 +7,39 @@
 PDKIT
 #####
 
+
+INSTALL INSTRUCTIONS
+********************
+
+Regular install
+===============
+
+.. code-block:: console
+
+    $ pip install pdkit
+
+or
+
+.. code-block:: console
+
+    $ pip install git+git://github.com/pdkit/pdkit.git
+
+For "editable" install
+======================
+
+.. code-block:: console
+
+    $ pip install -e git://github.com/pdkit/pdkit.git#egg=pdkit
+
+For development install
+=========================
+
+.. code-block:: console
+
+    $ git clone https://github.com/pdkit/pdkit.git
+    $ pip install -r requirements.txt
+    $ pip install .
+
 TREMOR PROCESSOR
 ****************
 
