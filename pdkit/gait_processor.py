@@ -640,7 +640,7 @@ class GaitProcessor(Processor):
                 data_frame.loc[start: end, 'segmentation'] = k
         
         return data_frame
-            
+                
     def plot_segmentation_dictionary(self, x, segmentation_dictionary, figsize=(10, 5)):
         """ 
             Utility method used to visualize how the segmentation dictionary interacts with the time series.

@@ -714,7 +714,7 @@ def ExpandSegmentIndicies(endPoint):
     return lbls
 
 
-def plot_segmentation(data, peaks, segment_indexes):
+def plot_segmentation(data, peaks, segment_indexes, figsize=(10, 5)):
     """ Will plot the data and segmentation based on the peaks and segment indexes.
     
         :param 1d-array data: The orginal axis of the data that was segmented into sections.
@@ -724,7 +724,7 @@ def plot_segmentation(data, peaks, segment_indexes):
         Will not return anything, instead it will plot the data and peaks with different colors for each class.
     
     """
-    
+    fig, ax = plt.subplots(figsize=figsize)
     plt.plot(data);
     
     for segment in np.unique(segment_indexes):
