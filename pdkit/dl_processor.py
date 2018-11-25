@@ -1,7 +1,7 @@
 import numpy as np
 import random as rn
 
-from models import RCL
+from pdkit.models import RCL
 
 from keras.optimizers import sgd, adam
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
@@ -10,7 +10,10 @@ from keras.utils import to_categorical
 
 
 class QoIProcessor(object):
-    def __init__(self, input_shape=(150, 4)):
+    def __init__(self,
+                 input_shape=(150, 4),
+                 labels=2,
+                 output_activation='sigmoid'):
         self.model = RCL( input_shape=input_shape,
                           rec_conv_layers=[
                               [
@@ -29,24 +32,5 @@ class QoIProcessor(object):
                                         (512, 0.0, 0.5)],
                           padding='same',
                           optimizer=adam(lr=0.001),
+                          output_layer=[labels, output_activation]
                        )
-        
-        self.callbacks = []
-        
-    def fit(self, x, y,
-            validation_data=(None, None),
-            batch_size=1,
-            epochs=1,
-            shuffle=False,
-            verbose=1):
-        
-        self.model.fit(x=x, y=y,
-                       batch_size=batch_size,
-                       shuffle=False,
-                       epochs=epochs,
-                       validation_data=(va_x, va_y),
-                       callbacks=[self.callbacks],
-                       verbose=verbose)
-        
-    def history(self):
-        print(self.model.history.history)
