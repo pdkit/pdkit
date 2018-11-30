@@ -47,7 +47,7 @@ setup(
     license='MIT',
     packages=['pdkit'],
     install_requires=[
-        'numpy', 'pandas', 'scipy', 'PyWavelets'
+        'numpy', 'pandas', 'scipy', 'PyWavelets', 'keras'
     ],
     zip_safe=False,
     classifiers=[

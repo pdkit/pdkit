@@ -977,3 +977,20 @@ def non_zero_row(arr):
             return False
 
     return True
+
+
+def window_features(idx, window_size=100, overlap=10):
+    """ Generate indexes for a sliding window with overlap
+    
+        :param array idx: The indexes that need to be windowed.
+        :param int window_size: The size of the window.
+        :param int overlap: How much should each window overlap.
+        
+        :return array view: The indexes for the windows with overlap.
+    """
+    overlap = window_size - overlap
+    sh = (idx.size - window_size + 1, window_size)
+    st = idx.strides * 2
+    view = np.lib.stride_tricks.as_strided(idx, strides=st, shape=sh)[0::overlap]
+    
+    return view
