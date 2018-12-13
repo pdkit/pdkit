@@ -6,15 +6,6 @@
 #
 # Author: Cosmin Stamate 
 
-from __future__ import division
-from __future__ import unicode_literals
-from __future__ import print_function
-from __future__ import absolute_import
-from builtins import super
-from builtins import int
-from builtins import range
-from future import standard_library
-standard_library.install_aliases()
 import sys
 import traceback
 
@@ -640,7 +631,7 @@ class GaitProcessor(Processor):
                 data_frame.loc[start: end, 'segmentation'] = k
         
         return data_frame
-                
+            
     def plot_segmentation_dictionary(self, x, segmentation_dictionary, figsize=(10, 5)):
         """ 
             Utility method used to visualize how the segmentation dictionary interacts with the time series.
