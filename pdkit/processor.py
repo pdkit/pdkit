@@ -71,7 +71,8 @@ class Processor:
             :param data_frame: the data frame to resample
             :param str sampling_frequency: the sampling frequency. Default is 100Hz, as recommended by the author of the pilot study [1]
         """
-        df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
+        new_freq = np.round(1 / self.sampling_frequency, decimals=6)
+        df_resampled = data_frame.resample(str(new_freq) + 'S').mean()
 
         # f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
         
