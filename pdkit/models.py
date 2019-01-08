@@ -581,6 +581,8 @@ def PERCOM(input_shape,
 
     for i, d in enumerate(dense_layers):
         dense = Dense(d, activation='relu')(dense)
+        dense = BatchNormalization()(dense)
+        dense = Dropout(0.3)(dense)
     
     output = Dense(output_layer[0], activation=output_layer[1])(dense)
     
