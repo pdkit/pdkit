@@ -1,19 +1,43 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright 2019 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author: Cosmin Stamate
+
 import numpy as np
-import random as rn
+
+from keras.optimizers import adam
 
 from pdkit.models import RCL
 from pdkit.utils import window_features
 
-from keras.optimizers import sgd, adam
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-
-from keras.utils import to_categorical
-
 
 class QoIProcessor(object):
+    """
+        Quality of Information processor based on a recurrent convolutional network.
+        Supervised learning method that has been used to classify accelerometer signal (collected through the cloudUPDRS app) according to qulity.
+        The method has been used in a binary fashion (good vs bad signals) but this can easily do multiclass classification.
+        Initializing this processor will instantiate a model and the model uses the keras api: https://keras.io.
+
+        :param input_shape: (optional) Shape of the input data, this has to be in 2d, without the minibatch size
+        :type input_shape: tuple
+        :param labels: (optional) Number of classes, this should be 1 for binary classification.
+        :type labels: int
+        :param output_activation: (optional) The activation function to use on the output data. For binary classification use 'sigmoid', for multiclass use 'softmax'
+        :type output_activation: str
+
+
+        :Examples:
+         
+        >>> import pdkit
+        >>> qoi = pdkit.QoIProcessor()
+        >>> qoi.model.fit(X, y)
+    """
     def __init__(self,
                  input_shape=(150, 4),
-                 labels=2,
+                 labels=1,
                  output_activation='sigmoid'):
         
         self.model = RCL( input_shape=input_shape,
