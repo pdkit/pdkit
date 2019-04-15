@@ -15,7 +15,7 @@ HeapDict==1.0.0
 idna==2.7
 imagesize==1.1.0
 ipaddress==1.0.22
-Jinja2==2.10
+Jinja2==2.10.1
 kiwisolver==1.0.1
 latexcodec==1.0.5
 MarkupSafe==1.1.0
