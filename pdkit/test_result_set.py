@@ -59,7 +59,7 @@ class TestResultSet:
         logging.debug("TestRestultSet init")
 
     def __get_files_list(self, folder_absolute_path):
-        return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f))]
+        return [f for f in os.listdir(folder_absolute_path) if isfile(join(folder_absolute_path, f)) and f.endswith('.csv')]
 
     def __get_dirs_list(self):
         return [f for f in os.listdir(self.folder_absolute_path) if (isdir(join(self.folder_absolute_path, f)) and not f.startswith('_'))]
