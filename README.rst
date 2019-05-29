@@ -4,6 +4,9 @@
 .. image:: https://readthedocs.org/projects/pdkit/badge/
     :target: https://pdkit.readthedocs.org
 
+.. image:: https://zenodo.org/badge/124572011.svg
+   :target: https://zenodo.org/badge/latestdoi/124572011
+   
 PDKIT
 #####
 
