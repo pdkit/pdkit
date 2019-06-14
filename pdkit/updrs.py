@@ -25,6 +25,25 @@ class UPDRS:
         `k-means <https://docs.scipy.org/doc/scipy-0.7.x/reference/cluster.vq.html#scipy.cluster.vq.kmeans>`_ \
         on a set of observation vectors forming k clusters.
 
+        The abbreviation for the observations are as follows:
+
+        "OT-RH" > One Target - Right Hand
+        "OT-LH" > One Target - Left Hand
+        "TT-RH" > Two Targets - Right Hand
+        "TT-LH" > Two Targets - Left Hand
+        "PS-RH" > Pronation Supination - Right Hand
+        "PS-LH" > Pronation Supination - Left Hand
+        "LA-RL" > Leg Agility - Right Leg
+        "LA-LL" > Leg Agility - Left Leg
+        "PTOTH-RH" > Postural Tremor Of The Hands - Right Hand
+        "PTOTH-LH" > Postural Tremor Of The Hands - Left Hand
+        "KTOH-RH" > Kinetic Tremor Of Hands - Right Hand
+        "KTOH-LH" > Kinetic Tremor Of Hands - Left Hand
+        "RTA-RH" > Rest Tremor Amplitude - Right Hand
+        "RTA-LH" > Rest Tremor Amplitude - Left Hand
+        "RTA-RL" > Rest Tremor Amplitude - Right Leg
+        "RTA-LL" > Rest Tremor Amplitude - Left Leg
+
         :Example:
 
         >>> import pdkit
