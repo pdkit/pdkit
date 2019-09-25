@@ -21,6 +21,12 @@ class FTCloudUPDRSDataFrameValidator(pv.DataFrameValidator):
     x_target = pv.FloatColumnValidator('x_target', min_value=-10000, max_value=10000)
     y_target = pv.FloatColumnValidator('y_target', min_value=-10000, max_value=10000)
 
+class FTOPDCDataFrameValidator(pv.DataFrameValidator):
+    column_num = 4
+    td = pv.FloatColumnValidator('td', min_value=-1, max_value=10000)
+    action_type = pv.FloatColumnValidator('action_type', min_value=0, max_value=1)
+    x = pv.FloatColumnValidator('x', min_value=-10000, max_value=10000)
+    y = pv.FloatColumnValidator('y', min_value=-10000, max_value=10000)
 
 class FingerTappingTimeSeries:
     """
@@ -40,7 +46,11 @@ class FingerTappingTimeSeries:
         """
         try:
             ts = load_data(filename, format_file, button_left_rect, button_right_rect)
-            validator = FTCloudUPDRSDataFrameValidator()
+
+            if format_file == 'ft_opdc':
+                validator = FTOPDCDataFrameValidator()
+            else:
+                validator = FTCloudUPDRSDataFrameValidator()
 
             if validator.is_valid(ts):
                 return ts
@@ -54,5 +64,3 @@ class FingerTappingTimeSeries:
             logging.error("load data ValueError ->%s", verr.message)
         except:
             logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
-
-

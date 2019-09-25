@@ -16,9 +16,9 @@ import pandas as pd
 import re
 from tqdm import tqdm
 
-class TestResultSet:
+class TestResultSetOPDC:
     """
-        This is the Test Result Set class. Its main functionality is to read all the files (measurements) within a given
+        TTest Result Set class for OPDC app. Its main functionality is to read all the files (measurements) within a given
         path and extract the features. It will return a data frame where the rows are the measurements and the columns
         correspond to the extracted features.
 
@@ -69,13 +69,16 @@ class TestResultSet:
 
     @staticmethod
     def __get_session_id(filename):
-        m = re.search(r"_(\d+).csv", filename, re.IGNORECASE)
-        return m.group(1)
+        m = re.split('-|_', filename)
+        last = len(m)
+        l = [last-6, last-3, last-2]
+        return ''.join([m[i]+'-' for i in l])
 
     @staticmethod
     def __get_measurement_name(abr_measurement_type, filename):
-        m = re.search(r"(?![%s])[a-zA-Z_\-]*" % abr_measurement_type, filename, re.IGNORECASE).group(0)[3:].split('_')
-        return ''.join([x[0] for x in m if len(x)>0])
+        m = re.split('-|_', filename)
+        until = m.index(abr_measurement_type)
+        return ''.join([m[i]+'-' for i in range(1,until+1)])
 
     @staticmethod
     def __get_folder_absolute_path(folder_relative_path):
@@ -92,7 +95,7 @@ class TestResultSet:
         else:
             return folder_relative_path.split('/')[-1]
 
-    def __get_tremor_measurements(self, data_frame, directory, files_list):
+    def __get_accel_measurements(self, data_frame, directory, files_list):
         """
             Convenience method that gets the finger tapping measurements
 
@@ -105,12 +108,47 @@ class TestResultSet:
             :return data_frame: the dataframe
             :rtype data_frame: pandas.DataFrame
         """
-        abr_measurement_type = 'T'
+        abr_measurement_type = 'accel'
+
         tp = pdkit.TremorProcessor()
 
         for f in files_list:
-            if f.startswith(abr_measurement_type):
-                tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f))
+            if ( abr_measurement_type in f ):
+                # print(join(self.__build_folder_path(directory), f))
+                tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f), format_file='opdc')
+                # print(tts.head())
+                # print(self.__get_measurement_name(abr_measurement_type, f))
+                features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print('file error: '+f)
+
+        return data_frame
+
+    def __get_gyro_measurements(self, data_frame, directory, files_list):
+        """
+            Convenience method that gets the finger tapping measurements
+
+            :param data_frame: the dataframe where the features will be added
+            :type data_frame: pandas.DataFrame
+            :param directory: the directory name that contains the files
+            :type features: str
+            :param files_list: the list of files
+            :type files_list: str
+            :return data_frame: the dataframe
+            :rtype data_frame: pandas.DataFrame
+        """
+        abr_measurement_type = 'gyro'
+
+        tp = pdkit.TremorProcessor()
+
+        for f in files_list:
+            if ( abr_measurement_type in f ):
+                # print(join(self.__build_folder_path(directory), f))
+                tts = pdkit.TremorTimeSeries().load(join(self.__build_folder_path(directory), f), format_file='opdc')
+                # print(tts.head())
+                # print(self.__get_measurement_name(abr_measurement_type, f))
                 features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
                 if features is not None:
                     data_frame = self.__save_features_to_dataframe(features, data_frame, f)
@@ -132,12 +170,12 @@ class TestResultSet:
             :return data_frame: the dataframe
             :rtype data_frame: pandas.DataFrame
         """
-        abr_measurement_type = 'FT'
+        abr_measurement_type = 'tap'
         ftp = pdkit.FingerTappingProcessor()
 
         for f in files_list:
-            if f.startswith(abr_measurement_type):
-                ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f))
+            if (abr_measurement_type in f):
+                ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f), format_file='ft_opdc')
                 features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f)+'-')
                 if features is not None:
                     data_frame = self.__save_features_to_dataframe(features, data_frame, f)
@@ -192,12 +230,18 @@ class TestResultSet:
 
         features = pd.DataFrame()
         for d in tqdm(self.dir_list):
+            # print("Working in directory: " + d)
             if self.folder_relative_path.endswith('/'):
                 files_list = self.__get_files_list(self.folder_relative_path+d)
             else:
                 files_list = self.__get_files_list(join(self.folder_relative_path,d))
-            features_tremor = self.__get_tremor_measurements(pd.DataFrame(), d, files_list)
-            features_tremor_and_finger_tapping = self.__get_finger_tapping_measurements(features_tremor, d, files_list)
+            # features_tremor = self.__get_tremor_measurements(pd.DataFrame(), d, files_list)
+            # print(files_list)
+            features_tremor = self.__get_accel_measurements(pd.DataFrame(), d, files_list)
+            # get gyro, gait ++ voice and reaction
+            print(features_tremor.head())
+            features_tremor_ext = self.__get_gyro_measurements(features_tremor, d, files_list)
+            features_tremor_and_finger_tapping = self.__get_finger_tapping_measurements(features_tremor_ext, d, files_list)
             if features.empty:
                 features = features_tremor_and_finger_tapping
             else:

@@ -26,11 +26,11 @@ from scipy.spatial.distance import euclidean
 def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     """
        This method loads data in the cloudupdrs format
-       
+
        Usually the data will be saved in a csv file and it should look like this:
-       
+
       .. code-block:: json
-      
+
          timestamp_0, x_0, y_0, z_0
          timestamp_1, x_1, y_1, z_1
          timestamp_2, x_2, y_2, z_2
@@ -38,7 +38,7 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
          .
          .
          timestamp_n, x_n, y_n, z_n
-       
+
       where x, y, z are the components of the acceleration
 
       :param filename: The path to load data from
@@ -65,6 +65,48 @@ def load_cloudupdrs_data(filename, convert_times=1000000000.0):
     except:
         logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
 
+def load_opdc_data(filename, convert_times=1000000000.0):
+    """
+       This method loads data in the OPDC format
+
+       Usually the data will be saved in a csv file and it should look like this:
+
+      .. code-block:: json
+
+         timestamp_0, x_0, y_0, z_0
+         timestamp_1, x_1, y_1, z_1
+         timestamp_2, x_2, y_2, z_2
+         .
+         .
+         .
+         timestamp_n, x_n, y_n, z_n
+
+      where x, y, z are the components of the acceleration
+
+      :param filename: The path to load data from
+      :type filename: string
+      :param convert_times: Convert times. The default is from from nanoseconds to seconds.
+      :type convert_times: float
+    """
+    # data_m = pd.read_table(filename, sep=',', header=None)
+    try:
+        data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False)
+        data_m[:, 0] = data_m[:, 0] * 1000000000
+        date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
+        time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
+        magnitude_sum_acceleration = \
+            np.sqrt(data_m[:, 1] ** 2 + data_m[:, 2] ** 2 + data_m[:, 3] ** 2)
+        data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'z': data_m[:, 3],
+                'mag_sum_acc': magnitude_sum_acceleration}
+        data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'z', 'mag_sum_acc'])
+        return data_frame
+    except IOError as e:
+        ierr = "({}): {}".format(e.errno, e.strerror)
+        logging.error("load data, file not found, I/O error %s", ierr)
+    except ValueError as verr:
+        logging.error("load data ValueError ->%s", verr.message)
+    except:
+        logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
 
 def get_sampling_rate_from_timestamp(d):
     # group on minutes as pandas gives us the same second number
@@ -74,10 +116,10 @@ def get_sampling_rate_from_timestamp(d):
     # get the first minute (0) since we normalised the time above
     sampling_rate = d.iloc[minutes.indices[0]].index.second.value_counts().mean()
     print('Sampling rate is {} Hz'.format(sampling_rate))
-    
+
     return sampling_rate
 
-  
+
 def load_segmented_data(filename):
     """
         Helper function to load segmented gait time series data.
@@ -90,7 +132,7 @@ def load_segmented_data(filename):
     """
     data = pd.read_csv(filename, index_col=0)
     data.index = data.index.astype(np.datetime64)
-    
+
     return data
 
 
@@ -98,52 +140,52 @@ def load_freeze_data(filename):
     data = pd.read_csv(filename, delimiter=' ', header=None,)
     data.columns = ['td', 'ankle_f', 'ankle_v', 'ankle_l', 'leg_f', 'leg_v', 'leg_l', 'x', 'y', 'z', 'anno']
     data.td = data.td - data.td[0]
-    
+
     # the dataset specified it uses ms
     date_time = pd.to_datetime(data.td, unit='ms')
-    
+
     mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
 
     data['mag_sum_acc'] = mag_acc_sum
     data.index = date_time
-    
+
     del data.index.name
-    
+
     sampling_rate = get_sampling_rate_from_timestamp(data)
-    
+
     return data
 
 
 def load_huga_data(filepath):
     data = pd.read_csv(filepath, delimiter='\t', comment='#')
-    
+
     # this dataset does not have timestamps so we had to infer the sampling rate from the description
     # we used 1 because sample each second
     # 58.82 because that's 679073 samples divided by 11544 seconds
     # and we used 1000 because milliseconds to seconds
 
     freq = int((1 / 58.82) * 1000)
-    
+
     # this will make that nice date index that we know and love ...
     data.index = pd.date_range(start='1970-01-01', periods=data.shape[0], freq='{}ms'.format(freq))
-    
+
     # this hardcoded as we don't need all that data...
     keep = ['acc_lt_x', 'acc_lt_y', 'acc_lt_z']#, 'act']
-    
+
     drop = [c for c in data.columns if c not in keep]
     data = data.drop(columns=drop)
-    
+
     # just keep the last letter (x, y and z)
     data = data.rename(lambda x: x[-1], axis=1)
-    
+
     mag_acc_sum = np.sqrt(data.x ** 2 + data.y ** 2 + data.z ** 2)
 
     data['mag_sum_acc'] = mag_acc_sum
-    
+
     data['td'] = data.index - data.index[0]
-    
+
     sampling_rate = get_sampling_rate_from_timestamp(data)
-    
+
     return data
 
 
@@ -151,12 +193,12 @@ def load_physics_data(filename):
     dd = pd.read_csv(filename)
     dd['mag_sum_acc'] = np.sqrt(dd.x ** 2 + dd.y ** 2 + dd.z ** 2)
     dd.index = pd.to_datetime(dd.time, unit='s')
-    
+
     del dd.index.name
     dd = dd.drop(columns=['time'])
-    
+
     sampling_rate = get_sampling_rate_from_timestamp(dd)
-    
+
     return dd
 
 
@@ -175,9 +217,9 @@ def load_accapp_data(filename, convert_times=1000.0):
 def load_mpower_data(filename, convert_times=1000000000.0):
     """
         This method loads data in the `mpower <https://www.synapse.org/#!Synapse:syn4993293/wiki/247859>`_ format
-        
-        The format is like: 
-        
+
+        The format is like:
+
         .. code-block:: json
 
             [
@@ -241,6 +283,38 @@ def load_finger_tapping_cloudupdrs_data(filename, convert_times=1000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'action_type','x', 'y', 'x_target', 'y_target'])
     return data_frame
 
+def load_finger_tapping_opdc_data(filename, convert_times=1000000000.0):
+    """
+        This method loads data in the cloudupdrs format for the finger tapping processor
+
+        Usually the data will be saved in a csv file and it should look like this:
+
+        .. code-block:: json
+
+         timestamp_0, x_0, y_0,
+         timestamp_1, x_1, y_1,
+         timestamp_2, x_2, y_2,
+         .
+         .
+         .
+         timestamp_n, x_n, y_n
+
+        where data_frame.x, data_frame.y: components of tapping position.
+
+        :param filename: The path to load data from
+        :type filename: string
+        :param convert_times: Convert times. The default is from from milliseconds to seconds.
+        :type convert_times: float
+
+    """
+    data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False, skip_footer=1)
+    data_m[:, 0] = data_m[:, 0] * 1000000000
+    date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
+    time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
+    data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2]}
+    data['action_type'] = 1.0
+    data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'action_type', 'x', 'y'])
+    return data_frame
 
 def load_finger_tapping_mpower_data(filename, button_left_rect, button_right_rect, convert_times=1000.0):
     """
@@ -295,9 +369,17 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
         :type button_right_rect: str
 
     """
+    import sys
+
     if format_file == 'mpower':
         return load_mpower_data(filename)
-    
+
+    elif format_file == 'hopkinsdp':
+        return load_cloudupdrs_data(filename)
+
+    elif format_file == 'opdc':
+            return load_opdc_data(filename)
+
     elif format_file == 'segmented':
         return load_segmented_data(filename)
 
@@ -306,12 +388,15 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
     elif format_file == 'physics':
         return load_physics_data(filename)
-    
+
     elif format_file == 'freeze':
         return load_freeze_data(filename)
-    
+
     elif format_file == 'huga':
         return load_huga_data(filename)
+
+    elif format_file == 'ft_opdc':
+        return load_finger_tapping_opdc_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
@@ -335,15 +420,15 @@ def numerical_integration(signal, sampling_frequency):
         :return: The integrated signal.
         :rtype: numpy.ndarray
     """
-        
+
     integrate = sum(signal[1:]) / sampling_frequency + sum(signal[:-1])
     integrate /= sampling_frequency * 2
-    
+
     return np.array(integrate)
 
 
 def autocorrelation(signal):
-    """ 
+    """
         The `correlation <https://en.wikipedia.org/wiki/Autocorrelation#Estimation>`_ of a signal with a delayed copy of itself.
 
         :param signal: A 1-dimensional array or list (the signal).
@@ -356,10 +441,10 @@ def autocorrelation(signal):
     n = len(signal)
     variance = signal.var()
     signal -= signal.mean()
-    
+
     r = np.correlate(signal, signal, mode = 'full')[-n:]
     result = r / (variance * (np.arange(n, 0, -1)))
-    
+
     return np.array(result)
 
 
@@ -379,7 +464,7 @@ def peakdet(signal, delta, x=None):
         :return mintab: The lowest peaks.
         :rtype mintab: numpy.ndarray
     """
-    
+
     maxtab = []
     mintab = []
 
@@ -435,7 +520,7 @@ def compute_interpeak(data, sample_rate):
         :type data: array
         :param sample_rate: Sample rate of accelerometer reading (Hz)
         :type sample_rate: float
-        :return interpeak: Number of samples between peaks 
+        :return interpeak: Number of samples between peaks
         :rtype interpeak: int
 
         :Examples:
@@ -486,14 +571,14 @@ def butter_lowpass_filter(data, sample_rate, cutoff=10, order=4, plot=False):
         >>> cutoff = 5
         >>> order = 4
         >>> y = butter_lowpass_filter(data, sample_rate, cutoff, order)
-    
+
     """
-    
+
 
     nyquist = 0.5 * sample_rate
     normal_cutoff = cutoff / nyquist
     b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    
+
     if plot:
         w, h = freqz(b, a, worN=8000)
         plt.subplot(2, 1, 1)
@@ -526,7 +611,7 @@ def crossings_nonzero_pos2neg(data):
         >>> from mhealthx.signals import crossings_nonzero_pos2neg
         >>> data = np.random.random(100)
         >>> crossings = crossings_nonzero_pos2neg(data)
-    
+
     """
     import numpy as np
 
@@ -619,35 +704,35 @@ def autocorrelate(data, unbias=2, normalize=2):
 
 def get_signal_peaks_and_prominences(data):
     """ Get the signal peaks and peak prominences.
-        
+
         :param data array: One-dimensional array.
-        
+
         :return peaks array: The peaks of our signal.
         :return prominences array: The prominences of the peaks.
     """
     peaks, _ = sig.find_peaks(data)
     prominences = sig.peak_prominences(data, peaks)[0]
-        
+
     return peaks, prominences
 
 def smoothing_window(data, window=[1, 1, 1]):
     """ This is a smoothing functionality so we can fix misclassifications.
         It will run a sliding window of form [border, smoothing, border] on the
-        signal and if the border elements are the same it will change the 
+        signal and if the border elements are the same it will change the
         smooth elements to match the border. An example would be for a window
         of [2, 1, 2] we have the following elements [1, 1, 0, 1, 1], this will
         transform it into [1, 1, 1, 1, 1]. So if the border elements match it
         will transform the middle (smoothing) into the same as the border.
-        
+
         :param data array: One-dimensional array.
         :param window array: Used to define the [border, smoothing, border]
                              regions.
-                             
+
         :return data array: The smoothed version of the original data.
     """
-    
+
     for i in range(len(data) - sum(window)):
-        
+
         start_window_from = i
         start_window_to = i+window[0]
 
@@ -656,7 +741,7 @@ def smoothing_window(data, window=[1, 1, 1]):
 
         if np.all(data[start_window_from: start_window_to] == data[end_window_from: end_window_to]):
             data[start_window_from: end_window_to] = data[start_window_from]
-            
+
     return data
 
 
@@ -664,7 +749,7 @@ def BellmanKSegment(x,k):
     # Divide a univariate time-series, x, into k contiguous segments
     # Cost is the sum of the squared residuals from the mean of each segment
     # Returns array containg the index for the endpoint of each segment in ascending order
-    
+
     n = x.size
     cost = np.matrix(np.ones(shape=(k,n))*np.inf)
     startLoc = np.zeros(shape=(k,n), dtype=int)
@@ -678,8 +763,8 @@ def BellmanKSegment(x,k):
 
             r = r + ((j-i)/(j-i+1))*(x[j] - mu)*(x[j] - mu) #incrementally update squared residual
             mu = (x[j] + (j-i)*mu)/(j-i+1) #incrementally update mean
-            res[i,j] = r #equivalent to res[i,j] = np.var(x[i:(j+1)])*(1+j-i) 
-           
+            res[i,j] = r #equivalent to res[i,j] = np.var(x[i:(j+1)])*(1+j-i)
+
 
     #Determine optimal segmentation O(kn^2)
     segment = 0
@@ -688,20 +773,20 @@ def BellmanKSegment(x,k):
         startLoc[segment, j] = 0
 
     for segment in range(1,k):
-        for i in range(segment,n-1):   
+        for i in range(segment,n-1):
             for j in range(i+1,n):
                 tmpcost = res[i,j] + cost[segment-1,i-1]
-                if cost[segment,j] > tmpcost: #break ties with smallest j                   
+                if cost[segment,j] > tmpcost: #break ties with smallest j
                     cost[segment,j]= tmpcost
                     startLoc[segment, j] = i
-   
+
 
     #Backtrack to determine endpoints of each segment for the optimal partition
     endPoint = np.zeros(shape=(k,1))
     v = n
     for segment in range(k-1,-1,-1):
-        endPoint[segment] = v-1         
-        v = startLoc[segment,v-1]       
+        endPoint[segment] = v-1
+        v = startLoc[segment,v-1]
 
     return ExpandSegmentIndicies(endPoint)
 
@@ -716,20 +801,20 @@ def ExpandSegmentIndicies(endPoint):
 
 def plot_segmentation(data, peaks, segment_indexes, figsize=(10, 5)):
     """ Will plot the data and segmentation based on the peaks and segment indexes.
-    
+
         :param 1d-array data: The orginal axis of the data that was segmented into sections.
         :param 1d-array peaks: Peaks of the data.
         :param 1d-array segment_indexes: These are the different classes, corresponding to each peak.
-        
+
         Will not return anything, instead it will plot the data and peaks with different colors for each class.
-    
+
     """
     fig, ax = plt.subplots(figsize=figsize)
     plt.plot(data);
-    
+
     for segment in np.unique(segment_indexes):
         plt.plot(peaks[np.where(segment_indexes == segment)[0]], data[peaks][np.where(segment_indexes == segment)[0]], 'o')
-        
+
     plt.show()
 
 
@@ -738,81 +823,81 @@ def DisplayBellmanK(data, ix):
     for segment in np.unique(ix):
         plt.plot(np.where(ix == segment)[0],data[np.where(ix == segment)[0]],'o')
     plt.show()
-    
+
 def plot_walk_turn_segments(data, window=[1, 1, 1]):
     c, pk, p = cluster_walk_turn(data, window=window)
-    
+
     contour_heights = data[pk] - p
-    
+
     colors = [['red', 'green'][i] for i in c]
     plt.plot(data)
     plt.scatter(pk, data[pk], color=colors)
     plt.vlines(x=pk, ymin=contour_heights, ymax=data[pk], color=colors)
-    
+
 
 def separate_walks_turns(data, window=[1, 1, 1]):
     """ Will separate peaks into the clusters by following the trend in the clusters array.
         This is usedful because scipy's k-mean clustering will give us a continous clusters
         array.
-        
+
         :param clusters array: A continous array representing different classes.
         :param peaks array: The peaks that we want to separate into the classes from the custers.
-        
+
         :return walks arrays: An array of arrays that will have all the peaks corresponding to every
                               individual walk.
         :return turns arraays: Array of array which has all the indices of the peaks that correspond
                                to turning.
-    
+
     """
     clusters, peaks, promi = cluster_walk_turn(data, window=window)
-    
+
     group_one = []
     group_two = []
-    
+
     start = 0
 
     for i in range(1, len(clusters)):
-        
+
         if clusters[i-1] != clusters[i]:
             assert np.all(clusters[start: i] == clusters[start]), 'Some values are mixed up, please check!'
-            
+
             add = group_one if clusters[start] == 0 else group_two
             add.append(peaks[start: i])
             start = i
-        
+
         # hacky fix for the last part of the signal ...
         # I need to change this ...
         if i == len(clusters)-1:
             if not peaks[start] in add[-1]:
                 add = group_one if clusters[start] == 0 else group_two
                 add.append(peaks[start: ])
-                
+
     maxes_one = [np.max(data[c]) for c in group_one]
     maxes_two = [np.max(data[c]) for c in group_two]
-    
+
     walks, turns = group_two, group_one
-    
+
     if np.max(maxes_one) > np.max(maxes_two):
         walks, turns = group_one, group_two
-    
+
     # let's drop any turns at the end of the signal
 #     if len(turns[-1]) > len(walks[-1]):
 #         turns.pop()
-    
+
     return walks, turns
 
 
 def plot_walks_turns(df, window=[1, 1, 1]):
-    
+
     clusters, peaks, promis = cluster_walk_turn(df, window=window)
     walks, turns = separate_walks_turns(df, window=window)
-    
+
     top_of_graph = np.concatenate([df[w] for w in walks]).max()
     contour_heights = df[peaks] - promis
-    
+
     plt.plot(df)
     for w in walks:
-        
+
         plt.plot(w, df[w], 'o')
         plt.text(np.mean(w, dtype=np.int), top_of_graph, len(w), fontsize=22)
         #plt.vlines(x=w, ymin=contour_heights[w], ymax=df[w])
@@ -981,16 +1066,16 @@ def non_zero_row(arr):
 
 def window_features(idx, window_size=100, overlap=10):
     """ Generate indexes for a sliding window with overlap
-    
+
         :param array idx: The indexes that need to be windowed.
         :param int window_size: The size of the window.
         :param int overlap: How much should each window overlap.
-        
+
         :return array view: The indexes for the windows with overlap.
     """
     overlap = window_size - overlap
     sh = (idx.size - window_size + 1, window_size)
     st = idx.strides * 2
     view = np.lib.stride_tricks.as_strided(idx, strides=st, shape=sh)[0::overlap]
-    
+
     return view
