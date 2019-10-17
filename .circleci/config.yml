@@ -19,6 +19,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            apt install libsndfile1
             python3 -m venv venv
             source venv/bin/activate
             make dev
@@ -47,6 +48,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            apt install libsndfile1
             python3 -m venv venv
             source venv/bin/activate
             make dev
