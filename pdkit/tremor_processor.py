@@ -85,7 +85,7 @@ class TremorProcessor:
         df_resampled = data_frame.resample(str(1 / self.sampling_frequency) + 'S').mean()
 
         f = interpolate.interp1d(data_frame.td, data_frame.mag_sum_acc)
-        
+
         new_timestamp = np.arange(data_frame.td[0], data_frame.td[-1], 1.0 / self.sampling_frequency)
         df_resampled.mag_sum_acc = f(new_timestamp)
 
@@ -658,6 +658,11 @@ class TremorProcessor:
             magnitude_agg_linear = self.agg_linear_trend(data_frame.mag_sum_acc)
             magnitude_spkt_welch_density = self.spkt_welch_density(data_frame.mag_sum_acc)
             magnitude_fft_coefficient = self.fft_coefficient(data_frame.mag_sum_acc)
+            try:
+                magnitutde_approximate_entropy = self.approximate_entropy(data_frame.mag_sum_acc)
+            except MemoryError as error:
+                magnitutde_approximate_entropy = 0
+                logging.error("Filed to allocate memory, setting to zero and skipping approximate entropy calculation.")
 
             return {pre+'amplitude_by_fft': self.amplitude(data_frame)[0],
                     pre+'frequency_by_fft': self.amplitude(data_frame)[1],
@@ -667,7 +672,7 @@ class TremorProcessor:
                     pre+'bradykinesia_frequency_by_fft': self.bradykinesia(data_frame)[1],
                     pre+'bradykinesia_amplitude_by_welch': self.bradykinesia(data_frame, 'welch')[0],
                     pre+'bradykinesia_frequency_by_welch': self.bradykinesia(data_frame, 'welch')[1],
-                    pre+'magnitude_approximate_entropy': self.approximate_entropy(data_frame.mag_sum_acc),
+                    pre+'magnitude_approximate_entropy': magnitutde_approximate_entropy,
                     pre+'magnitude_autocorrelation_lag_8': self.autocorrelation(data_frame.mag_sum_acc, 8),
                     pre+'magnitude_autocorrelation_lag_9': self.autocorrelation(data_frame.mag_sum_acc, 9),
                     pre+'magnitude_partial_autocorrelation_lag_3': magnitude_partial_autocorrelation[0][1],

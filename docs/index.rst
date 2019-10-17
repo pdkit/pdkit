@@ -9,6 +9,7 @@ Contents:
    tremor
    gait
    tapping
+   voice
    utils
    testResultSet
    testResultSetOPDC
