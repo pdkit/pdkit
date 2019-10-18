@@ -9,7 +9,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
 
     steps:
       - checkout
@@ -19,6 +19,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            sudo apt install libsndfile1
             python3 -m venv venv
             source venv/bin/activate
             make dev
@@ -36,7 +37,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6
+      - image: circleci/python:3.7
 
     steps:
       - checkout
@@ -47,6 +48,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            sudo apt install libsndfile1
             python3 -m venv venv
             source venv/bin/activate
             make dev
