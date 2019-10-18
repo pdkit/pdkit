@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright 2018 Birkbeck College. All rights reserved.
+#
+# Licensed under the MIT license. See file LICENSE for details.
+#
+# Author(s): J.S. Pons
+
+import logging
+import sys
+from pdkit.utils import load_data
+import pandas_validator as pv
+
+class ReactOPDCDataFrameValidator(pv.DataFrameValidator):
+    column_num = 5
+    td = pv.FloatColumnValidator('td', min_value=-1, max_value=10000)
+    x = pv.FloatColumnValidator('x', min_value=-10000, max_value=10000)
+    y = pv.FloatColumnValidator('y', min_value=-10000, max_value=10000)
+    # pandas_validator does not support Boolean validation
+
+class ReactionTimeSeries:
+    """
+        This is a wrapper class to load the Reaction Time Series data.
+    """
+    def __init__(self):
+        logging.debug("ReactionTimeSeries init")
+
+    def load(self, filename, format_file='opdc_react', button_left_rect=None, button_right_rect=None):
+        """
+            This is a general load data method where the format of data to load can be passed as a parameter,
+
+            :param str filename: The path to load data from
+            :param str format_file: format of the file. Default is CloudUPDRS. Set to mpower for mpower data.
+            :return dataframe: data_frame.x, data_frame.y: components of tapping position. data_frame.x_target, \
+            data_frame.y_target their target. data_frame.index is the datetime-like index
+        """
+        try:
+            ts = load_data(filename, format_file, button_left_rect, button_right_rect)
+
+            if format_file == 'opdc_react':
+                validator = ReactOPDCDataFrameValidator()
+            else:
+                logging.error('File format error, format file type provided is not valid for reaction tests.')
+                return None
+
+            if validator.is_valid(ts):
+                return ts.fillna(0)
+            else:
+                logging.error('Validator error loading data, wrong format.')
+                return None
+        except IOError as e:
+            ierr = "({}): {}".format(e.errno, e.strerror)
+            logging.error("load data, file not found, I/O error %s", ierr)
+        except ValueError as verr:
+            logging.error("load data ValueError ->%s", verr.message)
+        except:
+            logging.error("Unexpected error on load data method: %s", sys.exc_info()[0])
