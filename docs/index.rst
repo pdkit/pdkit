@@ -10,6 +10,7 @@ Contents:
    gait
    tapping
    voice
+   react
    utils
    testResultSet
    testResultSetOPDC

@@ -210,6 +210,33 @@ class TestResultSetOPDC:
 
         return data_frame
 
+    def __get_reaction_measurements(self, data_frame, directory, files_list):
+        """
+            Convenience method that gets the finger tapping measurements
+
+            :param data_frame: the dataframe where the features will be added
+            :type data_frame: pandas.DataFrame
+            :param directory: the directory name that contains the files
+            :type features: str
+            :param files_list: the list of files
+            :type files_list: str
+            :return data_frame: the dataframe
+            :rtype data_frame: pandas.DataFrame
+        """
+        abr_measurement_type = 'react'
+        rp = pdkit.ReactionProcessor()
+
+        for f in files_list:
+            if (abr_measurement_type in f):
+                rts = pdkit.ReactionTimeSeries().load(join(self.__build_folder_path(directory), f))
+                features = rp.extract_features(rts, self.__get_measurement_name(abr_measurement_type, f)+'-')
+                if features is not None:
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                else:
+                    print('file error: '+f)
+
+        return data_frame
+
     def __save_features_to_dataframe(self, features, data_frame, file_name):
         """
             Convenience method that saves/add features to an existing dataframe
@@ -269,13 +296,13 @@ class TestResultSetOPDC:
             features_tremor_ext = self.__get_gyro_measurements(features_tremor, d, files_list)
             features_tremor_and_finger_tapping = self.__get_finger_tapping_measurements(features_tremor_ext, d, files_list)
             features_tremor_finger_tapping_and_voice = self.__get_voice_measurements(features_tremor_and_finger_tapping, d, files_list)
-
+            features_tremor_finger_tapping_voice_and_reaction = self.__get_reaction_measurements(features_tremor_finger_tapping_and_voice, d, files_list)
             if features.empty:
-                features = features_tremor_finger_tapping_and_voice
+                features = features_tremor_finger_tapping_voice_and_reaction
             else:
                 try:
                     if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
-                        features = features.append(features_tremor_finger_tapping_and_voice, ignore_index=True, sort=False)
+                        features = features.append(features_tremor_finger_tapping_voice_and_reaction, ignore_index=True, sort=False)
                 except:
                     print('directory error?: ' + d)
 

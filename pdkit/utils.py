@@ -316,6 +316,44 @@ def load_finger_tapping_opdc_data(filename, convert_times=1000000000.0):
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'action_type', 'x', 'y'])
     return data_frame
 
+def load_reaction_opdc_data(filename, convert_times=1000000000.0):
+    """
+        This method loads data in the OPDC format for the reaction time processor
+
+        The data is expected in a csv file with the following format:
+
+        .. code-block:: json
+
+         timestamp_0, x_0, y_0, buttonVisible, buttonPressed
+         timestamp_1, x_1, y_1, buttonVisible, buttonPressed
+         timestamp_2, x_2, y_2, buttonVisible, buttonPressed
+         .
+         .
+         .
+         timestamp_n, x_n, y_n, buttonVisible, buttonPressed
+
+        where data_frame.x, data_frame.y: components of tapping position.
+
+        :param filename: The path to load data from
+        :type filename: string
+        :param convert_times: Convert times. The default is from from milliseconds to seconds.
+        :type convert_times: float
+        :param buttonVisible: True if button is visible.
+        :type buttonVisible: Boolean
+        :param buttonPressed: True if button is being pressed.
+        :type buttonPressed: Boolean
+
+
+    """
+    data_m = np.genfromtxt(filename, delimiter=',', invalid_raise=False, skip_footer=1)
+    data_m[:, 0] = data_m[:, 0] * convert_times
+    date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
+    time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
+    data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'bVis': data_m[:, 3]!= 0, 'bPres': data_m[:, 4]!= 0 }
+    data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'bVis', 'bPres'])
+    return data_frame
+
+
 def load_finger_tapping_mpower_data(filename, button_left_rect, button_right_rect, convert_times=1000.0):
     """
         This method loads data in the `mpower <https://www.synapse.org/#!Synapse:syn4993293/wiki/247859>`_ format
@@ -397,6 +435,9 @@ def load_data(filename, format_file='cloudupdrs', button_left_rect=None, button_
 
     elif format_file == 'ft_opdc':
         return load_finger_tapping_opdc_data(filename)
+
+    elif format_file == 'opdc_react':
+        return load_reaction_opdc_data(filename)
 
     else:
         if format_file == 'ft_cloudupdrs':
