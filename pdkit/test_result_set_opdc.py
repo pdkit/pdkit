@@ -326,6 +326,9 @@ class TestResultSetOPDC:
                 if output_format == 'sql':
                     self.features.to_sql(path_or_buf=filename, index=False)
                 else:
+
+                    self.features.columns = self.features.columns.str.replace("-", "_")
+                    self.features['id'] = self.features['id'].str.replace('-','_')
                     self.features.to_csv(path_or_buf=filename, index=False)
         except:
             logging.error("Unexpected error on writing output")
