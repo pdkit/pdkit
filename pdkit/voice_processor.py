@@ -61,7 +61,7 @@ class VoiceProcessor:
         try:
 
             # urllib.request.urlretrieve("https://raw.githubusercontent.com/Shahabks/myprosody/master/myprosody/dataset/essen/myspsolution.praat", "myspsolution.praat")
-            objects=run_file(os.getcwd() + "/myspsolution.praat", -20, 2, 0.3, "yes", self.file_name, './', 80, 400, 0.01, capture_output=True)
+            objects=run_file(os.getcwd() + "/pdkit/myspsolution.praat", -20, 2, 0.3, "yes", self.file_name, './', 80, 400, 0.01, capture_output=True)
             z1=str( objects[1])
             z2=z1.strip().split()
 
