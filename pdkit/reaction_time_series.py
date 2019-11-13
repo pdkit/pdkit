@@ -37,6 +37,7 @@ class ReactionTimeSeries:
         try:
             ts = load_data(filename, format_file, button_left_rect, button_right_rect)
 
+            """
             if format_file == 'opdc_react':
                 validator = ReactOPDCDataFrameValidator()
             else:
@@ -48,6 +49,8 @@ class ReactionTimeSeries:
             else:
                 logging.error('Validator error loading data, wrong format.')
                 return None
+            """
+            return ts.fillna(0)
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("load data, file not found, I/O error %s", ierr)

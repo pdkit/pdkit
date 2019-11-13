@@ -662,7 +662,7 @@ class TremorProcessor:
                 magnitutde_approximate_entropy = self.approximate_entropy(data_frame.mag_sum_acc)
             except MemoryError as error:
                 magnitutde_approximate_entropy = 0
-                logging.error("Filed to allocate memory, setting to zero and skipping approximate entropy calculation.")
+                logging.error("Failed to allocate memory, setting to zero and skipping approximate entropy calculation.")
 
             return {pre+'amplitude_by_fft': self.amplitude(data_frame)[0],
                     pre+'frequency_by_fft': self.amplitude(data_frame)[1],

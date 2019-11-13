@@ -71,7 +71,7 @@ class TestResultSetOPDC:
     def __get_session_id(filename):
         m = re.split('-|_', filename)
         last = len(m)
-        l = [last-6, last-3, last-2]
+        l = [last-6, last-3, last-2, last-1]
         return ''.join([m[i]+'-' for i in l])
 
     @staticmethod
