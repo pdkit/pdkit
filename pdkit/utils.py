@@ -349,7 +349,7 @@ def load_reaction_opdc_data(filename, convert_times=1000000000.0):
     data_m[:, 0] = data_m[:, 0] * convert_times
     date_times = pd.to_datetime((data_m[:, 0] - data_m[0, 0]))
     time_difference = (data_m[:, 0] - data_m[0, 0]) / convert_times
-    data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'bVis': data_m[:, 3]!= 0, 'bPres': data_m[:, 4]!= 0 }
+    data = {'td': time_difference, 'x': data_m[:, 1], 'y': data_m[:, 2], 'bVis': data_m[:, 3]!= 0, 'bPres': data_m[:, 4]==1 }
     data_frame = pd.DataFrame(data, index=date_times, columns=['td', 'x', 'y', 'bVis', 'bPres'])
     return data_frame
 

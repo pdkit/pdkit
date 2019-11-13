@@ -61,30 +61,51 @@ class ReactionProcessor:
         """
         visibleb = False
         pressed = False
+        raised = False
         tmp = []
         for index, row in data_frame.iterrows():
-            if row['x']==0.0 and row['y']==0.0 and row['bVis']==True and row['bPres']==True:
-                visible = True
-                start_time_press = row['td']
-            elif row['x']!=0.0 and row['y']!=0.0 and row['bVis']==True and row['bPres']==True:
-                end_time_press = row['td']
+            #print(row)
+            if not visibleb and row['bVis']==True: # assertion: not possible to have reaction of 0 sec
+                start_time_to_press = row['td']
+                end_time_to_press = 0
+                visibleb = True
+                pressed = False
+                raised = False
+            elif visibleb and not pressed and row['bPres']==True:
+                end_time_to_press = row['td']
+                tmp.append(('down', end_time_to_press - start_time_to_press))
+                visibleb = True
                 pressed = True
-            elif row['x']==0.0 and row['y']==0.0 and row['bVis']==False and row['bPres']==True:
-                tmp.append(('down', end_time_press - start_time_press))
+                raised = False
+            elif visibleb and pressed and row['bPres']==True:
+                # nothing to do -- skip
+                visibleb = True
+                pressed = True
+                raised = False
+            elif visibleb and row['bVis']==False: # assertion: not possible to have reaction of 0 sec
+                start_time_to_raise = row['td']
+                end_time_to_raise = 0
                 visibleb = False
-                start_time_raise = row['td']
-            elif row['x']!=0.0 and row['y']!=0.0 and row['bVis']==False and row['bPres']==True:
-                start_time_raise = row['td']
-            elif row['x']==0.0 and row['y']==0.0 and row['bVis']==False and row['bPres']==False:
-                end_time_raise = row['td']
-                tmp.append(('up', end_time_raise - start_time_raise))
                 pressed = False
-            elif row['x']!=0.0 and row['y']!=0.0 and row['bVis']==False and row['bPres']==False:
-                end_time_raise = row['td']
-                tmp.append(('up', end_time_raise - start_time_raise))
+                raised = False
+            elif not visibleb and row['bPres']==True:
+                # nothing to do -- skip
+                visibleb = False
+                pressed = True
+                raised = False
+            elif not visibleb and row['bPres']==False:
+                end_time_to_raise = row['td']
+                tmp.append(('up', end_time_to_press - start_time_to_press))
+                visibleb = False
                 pressed = False
+                raised = True
+            elif visibleb and pressed and row['bPres']==False:
+                # error raising while button visible
+                logging.warn('In ReactionProcessor found finger raised in error while button visible. Ignoring action.')
             else:
-                logging.error("Error in ReactionProcessor while calculating reaction times: %s", sys.exc_info()[0])
+                # logging.error(np.where(data_frame.index==index)[0])
+                # logging.error(row)
+                logging.warn("In ReactionProcessor invalid finger lift detected. Ignoring action")
         # print(tmp)
         press_t = 0
         raise_t = 0
