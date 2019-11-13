@@ -69,9 +69,11 @@ class TestResultSetOPDC:
 
     @staticmethod
     def __get_session_id(filename):
+        # m = re.split('-|_|\.', filename)
         m = re.split('-|_', filename)
         last = len(m)
-        l = [last-6, last-3, last-2, last-1]
+        # l = [last-7, last-4, last-3, last-2]
+        l = [last-6, last-3, last-2]
         return ''.join([m[i]+'-' for i in l])
 
     @staticmethod
@@ -297,14 +299,16 @@ class TestResultSetOPDC:
             features_tremor_and_finger_tapping = self.__get_finger_tapping_measurements(features_tremor_ext, d, files_list)
             features_tremor_finger_tapping_and_voice = self.__get_voice_measurements(features_tremor_and_finger_tapping, d, files_list)
             features_tremor_finger_tapping_voice_and_reaction = self.__get_reaction_measurements(features_tremor_finger_tapping_and_voice, d, files_list)
+
             if features.empty:
                 features = features_tremor_finger_tapping_voice_and_reaction
             else:
                 try:
+                    # print( features.loc[features['id']])
                     if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
                         features = features.append(features_tremor_finger_tapping_voice_and_reaction, ignore_index=True, sort=False)
-                except:
-                    print('directory error?: ' + d)
+                except Exception as e:
+                    logging.error('Failed to extract featurees for tests in directory: ' + d + ' with error: ' + str(e) )
 
         self.features = features.fillna(0)
 
