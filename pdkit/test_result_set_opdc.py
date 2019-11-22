@@ -15,6 +15,8 @@ from os.path import isfile, join, isdir
 import pandas as pd
 import re
 from tqdm import tqdm
+import glob
+import traceback
 
 class TestResultSetOPDC:
     """
@@ -47,6 +49,39 @@ class TestResultSetOPDC:
             self.folder_name = self.__get_folder_name(folder_relative_path)
             self.dir_list = self.__get_dirs_list()
             self.features = pd.DataFrame()
+
+            path = self.__get_folder_absolute_path(folder_relative_path)
+            dirs = self.__get_dirs_list()
+
+            prefices = ['OPDCv1.0.0-balance_pocket_accel_',
+                        'OPDCv1.0.0-balance_pocket_gyro_',
+                        'OPDCv1.0.0-dexterity-left_tap_',
+                        'OPDCv1.0.0-dexterity-right_tap_',
+                        'OPDCv1.0.0-gait_pocket_accel_',
+                        'OPDCv1.0.0-gait_pocket_gyro_',
+                        'OPDCv1.0.0-postural-tremor-left_accel_',
+                        'OPDCv1.0.0-postural-tremor-left_gyro_',
+                        'OPDCv1.0.0-postural-tremor-right_accel_',
+                        'OPDCv1.0.0-postural-tremor-right_gyro_',
+                        'OPDCv1.0.0-reaction_react_',
+                        'OPDCv1.0.0-rest-tremor-left_accel',
+                        'OPDCv1.0.0-rest-tremor-left_gyro_',
+                        'OPDCv1.0.0-rest-tremor-right_accel_',
+                        'OPDCv1.0.0-rest-tremor-right_gyro_',
+                        'OPDCv1.0.0-voice_audio_']
+            for d in dirs:
+                if len( glob.glob(path+'/'+d+'/*') ) > 17:
+                    logging.warn('Detected duplicate measurements -- deleting duplicate files retaining most recent datafile')
+                wav = glob.glob(path+'/'+d+'/*.wav')
+                for w in wav:
+                    os.remove(w)
+                for p in prefices:
+                    g = glob.glob(path+'/'+d+'/'+p+'*')
+                    if len(g)>1:
+                        g.sort()
+                        for i in range(len(g)-1):
+                            os.remove(g[i])
+
         except IOError as e:
             ierr = "({}): {}".format(e.errno, e.strerror)
             logging.error("TestResultSet I/O error %s", ierr)
@@ -56,6 +91,7 @@ class TestResultSetOPDC:
 
         except:
             logging.error("Unexpected error on TestResultSet init: %s", sys.exc_info()[0])
+            logging.error("Unexpected error on TestResultSet init: %s", traceback.format_exc())
         logging.debug("TestRestultSet init")
 
     def __get_files_list(self, folder_absolute_path):
