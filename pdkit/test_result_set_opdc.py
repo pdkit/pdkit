@@ -109,7 +109,7 @@ class TestResultSetOPDC:
         m = re.split('-|_', filename)
         last = len(m)
         # l = [last-7, last-4, last-3, last-2]
-        l = [last-6, last-3, last-2]
+        l = [last-6, last-3, last-2, last-1]
         return ''.join([m[i]+'-' for i in l])
 
     @staticmethod
@@ -158,7 +158,8 @@ class TestResultSetOPDC:
                 # print(self.__get_measurement_name(abr_measurement_type, f))
                 features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
                 if features is not None:
-                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    # data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, directory)
                 else:
                     print('file error: '+f)
 
@@ -189,7 +190,8 @@ class TestResultSetOPDC:
                 # print(self.__get_measurement_name(abr_measurement_type, f))
                 features = tp.extract_features(tts, self.__get_measurement_name(abr_measurement_type, f))
                 if features is not None:
-                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    # data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, directory)
                 else:
                     print('file error: '+f)
 
@@ -216,7 +218,8 @@ class TestResultSetOPDC:
                 ftts = pdkit.FingerTappingTimeSeries().load(join(self.__build_folder_path(directory), f), format_file='ft_opdc')
                 features = ftp.extract_features(ftts, self.__get_measurement_name(abr_measurement_type, f)+'-')
                 if features is not None:
-                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    # data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, directory)
                 else:
                     print('file error: '+f)
 
@@ -242,7 +245,8 @@ class TestResultSetOPDC:
                 vp = pdkit.VoiceProcessor(join(self.__build_folder_path(directory), f), format_file='opdc')
                 features = vp.extract_features(self.__get_measurement_name(abr_measurement_type, f)+'-')
                 if features is not None:
-                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    # data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, directory)
                 else:
                     print('file error: '+f)
 
@@ -269,7 +273,8 @@ class TestResultSetOPDC:
                 rts = pdkit.ReactionTimeSeries().load(join(self.__build_folder_path(directory), f))
                 features = rp.extract_features(rts, self.__get_measurement_name(abr_measurement_type, f)+'-')
                 if features is not None:
-                    data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    # data_frame = self.__save_features_to_dataframe(features, data_frame, f)
+                    data_frame = self.__save_features_to_dataframe(features, data_frame, directory)
                 else:
                     print('file error: '+f)
 
@@ -341,7 +346,9 @@ class TestResultSetOPDC:
             else:
                 try:
                     # print( features.loc[features['id']])
-                    if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
+                    # if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
+                    if features.loc[features['id'] == self.__get_session_id(d)].empty:
+
                         features = features.append(features_tremor_finger_tapping_voice_and_reaction, ignore_index=True, sort=False)
                 except Exception as e:
                     logging.error('Failed to extract featurees for tests in directory: ' + d + ' with error: ' + str(e) )
