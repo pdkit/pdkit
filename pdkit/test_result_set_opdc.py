@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Copyright 2018 Birkbeck College. All rights reserved.
+# Copyright 2020 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author(s): J.S. Pons
+# Author(s): George Roussos
 
 import logging
 import pdkit
@@ -20,7 +20,7 @@ import traceback
 
 class TestResultSetOPDC:
     """
-        TTest Result Set class for OPDC app. Its main functionality is to read all the files (measurements) within a given
+        Test Result Set class for OPDC app. Its main functionality is to read all the files (measurements) within a given
         path and extract the features. It will return a data frame where the rows are the measurements and the columns
         correspond to the extracted features.
 
@@ -33,8 +33,8 @@ class TestResultSetOPDC:
         >>> testResultSet = pdkit.TestResultSet(folderpath)
         >>> dataframe = testResultSet.process
 
-        where `folderpath` is the relative folder with the different measurements. For CloudUPDRS there are measurements
-        in the following folder `./tests/data/S5`.
+        where `folderpath` is the relative folder with the different measurements. OPDC style datasets can be collected using
+        the open source Hopkins PD app for Android or by application to the OPDC project.
 
         :Example:
 
