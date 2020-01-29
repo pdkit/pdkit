@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author(s): J.S. Pons
+# Author(s): J.S. Pons and George Roussos
 # -*- coding: utf-8 -*-
 
 import os
@@ -13,7 +13,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 
 
 def readme():
@@ -38,12 +38,12 @@ class VerifyVersionCommand(install):
 setup(
     name='pdkit',
     version=VERSION,
-    description='Parkinson`s Disease Kit',
+    description='The Parkinson`s Disease Data Science Toolkit',
     url='https://github.com/pdkit/pdkit',
     long_description=readme(),
-    keywords='parkinson`s disease kit',
-    author='J.S. Pons',
-    author_email='joan@dcs.bbk.ac.uk',
+    keywords='parkinson`s disease',
+    author='PDkit Project pmembers',
+    author_email='g.roussos@bbk.ac.uk',
     license='MIT',
     packages=['pdkit'],
     install_requires=[
