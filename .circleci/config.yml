@@ -1,9 +1,9 @@
 # Python CircleCI 2.0 configuration file
-# Copyright 2018 Birkbeck College. All rights reserved.
+# Copyright 2020 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author(s): J.S. Pons
+# Author(s): J.S. Pons and George Roussos
 #
 version: 2
 jobs:
