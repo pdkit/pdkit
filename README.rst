@@ -3,6 +3,12 @@
 
 .. image:: https://readthedocs.org/projects/pdkit/badge/
     :target: https://pdkit.readthedocs.org
+    
+.. image:: https://img.shields.io/badge/release-1.3.2-blue
+    :target: https://pypi.org/project/pdkit/
+    
+.. image:: https://img.shields.io/badge/license-MIT-yellowgreen
+    :target: https://github.com/pdkit/pdkit/blob/master/LICENSE
 
 .. image:: https://zenodo.org/badge/124572011.svg
    :target: https://zenodo.org/badge/latestdoi/124572011
