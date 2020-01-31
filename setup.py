@@ -13,7 +13,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 
 
 def readme():
@@ -42,7 +42,7 @@ setup(
     url='https://github.com/pdkit/pdkit',
     long_description=readme(),
     keywords='parkinson`s disease',
-    author='PDkit Project pmembers',
+    author='PDkit Project members',
     author_email='g.roussos@bbk.ac.uk',
     license='MIT',
     packages=['pdkit'],
