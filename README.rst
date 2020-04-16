@@ -26,12 +26,13 @@ An example of how PDkit is used in clinical strudies of Parkinson's can be found
 
 E. Menozzi, A. Jha, R. Oyekan, S. Schreglmann, A. Latorre, E. Mulroy, G. Roussos, C. Stamate, I. Daskalopoulos, J.C. Rothwell and K.P. Bhatia, Smartphone software for home monitoring of motor symptoms in Parkinson's disease: The CloudUPDRS Smartphone Software in Parkinson's (CUSSP) study, The International Congress of Parkinson's Disease and Movement Disorders, Nice, France, September 22-26. https://www.dcs.bbk.ac.uk/~gr/pdf/CUSSP.MDS2019.pdf
 
-The PDkit currently supports directly the following apps:  cloudUPDRS http://www.updrs.net, mPower https://parkinsonmpower.org/, HopkinsPD https://github.com/zad/HopkinsPD_Android and OPDC https://www.opdc.ox.ac.uk/opdc-smartphone-app-tests-for-early-signs-of-parkinson-s).
+The PDkit currently supports directly the following apps:  cloudUPDRS http://www.updrs.net, mPower https://parkinsonmpower.org/, HopkinsPD https://github.com/zad/HopkinsPD_Android and OPDC https://www.opdc.ox.ac.uk/opdc-smartphone-app-tests-for-early-signs-of-parkinson-s.
 
 Full documentation of PDkit features is available at http://pdkit.readthedocs.io/en/latest/.
 
 Installation instructions and brief use examples are included below. Additional examples of PDkit use can be found in the Docs directory including data file samples to help explore how the toolkit can be used.
 
+Test [GitHub Pages](https://pages.github.com/)
 
 Installation Instructions
 ********************
