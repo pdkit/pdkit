@@ -13,7 +13,7 @@
 .. image:: https://zenodo.org/badge/124572011.svg
    :target: https://zenodo.org/badge/latestdoi/124572011
    
-PDKIT
+PDkit
 #####
 
 PDkit is a python module that provides a comprehensive toolkit for the management and processing of Parkinson's symptoms performance data captured by high-use-frequency smartphone apps and continuously by wearables. PDkit facilitates the application of an extensive collection of methods and techniques across all stages of the Parkinson's information processing pipeline. Although inherently flexible, PDkit currently prioritises functionalities critical to therapeutic clinical trial delivery rather than general patient care.
