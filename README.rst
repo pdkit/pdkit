@@ -28,11 +28,9 @@ E. Menozzi, A. Jha, R. Oyekan, S. Schreglmann, A. Latorre, E. Mulroy, G. Roussos
 
 The PDkit currently supports directly the following apps:  cloudUPDRS http://www.updrs.net, mPower https://parkinsonmpower.org/, HopkinsPD https://github.com/zad/HopkinsPD_Android and OPDC https://www.opdc.ox.ac.uk/opdc-smartphone-app-tests-for-early-signs-of-parkinson-s.
 
-Full documentation of PDkit features is available at http://pdkit.readthedocs.io/en/latest/.
+Full documentation of PDkit features is available on `readthedocs <http://pdkit.readthedocs.io/en/latest/>`_.
 
 Installation instructions and brief use examples are included below. Additional examples of PDkit use can be found in the Docs directory including data file samples to help explore how the toolkit can be used.
-
-Test [GitHub Pages](https://pages.github.com/)
 
 Installation Instructions
 ********************
