@@ -16,6 +16,20 @@
 PDKIT
 #####
 
+PDkit is a python module that provides a comprehensive toolkit for the management and processing of Parkinson's symptoms performance data captured by high-use-frequency smartphone apps and continuously by wearables. PDkit facilitates the application of an extensive collection of methods and techniques across all stages of the Parkinson's information processing pipeline. Although inherently flexible, PDkit currently prioritises functionalities critical to therapeutic clinical trial delivery rather than general patient care.
+
+More information is available in the following paper:
+
+Joan Saez Pons, Cosmin Stamate, David Weston and George Roussos, PDkit: An Open Source Data Science Toolkit for Parkinson's Disease, UbiComp/ISWC '19 Adjunct: Adjunct Proceedings of the 2019 ACM International Joint Conference on Pervasive and Ubiquitous Computing 2019, pages 939–943. https://doi.org/10.1145/3341162.3346277
+
+An example of how PDkit is used in clinical strudies of Parkinson's can be found in:
+
+E. Menozzi, A. Jha, R. Oyekan, S. Schreglmann, A. Latorre, E. Mulroy, G. Roussos, C. Stamate, I. Daskalopoulos, J.C. Rothwell and K.P. Bhatia, Smartphone software for home monitoring of motor symptoms in Parkinson's disease: The CloudUPDRS Smartphone Software in Parkinson's (CUSSP) study, The International Congress of Parkinson's Disease and Movement Disorders, Nice, France, September 22-26. https://www.dcs.bbk.ac.uk/~gr/pdf/CUSSP.MDS2019.pdf
+
+The PDkit currently supports directly the following apps: [cloudUPDRS](http://www.updrs.net), [mPower](https://parkinsonmpower.org/), [HopkinsPD](https://github.com/zad/HopkinsPD_Android) and [OPDC](https://www.opdc.ox.ac.uk/opdc-smartphone-app-tests-for-early-signs-of-parkinson-s).
+
+Full documentation of PDkit features is available on [readthedocs](http://pdkit.readthedocs.io/en/latest/).
+
 
 INSTALL INSTRUCTIONS
 ********************
