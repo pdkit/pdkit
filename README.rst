@@ -30,7 +30,7 @@ The PDkit currently supports directly the following apps:  `cloudUPDRS <http://w
 
 Full documentation of PDkit features is available on `readthedocs <http://pdkit.readthedocs.io/en/latest/>`_.
 
-Installation instructions and brief use examples are included below. Additional examples of PDkit use can be found in the Docs directory including data file samples to help explore how the toolkit can be used.
+Installation instructions and brief use examples are included below. Additional examples of PDkit use can be found in the *notebooks* directory including data file samples to help explore how the toolkit can be used.
 
 Installation Instructions
 ********************
