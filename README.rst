@@ -20,7 +20,7 @@ PDkit is a python module that provides a comprehensive toolkit for the managemen
 
 More information is available in the following paper:
 
-Joan Saez Pons, Cosmin Stamate, David Weston and George Roussos, *PDkit: An Open Source Data Science Toolkit for Parkinson's Disease*, UbiComp/ISWC '19 Adjunct: Adjunct Proceedings of the 2019 ACM International Joint Conference on Pervasive and Ubiquitous Computing 2019, pages 939–943. https://doi.org/10.1145/3341162.3346277
+Stamate C, Saez Pons J, Weston D, Roussos G (2021) PDKit: A data science toolkit for the digital assessment of Parkinson’s Disease. PLoS Comput Biol 17(3): e1008833. doi:10.1371/journal.pcbi.1008833 https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1008833
 
 An example of how PDkit is used in clinical strudies of Parkinson's can be found in:
 
