@@ -1,9 +1,3 @@
-.. image:: https://circleci.com/gh/pdkit/pdkit.svg?style=shield
-    :target: https://circleci.com/gh/pdkit/pdkit
-
-.. image:: https://readthedocs.org/projects/pdkit/badge/
-    :target: https://pdkit.readthedocs.org
-    
 .. image:: https://img.shields.io/badge/license-MIT-yellowgreen
     :target: https://github.com/pdkit/pdkit/blob/master/LICENSE
     
