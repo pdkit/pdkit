@@ -39,7 +39,7 @@ pyparsing==2.3.0
 python-dateutil==2.7.5
 pytz==2018.7
 PyWavelets==1.0.1
-PyYAML==4.2b2
+PyYAML==5.4
 readme-renderer==24.0
 requests==2.21.0
 requests-toolbelt==0.8.0
