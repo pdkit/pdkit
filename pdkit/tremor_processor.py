@@ -122,7 +122,7 @@ class TremorProcessor:
 
             :param data_frame: the data frame
             :type data_frame: pandas.DataFrame
-            :return: data frame with a 'filtered_singal', 'transformed_signal' and 'dt' columns
+            :return: data frame with a 'filtered_signal', 'transformed_signal' and 'dt' columns
             :rtype: pandas.DataFrame
         """
         signal_length = len(data_frame.filtered_signal.values)
@@ -132,7 +132,7 @@ class TremorProcessor:
         hann_window = signal.hann(self.window)
 
         msa_window = (msa * hann_window)
-        transformed_signal = fft(msa_window)
+        transformed_signal = fft.fft(msa_window)
 
         data = {'filtered_signal': msa_window, 'transformed_signal': transformed_signal,
                 'dt': data_frame.td[ll:rr].values}

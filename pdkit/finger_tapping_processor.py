@@ -153,7 +153,14 @@ class FingerTappingProcessor:
 
         raise_timestamps = data_frame.td[data_frame.action_type == 1]
         down_timestamps = data_frame.td[data_frame.action_type == 0]
-        diff = down_timestamps.iloc[1:].values - raise_timestamps.iloc[0:-1].values
+        down_timestamps_slice = down_timestamps.iloc[1:].values
+        raise_timestamps_slice = raise_timestamps.iloc[0:-1].values
+        if (down_timestamps_slice.shape[0] != raise_timestamps_slice.shape[0]):
+            size = down_timestamps_slice.shape[0]
+            newSize = np.resize(raise_timestamps_slice, size)
+            diff = down_timestamps_slice - newSize
+        else:
+            diff = down_timestamps_slice - raise_timestamps_slice
 
         if crop != 'no':
             diff = diff[:-1]
