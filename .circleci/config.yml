@@ -19,7 +19,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            sudo apt-get install -y libsndfile1
+            sudo apt-get install -y libsndfile-dev
             python3 -m venv venv
             source venv/bin/activate
             make dev
@@ -48,7 +48,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            sudo apt-get install -y libsndfile1
+            sudo apt-get install -y libsndfile-dev
             python3 -m venv venv
             source venv/bin/activate
             make dev
