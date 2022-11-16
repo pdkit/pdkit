@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2020 Birkbeck College. All rights reserved.
+# Copyright 2022 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
@@ -13,7 +13,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # circleci.py version
-VERSION = "1.3.2"
+VERSION = "1.4.1"
 
 
 def readme():
