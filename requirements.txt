@@ -51,7 +51,7 @@ Pillow==9.2.0
 pip-upgrader==1.4.15
 pkginfo==1.8.3
 praat-parselmouth==0.4.1
-protobuf==3.11.2
+protobuf==4.21.9
 psutil==5.9.2
 pybtex==0.24.0
 pybtex-docutils==1.0.2
