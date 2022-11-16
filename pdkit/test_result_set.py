@@ -203,7 +203,7 @@ class TestResultSet:
             else:
                 try:
                     if features.loc[features['id'] == self.__get_session_id(files_list[0])].empty:
-                        features = features.append(features_tremor_and_finger_tapping, ignore_index=True, sort=False)
+                        features = pd.concat([features, features_tremor_and_finger_tapping], ignore_index=True, sort=False)
                 except:
                     print('directory error?: ' + d)
 
