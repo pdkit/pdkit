@@ -4,7 +4,11 @@
 .. image:: https://img.shields.io/badge/release-1.4.1-blue
     :target: https://pypi.org/project/pdkit/
     
-[![CircleCI](https://circleci.com/gh/circleci/circleci-docs.svg?style=svg)](https://circleci.com/gh/circleci/circleci-docs)
+.. image:: https://circleci.com/gh/pdkit/pdkit.svg?style=shield
+     :target: https://circleci.com/gh/pdkit/pdkit
+
+.. image:: https://readthedocs.org/projects/pdkit/badge/
+     :target: https://pdkit.readthedocs.org
 
 .. image:: https://zenodo.org/badge/124572011.svg
    :target: https://zenodo.org/badge/latestdoi/124572011
