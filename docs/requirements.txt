@@ -43,7 +43,7 @@ oset==0.1.3
 packaging==21.3
 partd==1.3.0
 patsy==0.5.3
-Pillow==9.2.0
+Pillow==9.3.0
 pip-upgrader==1.4.15
 pkginfo==1.8.3
 praat-parselmouth==0.4.1
