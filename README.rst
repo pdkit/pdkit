@@ -1,7 +1,7 @@
 .. image:: https://img.shields.io/badge/license-MIT-yellowgreen
     :target: https://github.com/pdkit/pdkit/blob/master/LICENSE
     
-.. image:: https://img.shields.io/badge/release-1.4.3-blue
+.. image:: https://img.shields.io/badge/release-1.4.4-blue
     :target: https://pypi.org/project/pdkit/
     
 .. image:: https://circleci.com/gh/pdkit/pdkit.svg?style=shield
