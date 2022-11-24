@@ -38,6 +38,7 @@ sys.path.insert(0, os.path.abspath('../pdkit'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.mathjax', 'sphinxcontrib.bibtex']
+bibtex_bibfiles = ['references.bib', 'references_tapping.bib']
 
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
 #mathjax_path="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
@@ -315,25 +316,18 @@ MOCK_MODULES = ['pygtk',
                 'pywt',
                 'matplotlib',
                 'tsfresh',
-                'numpy.linalg',
-                'numpy.testing',
-                'numpy.lib',
-                'numpy.lib.recfunctions',
-                'scipy.signal',
-                'scipy.linalg',
-                'scipy.fft',
-                'scipy.fftpack',
-                'scipy.integrate',
-                'scipy.cluster',
-                'scipy.cluster.vq',
-                'scipy.spatial',
-                'scipy.spatial.distance',
-                'matplotlib.pylab',
-                'matplotlib.patches',
-                'tsfresh.feature_extraction',
+                'numpy',
+                'scipy',
+                'matplotlib',
+                'tsfresh',
                 'sklearn',
-                'sklearn.neighbors',
-                'sklearn.model_selection',
-                'sklearn.metrics']
+                'scikit-learn',
+                'PyWavelets',
+                'PySoundFile',
+                'praat-parselmouth',
+                'llvmlite',
+                'keras',
+                'distributed',
+                'statsmodels']
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
