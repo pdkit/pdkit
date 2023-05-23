@@ -8,7 +8,7 @@ cycler==0.10.0
 dask==0.15.2
 distributed==1.18.3
 docutils==0.14
-future==0.16.0
+future==0.18.3
 HeapDict==1.0.0
 idna==2.6
 imagesize==1.0.0
