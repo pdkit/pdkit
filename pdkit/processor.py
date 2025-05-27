@@ -10,7 +10,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from scipy import interpolate, signal, fft
+from scipy import signal, fft
 
 from .utils import get_sampling_rate_from_timestamp, butter_lowpass_filter
 
