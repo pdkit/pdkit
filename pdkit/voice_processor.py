@@ -13,6 +13,7 @@ import numpy as np
 
 import soundfile as sf
 
+import parselmouth
 from parselmouth.praat import call, run_file
 
 
