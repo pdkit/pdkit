@@ -53,5 +53,5 @@ tornado==5.0.1
 tqdm==4.19.7
 tsfresh==0.11.0
 twine==1.10.0
-urllib3==1.24.2
+urllib3==2.5.0
 zict==0.1.3
