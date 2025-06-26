@@ -12,3 +12,4 @@ from .test_result_set import TestResultSet
 from .test_result_set_opdc import TestResultSetOPDC
 from .updrs import UPDRS
 from .clinical_updrs import Clinical_UPDRS
+from ._version import __version__

@@ -5,15 +5,14 @@
 # Licensed under the MIT license. See file LICENSE for details.
 #
 # Author: Cosmin Stamate
-import shutil
 import os
 import logging
 import sys
-import urllib.request
 
 import numpy as np
 
 import soundfile as sf
+
 import parselmouth
 from parselmouth.praat import call, run_file
 

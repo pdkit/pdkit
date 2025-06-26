@@ -7,19 +7,24 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 
 from setuptools import setup
 from setuptools.command.install import install
 
-# circleci.py version
-VERSION = "1.4.4"
 
+def get_version():
+    with open(os.path.join("pdkit", "_version.py")) as f:
+        return re.search(r'__version__ = "([^"]+)"', f.read()).group(1)
 
 def readme():
     with open('readme-pypi.rst') as f:
         return f.read()
+    
 
+# circleci.py version
+VERSION = get_version()
 
 class VerifyVersionCommand(install):
     """Custom command to verify that the git tag matches our version"""
@@ -47,7 +52,19 @@ setup(
     license='MIT',
     packages=['pdkit'],
     install_requires=[
-        'numpy', 'pandas', 'scipy', 'PyWavelets', 'keras'
+        "future==1.0.0",
+        "keras==3.10.0",
+        "matplotlib==3.10.3",
+        'numpy==1.23.5',
+        "pandas==2.3.0",
+        "pandas_validator==0.5.0",
+        "praat-parselmouth==0.4.6",
+        "scikit_learn==1.7.0",
+        "scipy==1.15.3",
+        "soundfile==0.13.1",
+        "stumpy==1.13.0",
+        "tqdm==4.67.1",
+        "tsfresh==0.21.0",
     ],
     zip_safe=False,
     classifiers=[

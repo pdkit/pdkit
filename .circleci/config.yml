@@ -9,7 +9,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: cimg/python:3.10.8
+      - image: cimg/python:3.11.6
 
     steps:
       - checkout
@@ -38,7 +38,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/python:3.10.8
+      - image: cimg/python:3.11.6
 
     steps:
       - checkout

@@ -15,21 +15,14 @@ from builtins import int
 from builtins import range
 from future import standard_library
 standard_library.install_aliases()
-import sys
-import traceback
 
 import numpy as np
-import pandas as pd
-import json
 
-from scipy import interpolate, signal, fft
-from scipy.fftpack import rfft
 from pywt import wavedec
 
 from pdkit.processor import Processor
 from pdkit.gait_time_series import GaitTimeSeries
 
-from scipy.integrate import cumtrapz
 import matplotlib.pylab as plt
 import matplotlib.patches as mpatches
 
