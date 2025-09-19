@@ -45,8 +45,8 @@ restore_cache:
     steps:
       - restore_cache:
           keys:
-            - << parameters.cache_key_prefix >>-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-            - << parameters.cache_key_prefix >>-{{ .Branch }}
+            - << parameters.cache_key_prefix >>-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+            - << parameters.cache_key_prefix >>-{{ .Branch }}
 
 # Define reusable jobs
 jobs:
