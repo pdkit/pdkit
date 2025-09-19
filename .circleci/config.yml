@@ -36,15 +36,15 @@ commands:
           paths:
             - "venv"
 
-restore_cache:
-    description: "Restore a cache of the virtual environment"
-    parameters:
-      cache_key_prefix:
-        type: string
-        default: "v1-dependencies"
-    steps:
-      - restore_cache:
-          keys:
+  restore_cache:
+    description: "Restore a cache of the virtual environment"
+    parameters:
+      cache_key_prefix:
+        type: string
+        default: "v1-dependencies"
+    steps:
+      - restore_cache:
+          keys:
             - << parameters.cache_key_prefix >>-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
             - << parameters.cache_key_prefix >>-{{ .Branch }}
 
