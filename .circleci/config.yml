@@ -1,37 +1,67 @@
-# Python CircleCI 2.0 configuration file
-# Copyright 2020 Birkbeck College. All rights reserved.
+# Python CircleCI 2.1 configuration file
+# Copyright 2025 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
 # Author(s): J.S. Pons and George Roussos
 #
-version: 2
+version: 2.1
+
+# Define reusable commands to reduce duplication and improve readability
+commands:
+  install_dependencies:
+    description: "Install project dependencies using a virtual environment"
+    steps:
+      - run:
+          name: Install system libraries
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y libsndfile1
+      - run:
+          name: Setup virtual environment and install dependencies
+          command: |
+            python3 -m venv venv
+            source venv/bin/activate
+            make dev
+  
+  save_cache:
+    description: "Save a cache of the virtual environment"
+    parameters:
+      cache_key_prefix:
+        type: string
+        default: "v1-dependencies"
+    steps:
+      - save_cache:
+          key: << parameters.cache_key_prefix >>-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+          paths:
+            - "venv"
+
+  restore_cache:
+    description: "Restore a cache of the virtual environment"
+    parameters:
+      cache_key_prefix:
+        type: string
+        default: "v1-dependencies"
+    steps:
+      - restore_cache:
+          keys:
+            - << parameters.cache_key_prefix >>-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
+            - << parameters.cache_key_prefix >>-{{ .Branch }}
+
+# Define reusable jobs
 jobs:
   build:
     docker:
       - image: cimg/python:3.11.6
-
     steps:
       - checkout
-
       - restore_cache:
-          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-      - run:
-          name: install dependencies
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libsndfile1
-            python3 -m venv venv
-            source venv/bin/activate
-            make dev
-
+          cache_key_prefix: "v1-dependencies"
+      - install_dependencies
       - save_cache:
-          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-          paths:
-            - "venv"
-
+          cache_key_prefix: "v1-dependencies"
       - run:
-          name: run tests
+          name: Run tests
           command: |
             source venv/bin/activate
             make test
@@ -39,47 +69,30 @@ jobs:
   deploy:
     docker:
       - image: cimg/python:3.11.6
-
     steps:
       - checkout
-
       - restore_cache:
-          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-
-      - run:
-          name: install dependencies
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libsndfile1
-            python3 -m venv venv
-            source venv/bin/activate
-            make dev
-
+          cache_key_prefix: "v1-dependencies"
+      - install_dependencies
       - save_cache:
-          key: v1-dependencies-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "setup.py" }}
-          paths:
-            - "venv"
-
+          cache_key_prefix: "v1-dependencies"
       - run:
-          name: verify git tag vs. version
+          name: Verify git tag vs. version
           command: |
             source venv/bin/activate
             python setup.py verify
-
       - run:
-          name: init .pypirc
+          name: Initialize .pypirc
           command: |
             echo -e "[pypi]" >> ~/.pypirc
             echo -e "username = pdkit" >> ~/.pypirc
             echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
-
       - run:
-          name: create packages
+          name: Create packages
           command: |
             make package
-
       - run:
-          name: upload to pypi
+          name: Upload to pypi
           command: |
             source venv/bin/activate
             twine upload dist/*
@@ -97,7 +110,6 @@ workflows:
             - build
           filters:
             tags:
-              only: /[0-9]+(\.[0-9]+)*/
+              only: /^[0-9]+(\.[0-9]+)*$/
             branches:
               ignore: /.*/
-
