@@ -21,6 +21,8 @@ commands:
           name: Setup virtual environment and install dependencies
           command: |
             python3 -m venv venv
+            # Persist the virtual environment activation for subsequent steps
+            echo 'source venv/bin/activate' >> $BASH_ENV
             source venv/bin/activate
             make dev
   
@@ -62,9 +64,7 @@ jobs:
           cache_key_prefix: "v1-dependencies"
       - run:
           name: Run tests
-          command: |
-            source venv/bin/activate
-            make test
+          command: make test
 
   deploy:
     docker:
@@ -78,23 +78,17 @@ jobs:
           cache_key_prefix: "v1-dependencies"
       - run:
           name: Verify git tag vs. version
-          command: |
-            source venv/bin/activate
-            python setup.py verify
+          command: python setup.py verify
       - run:
           name: Initialize .pypirc
           command: |
             echo -e "[pypi]" >> ~/.pypirc
-            echo -e "username = pdkit" >> ~/.pypirc
+            echo -e "username = __token__" >> ~/.pypirc
             echo -e "password = $PYPI_PASSWORD" >> ~/.pypirc
       - run:
-          name: Create packages
+          name: Create and upload packages
           command: |
             make package
-      - run:
-          name: Upload to pypi
-          command: |
-            source venv/bin/activate
             twine upload dist/*
 
 workflows:
