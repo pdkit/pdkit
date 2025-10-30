@@ -98,3 +98,11 @@ ENV/
 
 # local notebooks
 local-notebooks/
+
+_bin/
+*.so
+*.dylib
+*.dll
+
+.DS_Store
+**/.DS_Store

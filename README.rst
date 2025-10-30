@@ -186,3 +186,58 @@ To score a new measurement against the trained knn clusters.
 To read the testResultSet data from a file. See TestResultSet class for more details.
 
     >>> clinical_UPDRS = pdkit.Clinical_UPDRS(labels_file_path, data_frame_file_path=file_path_to_testResultSet_file)
+
+Comprehensive Voice Features
+=============================
+
+PDKit now includes comprehensive dysphonia feature extraction for Parkinson's screening,
+contributed by Alex Noble (Birkbeck, University of London).
+
+Features include:
+- MFCC coefficients and deltas
+- Jitter and shimmer measurements  
+- Harmonic-to-noise ratio (HNR)
+- Glottal-to-noise excitation (GNE)
+- Detrended fluctuation analysis (DFA)
+
+Usage::
+
+    from pdkit import ComprehensiveVoiceProcessor
+    
+    vp = ComprehensiveVoiceProcessor('audio.wav')
+    measures, names, f0 = vp.extract_comprehensive_features()
+    
+    # measures: numpy array of features
+    # names: list of feature names
+    # f0: fundamental frequency contour
+
+Optional C Extensions
+=====================
+
+PDKit includes optional C extensions for advanced IMF (Intrinsic Mode Function) analysis.
+These provide significant performance improvements but require:
+
+- CMake >= 3.12
+- GNU Scientific Library (GSL)
+- C compiler
+
+**Installation with C extensions:**
+
+macOS::
+
+    brew install gsl cmake
+    pip install pdkit
+
+Linux::
+
+    sudo apt-get install libgsl-dev cmake build-essential
+    pip install pdkit
+
+Windows::
+
+    # Install GSL via vcpkg:
+    vcpkg install gsl
+    pip install pdkit
+
+**Fallback:** If compilation fails, PDKit automatically falls back to pure Python 
+implementation (EMD-signal package), which is slower but fully functional.
