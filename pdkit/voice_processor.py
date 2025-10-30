@@ -5,6 +5,7 @@
 # Licensed under the MIT license. See file LICENSE for details.
 #
 # Author: Cosmin Stamate
+
 import os
 import logging
 import sys
@@ -15,7 +16,7 @@ import soundfile as sf
 
 import parselmouth
 from parselmouth.praat import call, run_file
-
+from .voice_features.voice_analysis_toolbox import voice_analysis
 
 class VoiceProcessor:
     """
@@ -113,3 +114,61 @@ class VoiceProcessor:
 
         except:
             logging.error("Error on VoiceProcessor extract features: %s", sys.exc_info()[0])
+
+
+
+class ComprehensiveVoiceProcessor(VoiceProcessor):
+    """
+    This class extends the VoiceProcessor to include comprehensive voice analysis features.
+    """    
+    def __init__(self, filename):
+        self.file_name = os.path.abspath(filename)
+        
+        if not os.path.exists(self.file_name):
+            raise FileNotFoundError(f"Audio file not found: {self.file_name}")
+    
+    def extract_voice_analysis_features(self, fs=None, f0_alg='SWIPE'):
+        """
+            This method extracts all the voice analysis toolbox features.
+
+            :param fs: sampling frequency
+            :type fs: int
+            :param f0_alg: f0 algorithm to use
+            :type f0_alg: string
+            :return: tuple (measures_vector, measures_names, f0)
+            :rtype: tuple
+
+        """
+        try:
+            logging.debug("Extracting voice analysis features using f0 algorithm: %s, %s", f0_alg, self.file_name)
+            return voice_analysis(self.file_name, fs=fs, f0_alg=f0_alg)
+
+        except Exception as e:
+            logging.error("Error on VoiceProcessor extract voice analysis features: %s", sys.exc_info()[0])
+            logging.error(f"Error: {e}", exc_info=True)
+
+    def extract_voice_analysis_features_as_dict(self, fs=None, f0_alg='SWIPE', pre='vat_'):
+        """
+            This method extracts all the voice analysis toolbox features and returns as a dictionary.
+
+            :param fs: sampling frequency
+            :type fs: int
+            :param f0_alg: f0 algorithm to use
+            :type f0_alg: string
+            :param pre: feature name prefix
+            :type string: string
+            :return: features dictionary
+            :rtype: dict
+
+        """
+        try:
+            logging.debug("Extracting voice analysis features using f0 algorithm: %s, %s", f0_alg, self.file_name)
+            measures_vector, measures_names, f0 = voice_analysis(self.file_name, fs=fs, f0_alg=f0_alg)
+            features = {name: measures_vector[i] for i, name in enumerate(measures_names)}
+            features_prefixed = {pre + k: v for k, v in features.items()}
+
+            return features_prefixed
+
+        except Exception as e:
+            logging.error("Error on VoiceProcessor extract voice analysis features as dict: %s", sys.exc_info()[0])
+            logging.error(f"Error: {e}", exc_info=True)

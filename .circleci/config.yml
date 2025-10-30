@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
-# Author(s): J.S. Pons and George Roussos
+# Author(s): J.S. Pons, George Roussos and Alex Noble
 #
 version: 2.1
 
@@ -25,6 +25,19 @@ commands:
             echo 'source venv/bin/activate' >> $BASH_ENV
             source venv/bin/activate
             make dev
+      - run:
+          name: Install build dependencies
+          command: sudo apt-get update && sudo apt-get install -y cmake build-essential libgsl-dev
+
+      - run:
+          name: Compile libeemd
+          command: |
+            cd pdkit/voice_features/native/libeemd
+            mkdir -p build && cd build
+            cmake ..
+            make
+            mkdir -p ../../../_bin
+            cp libeemd.so ../../../_bin/
 
   # Renamed this command to avoid conflict with the native save_cache step
   custom_save_cache:

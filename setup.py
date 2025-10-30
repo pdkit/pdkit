@@ -9,10 +9,15 @@
 import os
 import re
 import sys
+import subprocess
+import sys
+import shutil
+import platform
+import glob
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from setuptools.command.install import install
-
+from setuptools.command.build_ext import build_ext as _build_ext
 
 def get_version():
     with open(os.path.join("pdkit", "_version.py"), encoding="utf-8") as f:
@@ -38,6 +43,81 @@ class VerifyVersionCommand(install):
                 tag, VERSION
             )
             sys.exit(info)
+
+
+class BuildExtOptional(_build_ext):
+    """
+    Attempt to build C extensions, but continue if they fail.
+    This allows libeemd to be optional.
+    """
+    def run(self):
+        try:
+            self.build_libeemd()
+            print("libeemd C extension built successfully")
+        except Exception as e:
+            print(f"Warning: Could not build libeemd: {e}", file=sys.stderr)
+            print("Falling back to pure Python EMD (slower)", file=sys.stderr)
+        
+        # Continue with normal extension building (even if libeemd failed)
+        try:
+            super().run()
+        except:
+            pass  # No extensions to build is fine
+    
+    def build_libeemd(self):
+        """Build libeemd using CMake"""
+        # Check CMake is available
+        try:
+            subprocess.check_call(['cmake', '--version'], 
+                                stdout=subprocess.DEVNULL, 
+                                stderr=subprocess.DEVNULL)
+        except (OSError, subprocess.CalledProcessError):
+            raise RuntimeError("CMake not found (install with: brew install cmake)")
+        
+        # Directories
+        source_dir = os.path.abspath(os.path.join('pdkit', 'voice_features', 'native', 'libeemd'))
+        build_temp = os.path.abspath(os.path.join(self.build_temp, 'libeemd_build'))
+        os.makedirs(build_temp, exist_ok=True)
+        
+        # Configure
+        cmake_args = [
+            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={build_temp}',
+            '-DBUILD_SHARED_LIBS=ON',
+            '-DCMAKE_BUILD_TYPE=Release',
+        ]
+        
+        print(f"Configuring libeemd with CMake...")
+        subprocess.check_call(['cmake', source_dir] + cmake_args, cwd=build_temp)
+        
+        # Build
+        print(f"Building libeemd...")
+        subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=build_temp)
+        
+        # Copy built library to voice_features/_bin/
+        bin_dir = os.path.join('pdkit', 'voice_features', '_bin')
+        os.makedirs(bin_dir, exist_ok=True)
+        
+        # Find built library
+        if platform.system() == 'Windows':
+            lib_pattern = '**/libeemd.dll'
+        elif platform.system() == 'Darwin':
+            lib_pattern = '**/libeemd.dylib'
+        else:
+            lib_pattern = '**/libeemd.so'
+        
+        libs = glob.glob(os.path.join(build_temp, lib_pattern), recursive=True)
+        if not libs:
+            # Also try without 'lib' prefix
+            alt_pattern = lib_pattern.replace('libeemd', 'eemd')
+            libs = glob.glob(os.path.join(build_temp, alt_pattern), recursive=True)
+        
+        if libs:
+            lib_name = os.path.basename(libs[0])
+            dest = os.path.join(bin_dir, lib_name)
+            shutil.copy2(libs[0], dest)
+            print(f"Copied {lib_name} to {bin_dir}")
+        else:
+            raise RuntimeError(f"Built library not found in {build_temp}")
 
 
 setup(
@@ -88,6 +168,17 @@ setup(
 
         # Legacy helper; harmless on Py3 but kept for compatibility
         "future>=0.18.3",
+        
+        "PyWavelets>=1.3,<2.0",
+        "librosa>=0.9,<1.0",
+        "EMD-signal>=1.6.4,<2.0",
+
+        "wheel>=0.38.4"
+
+    ],
+
+    setup_requires=[
+        'cmake>=3.12'
     ],
 
     # Optional replacement for the unmaintained pandas_validator
@@ -109,7 +200,13 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
     ],
+
+    ext_modules=[
+        Extension('pdkit.voice_features._libeemd_stub', sources=[])
+    ],
+
     cmdclass={
+        "build_ext": BuildExtOptional,
         "verify": VerifyVersionCommand,
     },
 )

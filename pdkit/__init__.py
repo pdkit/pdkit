@@ -2,7 +2,7 @@ from .tremor_processor import TremorProcessor
 from .gait_processor import GaitProcessor
 from .finger_tapping_processor import FingerTappingProcessor
 from .reaction_processor import ReactionProcessor
-from .voice_processor import VoiceProcessor
+from .voice_processor import VoiceProcessor, ComprehensiveVoiceProcessor
 from .utils import load_data
 from .tremor_time_series import TremorTimeSeries
 from .gait_time_series import GaitTimeSeries
@@ -12,4 +12,5 @@ from .test_result_set import TestResultSet
 from .test_result_set_opdc import TestResultSetOPDC
 from .updrs import UPDRS
 from .clinical_updrs import Clinical_UPDRS
+from .voice_features.voice_analysis_toolbox import voice_analysis
 from ._version import __version__
