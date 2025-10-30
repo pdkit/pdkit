@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.12)
 project(libeemd_vendor LANGUAGES C)
 
 set(BUILD_SHARED_LIBS ON)
