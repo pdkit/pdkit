@@ -17,11 +17,12 @@ dev:
 	pip freeze
 
 test:
-	python tests/tremor_processing-test.py
-	python tests/gait_processing-test.py
-	python tests/bradykinesia_processing-test.py
-	python tests/finger_tapping_processing-test.py
-	python tests/test_result_set-test.py
+	python tests/test_tremor_processing.py
+	python tests/test_gait_processing.py
+	python tests/test_bradykinesia_processing.py
+	python tests/test_finger_tapping_processing.py
+	python tests/test_result_set.py
+	python tests/test_voice_processor.py
 
 package:
 	python setup.py sdist
