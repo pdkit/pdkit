@@ -36,6 +36,7 @@ commands:
             mkdir -p build && cd build
             cmake ..
             make
+            mkdir -p ../../../_bin
             cp libeemd.so ../../../_bin/
 
   # Renamed this command to avoid conflict with the native save_cache step
