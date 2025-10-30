@@ -13,7 +13,6 @@ clean:
 dev:
 	pip install -r requirements.txt
 	pip install --upgrade pip wheel setuptools twine
-	pip install git+https://github.com/blue-yonder/tsfresh
 	pip install -e .
 	pip freeze
 
