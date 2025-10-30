@@ -27,7 +27,7 @@ commands:
             make dev
       - run:
           name: Install build dependencies
-          command: sudo apt-get update && sudo apt-get install -y cmake build-essential
+          command: sudo apt-get update && sudo apt-get install -y cmake build-essential libgsl-dev
 
       - run:
           name: Compile libeemd
