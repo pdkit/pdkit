@@ -51,6 +51,7 @@ class BuildExtOptional(_build_ext):
     This allows libeemd to be optional.
     """
     def run(self):
+        # Build libeemd
         try:
             self.build_libeemd()
             print("libeemd C extension built successfully")
@@ -58,7 +59,15 @@ class BuildExtOptional(_build_ext):
             print(f"Warning: Could not build libeemd: {e}", file=sys.stderr)
             print("Falling back to pure Python EMD (slower)", file=sys.stderr)
         
-        # Continue with normal extension building (even if libeemd failed)
+        # Build libclose_ret
+        try:
+            self.build_libclose_ret()
+            print("libclose_ret C extension built successfully")
+        except Exception as e:
+            print(f"Warning: Could not build libclose_ret: {e}", file=sys.stderr)
+            print("Falling back to pure Python RPDE (slower)", file=sys.stderr)
+        
+        # Continue with normal extension building (even if native libs failed)
         try:
             super().run()
         except:
@@ -109,6 +118,61 @@ class BuildExtOptional(_build_ext):
         if not libs:
             # Also try without 'lib' prefix
             alt_pattern = lib_pattern.replace('libeemd', 'eemd')
+            libs = glob.glob(os.path.join(build_temp, alt_pattern), recursive=True)
+        
+        if libs:
+            lib_name = os.path.basename(libs[0])
+            dest = os.path.join(bin_dir, lib_name)
+            shutil.copy2(libs[0], dest)
+            print(f"Copied {lib_name} to {bin_dir}")
+        else:
+            raise RuntimeError(f"Built library not found in {build_temp}")
+    
+    def build_libclose_ret(self):
+        """Build libclose_ret using CMake"""
+        # Check CMake is available
+        try:
+            subprocess.check_call(['cmake', '--version'], 
+                                stdout=subprocess.DEVNULL, 
+                                stderr=subprocess.DEVNULL)
+        except (OSError, subprocess.CalledProcessError):
+            raise RuntimeError("CMake not found (install with: brew install cmake)")
+        
+        # Directories
+        source_dir = os.path.abspath(os.path.join('pdkit', 'voice_features', 'native', 'close_ret'))
+        build_temp = os.path.abspath(os.path.join(self.build_temp, 'close_ret_build'))
+        os.makedirs(build_temp, exist_ok=True)
+        
+        # Configure
+        cmake_args = [
+            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={build_temp}',
+            '-DBUILD_SHARED_LIBS=ON',
+            '-DCMAKE_BUILD_TYPE=Release',
+        ]
+        
+        print(f"Configuring libclose_ret with CMake...")
+        subprocess.check_call(['cmake', source_dir] + cmake_args, cwd=build_temp)
+        
+        # Build
+        print(f"Building libclose_ret...")
+        subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=build_temp)
+        
+        # Copy built library to voice_features/_bin/
+        bin_dir = os.path.join('pdkit', 'voice_features', '_bin')
+        os.makedirs(bin_dir, exist_ok=True)
+        
+        # Find built library
+        if platform.system() == 'Windows':
+            lib_pattern = '**/libclose_ret.dll'
+        elif platform.system() == 'Darwin':
+            lib_pattern = '**/libclose_ret.dylib'
+        else:
+            lib_pattern = '**/libclose_ret.so'
+        
+        libs = glob.glob(os.path.join(build_temp, lib_pattern), recursive=True)
+        if not libs:
+            # Also try without 'lib' prefix
+            alt_pattern = lib_pattern.replace('libclose_ret', 'close_ret')
             libs = glob.glob(os.path.join(build_temp, alt_pattern), recursive=True)
         
         if libs:

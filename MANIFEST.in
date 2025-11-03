@@ -1,0 +1,19 @@
+include README.rst
+include LICENSE
+include requirements.txt
+include readme-pypi.rst
+
+# Include native libraries and their source/build files
+recursive-include pdkit/voice_features/_bin *
+recursive-include pdkit/voice_features/native *.c *.h *.py
+include pdkit/voice_features/native/libeemd/CMakeLists.txt
+include pdkit/voice_features/native/close_ret/CMakeLists.txt
+
+# Include test data if any
+recursive-include tests *.wav *.csv *.txt
+
+# Exclude build artifacts and caches
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store

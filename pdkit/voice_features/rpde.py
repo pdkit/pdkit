@@ -1,121 +1,30 @@
 import numpy as np
-from sklearn.neighbors import radius_neighbors_graph
+from pdkit.voice_features.native.close_ret.close_ret_hook import fast_close_ret
 
-def rpde(data, d=4, tau=50, eta=0.2, Tmax=1000):
-    data = np.asarray(data)
+
+def rpde(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
+    if metric == "euclidean" and not standardize and step == 1:
+        hist = fast_close_ret(x, m=d, tau=tau, eta=eps)
+        
+        if hist is not None:
+            # Successfully got histogram from C implementation
+            if hist.sum() == 0:
+                return np.nan
+            
+            if tmax > 0 and len(hist) > tmax:
+                hist = hist[:tmax]
+            
+            p = hist.astype(np.float64)
+            p /= p.sum()
+            
+            p = p[p > 0]
+            
+            H = -np.sum(p * np.log(p))
+            H_norm = H / np.log(len(hist))
+            
+            return float(H_norm)
     
-    N = len(data)
-    embd_length = N - (d-1)*tau
-    if embd_length <= 0:
-        return np.nan
-
-    X = np.zeros((embd_length, d))
-    for i in range(d):
-        X[:, i] = data[i*tau : i*tau + embd_length]
-
-    X = X - np.mean(X, axis=0)
-    X = X / (np.std(X, axis=0) + 1e-6)
-
-    close_return_times = []
-    for i in range(embd_length-1):
-        dists = np.linalg.norm(X[i+1:] - X[i], axis=1)
-        close_idx = np.where(dists < eta)[0]
-
-        if len(close_idx) > 0:
-            close_return_times.append(close_idx[0]+1)
-
-    if len(close_return_times) == 0:
-        return np.nan
-
-    close_return_times = np.array(close_return_times)
-    close_return_times = close_return_times[close_return_times <= Tmax]
-
-    if len(close_return_times) == 0:
-        return np.nan
-
-    if Tmax > 0:
-        close_return_times = close_return_times[close_return_times <= Tmax]
-        if len(close_return_times) == 0:
-            return np.nan
-    
-    bins = np.arange(1, int(np.max(close_return_times)) + 2)
-    hist, _ = np.histogram(close_return_times, bins=bins)
-    
-    hist = hist / np.sum(hist)
-    
-    hist = hist[hist > 0]
-    
-    rpde_val = -np.sum(hist * np.log(hist))
-    
-    rpde_val /= np.log(len(hist))
-
-    return rpde_val
-
-def rpde_fast(data, d=4, tau=50, eta=0.2, tmax=1000):
-    data = np.asarray(data)
-    data_length = len(data)
-    embd_length = data_length - (d - 1) * tau
-
-    if embd_length <= 0:
-        return np.nan
-
-    X = np.zeros((embd_length, d))
-    for i in range(d):
-        X[:, i] = data[i * tau : i * tau + embd_length]
-
-    X -= np.mean(X, axis=0)
-    X /= np.std(X, axis=0) + 1e-6
-
-    graph = radius_neighbors_graph(X, radius=eta, mode='connectivity', include_self=False, n_jobs=1).tocsr()
-    indptr = graph.indptr
-    indices = graph.indices
-
-    close_returns = []
-    for i in range(embd_length - 1):
-        start, end = indptr[i], indptr[i+1]
-        if start == end:
-            continue
-        neighbors = indices[start:end]
-        forward_neighbors = neighbors[neighbors > i]
-        if forward_neighbors.size:
-            dt = int(forward_neighbors.min() - i)
-            if dt <= tmax:
-                close_returns.append(dt)
-
-    if not close_returns:
-        return np.nan
-
-    crt = np.array(close_returns, dtype=np.int32)
-    
-    bins = np.arange(1, tmax + 2)
-    hist, _ = np.histogram(crt, bins=bins)
-    hist = hist / np.sum(hist)
-    
-    N = len(hist)
-    hist = hist[hist > 0]
-
-    rpde_val = -np.sum(hist * np.log(hist))
-    
-    rpde_val /= np.log(N)
-    
-    return rpde_val
-
-
-
-def rpde_forward_window(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
-    """
-    RPDE via direct forward search in a limited window of size tmax.
-    Memory ~ O(d) + O(tmax). No neighbor lists/graphs.
-
-    x : 1D signal
-    d : embedding dimension
-    tau : delay (in samples)
-    eps : radius for 'close return'
-    tmax : max forward time to consider (bins = 1..tmax)
-    metric : 'euclidean' or 'chebyshev'
-    standardize : z-score each embedding dimension
-    step : stride to thin the embedded trajectory (e.g., 2 or 4 for long signals)
-    """
+    # Fall back to Python implementation
     x = np.asarray(x, dtype=np.float32)
     N = len(x)
     embN_full = N - (d - 1) * tau
@@ -140,14 +49,13 @@ def rpde_forward_window(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", 
     hist = np.zeros(tmax, dtype=np.int64)
     for i in range(embN - 1):
         x_i = X[i]
-
         W = min(tmax, embN - 1 - i)
         if W <= 0:
             break
         block = X[i+1 : i+1+W]
         if metric == "chebyshev":
             dists = np.max(np.abs(block - x_i), axis=1)
-        else: 
+        else:  # euclidean
             diff = block - x_i
             dists = np.sqrt(np.sum(diff * diff, axis=1))
         hits = np.flatnonzero(dists <= eps)
@@ -161,6 +69,37 @@ def rpde_forward_window(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", 
     p = hist.astype(np.float64)
     p /= p.sum()
     p = p[p > 0]
-    H = -np.sum(p * np.log(p)) 
+    H = -np.sum(p * np.log(p))
     H_norm = H / np.log(len(hist))
     return float(H_norm)
+
+
+def rpde_forward_window(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
+    """
+    Alias for rpde() to maintain backward compatibility.
+    RPDE via direct forward search in a limited window of size tmax.
+    
+    Parameters:
+    -----------
+    x : array-like
+        Input signal
+    d : int
+        Embedding dimension (default: 4)
+    tau : int
+        Embedding delay (default: 50)
+    eps : float
+        Close return distance threshold (default: 0.2)
+    tmax : int
+        Maximum recurrence time (default: 1000)
+    metric : str
+        Distance metric: "euclidean" or "chebyshev" (default: "euclidean")
+    standardize : bool
+        Whether to standardize the embedded trajectory (default: True)
+    step : int
+        Thinning factor for embedded states (default: 1, no thinning)
+        
+    Returns:
+    --------
+    float : Normalized entropy H_norm, or np.nan on error
+    """
+    return rpde(x, d=d, tau=tau, eps=eps, tmax=tmax, metric=metric, standardize=standardize, step=step)
