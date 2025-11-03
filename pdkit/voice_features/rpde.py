@@ -2,7 +2,7 @@ import numpy as np
 from pdkit.voice_features.native.close_ret.close_ret_hook import fast_close_ret
 
 
-def rpde(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
+def compute_rpde(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
     if metric == "euclidean" and not standardize and step == 1:
         hist = fast_close_ret(x, m=d, tau=tau, eta=eps)
         
@@ -72,34 +72,3 @@ def rpde(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=Tru
     H = -np.sum(p * np.log(p))
     H_norm = H / np.log(len(hist))
     return float(H_norm)
-
-
-def rpde_forward_window(x, d=4, tau=50, eps=0.2, tmax=1000, metric="euclidean", standardize=True, step=1):
-    """
-    Alias for rpde() to maintain backward compatibility.
-    RPDE via direct forward search in a limited window of size tmax.
-    
-    Parameters:
-    -----------
-    x : array-like
-        Input signal
-    d : int
-        Embedding dimension (default: 4)
-    tau : int
-        Embedding delay (default: 50)
-    eps : float
-        Close return distance threshold (default: 0.2)
-    tmax : int
-        Maximum recurrence time (default: 1000)
-    metric : str
-        Distance metric: "euclidean" or "chebyshev" (default: "euclidean")
-    standardize : bool
-        Whether to standardize the embedded trajectory (default: True)
-    step : int
-        Thinning factor for embedded states (default: 1, no thinning)
-        
-    Returns:
-    --------
-    float : Normalized entropy H_norm, or np.nan on error
-    """
-    return rpde(x, d=d, tau=tau, eps=eps, tmax=tmax, metric=metric, standardize=standardize, step=step)
