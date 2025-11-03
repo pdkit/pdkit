@@ -4,14 +4,14 @@ import numpy as np
 from pdkit.voice_features.tkeo import compute_tkeo
 
 
-def wavedec_features(data, wname='db8', dec_levels=10, mode='symmetric'):
+def compute_wavedec_features(data, wname='db8', dec_levels=10, mode='symmetric'):
     data = np.asarray(data)
 
     data = data[np.isfinite(data)]
     
     if len(data) == 0:
         dummy_data = np.ones(1024)
-        dummy_features, dummy_names = wavedec_features(dummy_data, wname, dec_levels, mode)
+        dummy_features, dummy_names = compute_wavedec_features(dummy_data, wname, dec_levels, mode)
         return np.full_like(dummy_features, np.nan), dummy_names
     
     max_level = pywt.dwt_max_level(data_len=len(data), filter_len=pywt.Wavelet(wname).dec_len)
@@ -158,8 +158,8 @@ def detail_coefficient_expansion(C, L, dec_levels, features, feature_names, pref
             d = detcoef(C, L, i)
             features.append(shannon_entropy(d))
             features.append(log_energy_entropy(d))
-            features.append(np.mean(tkeo(d)))
-            features.append(np.std(tkeo(d)))
+            features.append(np.mean(compute_tkeo(d)))
+            features.append(np.std(compute_tkeo(d)))
 
             feature_names.extend([
                 f'{prefix}_entropy_shannon_{i}_coef',
@@ -178,8 +178,8 @@ def approx_coefficient_expansion(C, L, dec_levels, wname, features, feature_name
             a = appcoef_at_level(C, L, wname, level=i)
             features.append(shannon_entropy(a))
             features.append(log_energy_entropy(a))
-            features.append(np.mean(tkeo(a)))
-            features.append(np.std(tkeo(a)))
+            features.append(np.mean(compute_tkeo(a)))
+            features.append(np.std(compute_tkeo(a)))
 
             feature_names.extend([
                 f'{prefix}_entropy_shannon_{i}_coef',
@@ -188,7 +188,7 @@ def approx_coefficient_expansion(C, L, dec_levels, wname, features, feature_name
                 f'{prefix}_TKEO_std_{i}_coef'
             ])
         except (ValueError, IndexError) as e:
-            print("Error occurred while processing coefficients:", e)
+            logging.error("Error occurred while processing coefficients:", e)
             break
 
 def shannon_entropy(x):    
