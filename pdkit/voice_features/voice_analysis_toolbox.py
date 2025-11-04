@@ -6,7 +6,7 @@ from scipy.signal import resample
 from pdkit.voice_features import (
     compute_f0_thanasis, compute_wavedec_features, compute_dfa, compute_glottis_quotient, 
     compute_gne_measure, compute_hnr_fun, compute_imf_measure, compute_jitter_shimmer, 
-    rpde_forward_window, compute_ppe, compute_vfer_measure, dypsa, melcepst 
+    compute_rpde, compute_ppe, compute_vfer_measure, dypsa, melcepst 
 )
 
 def voice_analysis(data, fs=None, f0_alg='SWIPE'):
@@ -106,7 +106,7 @@ def voice_analysis(data, fs=None, f0_alg='SWIPE'):
     DFA_feat = 1/(1+np.exp(-dfa_value))
 
     data_resampled = resample(data, int(len(data) * 25000 / fs))
-    RPDE_feat = rpde_forward_window(data_resampled, d=4, tau=50, eps=0.2, tmax=1000)
+    RPDE_feat = compute_rpde(data_resampled, d=4, tau=50, eps=0.2, tmax=1000)
 
     if len(data) > 800000:
         downsample_factor = 8

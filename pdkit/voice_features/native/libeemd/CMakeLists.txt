@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.23)
 project(libeemd_vendor LANGUAGES C)
 
 set(BUILD_SHARED_LIBS ON)
@@ -68,3 +68,12 @@ endif()
 if (UNIX AND NOT APPLE)
   target_link_libraries(eemd PRIVATE m)
 endif()
+
+# Copy library to source tree after build for editable installs
+# This allows the Python hook to find it in development mode
+add_custom_command(TARGET eemd POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy 
+            $<TARGET_FILE:eemd>
+            ${CMAKE_CURRENT_SOURCE_DIR}/
+    COMMENT "Copying libeemd to source tree for editable installs"
+)

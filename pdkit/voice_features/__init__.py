@@ -19,7 +19,7 @@ from .jitter_shimmer import compute_jitter_shimmer
 from .melfbank import mel_filterbank
 from .mfcc import melcepst
 from .ppe import compute_ppe
-from .rpde import rpde_forward_window
+from .rpde import compute_rpde
 from .spectral import rfft, rdct, irfft, irdct
 from .tkeo import compute_tkeo
 from .vfer_measure import compute_vfer_measure
