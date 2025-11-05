@@ -60,7 +60,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'PDkit'
 copyright = u'2022, Birkbeck College'
-author = u'George Roussos, J.S.Pons, Cosmin Stamate and PDkit contributors'
+author = u'George Roussos, J.S.Pons, Cosmin Stamate, Alex Noble, and PDkit contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -318,6 +318,7 @@ MOCK_MODULES = ['pygtk',
                 'tsfresh',
                 'numpy',
                 'scipy',
+                'scipy.cluster',
                 'matplotlib',
                 'tsfresh',
                 'sklearn',
@@ -328,6 +329,11 @@ MOCK_MODULES = ['pygtk',
                 'llvmlite',
                 'keras',
                 'distributed',
+                'future',
+                'tsfresh.feature_extraction',
+                'scipy.fftpack',
+                'soundfile',
+                'pdkit',
                 'statsmodels']
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
