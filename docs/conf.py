@@ -1,4 +1,4 @@
-# Copyright 2022 Birkbeck College. All rights reserved.
+# Copyright 2025 Birkbeck College. All rights reserved.
 #
 # Licensed under the MIT license. See file LICENSE for details.
 #
@@ -312,6 +312,7 @@ MOCK_MODULES = ['pygtk',
                 'traceback',
                 'numpy',
                 'pandas',
+                'pandas_validator',
                 'scipy',
                 'pywt',
                 'matplotlib',
@@ -321,10 +322,13 @@ MOCK_MODULES = ['pygtk',
                 'scipy.cluster',
                 'scipy.cluster.vq',
                 'scipy.signal',
+                'scipy.spatial',
                 'tqdm',
                 'matplotlib',
+                'matplotlib.pylab',
                 'tsfresh',
                 'sklearn',
+                'sklearn.neighbors',
                 'scikit-learn',
                 'PyWavelets',
                 'PySoundFile',
@@ -337,9 +341,11 @@ MOCK_MODULES = ['pygtk',
                 'scipy.fftpack',
                 'soundfile',
                 'parselmouth',
+                'parselmouth.praat',
                 'pdkit',
                 'pdkit.processor',
                 'pdkit.utils',
+                'pdkit.gait_time_series',
                 'statsmodels']
 
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
