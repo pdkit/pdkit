@@ -27,7 +27,8 @@ def voice_analysis(data, fs=None, f0_alg='SWIPE'):
         logging.debug(f"DYPSA detected {len(vf_close)} GCIs and {len(vf_open)} GOIs.")
         A0 = np.zeros(len(vf_close))
         for i in range(len(vf_close) - 1):
-            A0[i] = max(np.abs(data[vf_open[i]:vf_close[i+1]]))
+            segment = data[vf_open[i]:vf_close[i+1]]
+            A0[i] = np.max(np.abs(segment)) if len(segment) > 0 else 0.0
 
     except Exception as e:
         logging.error(f"DYPSA GCI detection failed: {e}")
